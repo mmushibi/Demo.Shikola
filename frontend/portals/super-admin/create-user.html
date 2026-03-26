@@ -1,0 +1,873 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - Create Users</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script>
+    function getInitials(name) {
+        return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
+
+    function enforceDesktopOnly() {
+        if (window.innerWidth < 1024) {
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-slate-900">
+                    <div class="text-center p-8">
+                        <i class="fas fa-desktop text-6xl text-slate-400 mb-4"></i>
+                        <h1 class="text-2xl font-semibold text-white mb-2">Desktop Required</h1>
+                        <p class="text-slate-400 mb-6">The Console requires a desktop browser (1024px or larger).</p>
+                        <p class="text-slate-500 text-sm">Please switch to a desktop device to continue.</p>
+                    </div>
+                </div>
+            `;
+            return false;
+        }
+        return true;
+    }
+
+    window.addEventListener('load', enforceDesktopOnly);
+    window.addEventListener('resize', () => {
+        if (!enforceDesktopOnly()) {
+            location.reload();
+        }
+    });
+    </script>
+
+    <script src="/config/config.js"></script>
+    <script src="/shared-assets/js/shared-auth.js"></script>
+    <script src="/shared-assets/js/shared-api-client.js"></script>
+    <script src="super-admin-offline-manager.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page super-admin-page">
+    <div x-data="Object.assign(authData(), {
+        sidebarOpen: false,
+        pageTitle: 'Create Users',
+        pageSubtitle: 'Create accounts and assign roles',
+
+        profileLoading: false,
+        profileError: null,
+        isSuperAdmin: false,
+
+        schoolsLoading: false,
+        schoolsError: null,
+        schools: [],
+
+        createSubmitting: false,
+        createError: null,
+        createSuccess: null,
+        form: {
+            email: '',
+            fullName: '',
+            phone: '',
+            role: 'operations',
+            schoolId: '',
+            password: '',
+            isActive: true
+        },
+
+        usersLoading: false,
+        usersError: null,
+        users: [],
+        usersSearch: '',
+
+        userModalOpen: false,
+        userModalLoading: false,
+        userModalError: null,
+        selectedUser: null,
+        selectedUserDetails: null,
+        resetPasswordForm: {
+            password: '',
+            show: false,
+            submitting: false,
+            error: null,
+            success: null
+        },
+
+        tempPassword: {
+            value: null,
+            show: false,
+            revealed: false,
+            loading: false,
+            error: null
+        },
+
+        systemRoles() {
+            return ['operations'];
+        },
+
+        schoolScopedRoles() {
+            return ['admin','teacher','senior_teacher','accountant','parent','pupil'];
+        },
+
+        roleNeedsSchool(role) {
+            const r = String(role || '').toLowerCase();
+            if (!r) return false;
+            if (r === 'superadmin') return false;
+            return this.systemRoles().indexOf(r) === -1;
+        },
+
+        async initPage() {
+            await this.ensureSuperAdmin();
+            if (!this.isSuperAdmin) return;
+            await this.loadSchools();
+            await this.loadUsers();
+        },
+
+        notify(message, type) {
+            try {
+                if (window.shikolaButtons && typeof window.shikolaButtons.showNotification === 'function') {
+                    window.shikolaButtons.showNotification(message, type || 'info');
+                }
+            } catch (_e) {}
+        },
+
+        async ensureSuperAdmin() {
+            this.profileLoading = true;
+            this.profileError = null;
+            this.isSuperAdmin = false;
+
+            if (!window.ShikolaAPI) {
+                this.profileError = 'API client not available';
+                this.profileLoading = false;
+                return;
+            }
+
+            try {
+                const res = await window.ShikolaAPI.get('/api/auth/profile');
+                if (!res.success) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '../frontend/public/super-admin-signin.html';
+                        return;
+                    }
+                    this.profileError = res.error || 'Failed to load profile';
+                    return;
+                }
+
+                const role = res.data && res.data.user ? String(res.data.user.role || '').toLowerCase() : '';
+                if (role !== ('super' + 'admin')) {
+                    try {
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('shikola_token');
+                        localStorage.removeItem('shikola_session');
+                    } catch (_e) {}
+                    window.location.href = '../frontend/public/super-admin-signin.html';
+                    return;
+                }
+
+                this.isSuperAdmin = true;
+            } catch (err) {
+                this.profileError = (err && err.message) ? err.message : 'Failed to load profile';
+            } finally {
+                this.profileLoading = false;
+            }
+        },
+
+        async loadSchools() {
+            this.schoolsLoading = true;
+            this.schoolsError = null;
+            this.schools = [];
+
+            try {
+                const res = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/schools', { limit: 200, offset: 0 });
+                if (!res.success) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '../frontend/public/super-admin-signin.html';
+                        return;
+                    }
+                    this.schoolsError = res.error || 'Failed to load schools';
+                    return;
+                }
+
+                this.schools = Array.isArray(res.data && res.data.data) ? res.data.data : [];
+            } catch (err) {
+                this.schoolsError = (err && err.message) ? err.message : 'Failed to load schools';
+            } finally {
+                this.schoolsLoading = false;
+            }
+        },
+
+        async loadUsers() {
+            this.usersLoading = true;
+            this.usersError = null;
+            this.users = [];
+
+            try {
+                const res = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/system-users', { limit: 500, offset: 0 });
+                if (!res.success) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '../frontend/public/super-admin-signin.html';
+                        return;
+                    }
+                    this.usersError = res.error || 'Failed to load users';
+                    return;
+                }
+
+                const rows = Array.isArray(res.data && res.data.data) ? res.data.data : [];
+                this.users = rows
+                    .map(u => ({
+                        id: u.id,
+                        email: u.email,
+                        fullName: u.fullName,
+                        phone: u.phone,
+                        role: u.role,
+                        isActive: !!u.isActive,
+                        createdAt: u.createdAt,
+                        updatedAt: u.updatedAt
+                    }));
+            } catch (err) {
+                this.usersError = (err && err.message) ? err.message : 'Failed to load users';
+            } finally {
+                this.usersLoading = false;
+            }
+        },
+
+        filteredUsers() {
+            const term = String(this.usersSearch || '').trim().toLowerCase();
+            if (!term) return this.users;
+            return (this.users || []).filter(u => {
+                const hay = [u.email, u.fullName, u.role].filter(Boolean).join(' ').toLowerCase();
+                return hay.indexOf(term) !== -1;
+            });
+        },
+
+        formatDateTime(value) {
+            if (!value) return '—';
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return '—';
+            return d.toLocaleString();
+        },
+
+        schoolNameFromId(schoolId) {
+            if (!schoolId) return '—';
+            const match = (this.schools || []).find(s => String(s.id) === String(schoolId));
+            return match ? (match.schoolName || match.email || match.id) : String(schoolId);
+        },
+
+        async openUserModal(user) {
+            if (!user || !user.id) return;
+            this.userModalOpen = true;
+            this.userModalLoading = true;
+            this.userModalError = null;
+            this.selectedUser = user;
+            this.selectedUserDetails = null;
+            this.resetPasswordForm.password = '';
+            this.resetPasswordForm.show = false;
+            this.resetPasswordForm.submitting = false;
+            this.resetPasswordForm.error = null;
+            this.resetPasswordForm.success = null;
+
+            this.tempPassword.value = null;
+            this.tempPassword.show = false;
+            this.tempPassword.revealed = false;
+            this.tempPassword.loading = false;
+            this.tempPassword.error = null;
+
+            try {
+                const res = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/system-users/' + encodeURIComponent(user.id));
+                if (!res.success) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '../frontend/public/super-admin-signin.html';
+                        return;
+                    }
+                    this.userModalError = res.error || 'Failed to load user';
+                    return;
+                }
+                this.selectedUserDetails = res.data || null;
+            } catch (err) {
+                this.userModalError = (err && err.message) ? err.message : 'Failed to load user';
+            } finally {
+                this.userModalLoading = false;
+            }
+        },
+
+        closeUserModal() {
+            this.userModalOpen = false;
+        },
+
+        async generateTempPassword(user) {
+            if (!user || !user.id) return;
+
+            this.tempPassword.loading = true;
+            this.tempPassword.error = null;
+            this.tempPassword.value = null;
+            this.tempPassword.show = true;
+            this.tempPassword.revealed = false;
+
+            try {
+                const res = await window.ShikolaAPI.post('/api/frontend/portals/super-admin/accounts/' + encodeURIComponent(user.id) + '/generate-temp-password', {
+                    length: 12
+                });
+
+                if (!res.success) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '../frontend/public/super-admin-signin.html';
+                        return;
+                    }
+                    this.tempPassword.error = res.error || 'Failed to generate temporary password';
+                    return;
+                }
+
+                this.tempPassword.value = (res.data && res.data.temporaryPassword) ? String(res.data.temporaryPassword) : null;
+                if (!this.tempPassword.value) {
+                    this.tempPassword.error = 'Temporary password was not returned.';
+                } else {
+                    this.tempPassword.revealed = true;
+                    this.notify('Temporary password generated', 'success');
+                }
+            } catch (err) {
+                this.tempPassword.error = (err && err.message) ? err.message : 'Failed to generate temporary password';
+            } finally {
+                this.tempPassword.loading = false;
+            }
+        },
+
+        async copyTempPassword() {
+            const text = this.tempPassword && this.tempPassword.value ? String(this.tempPassword.value) : '';
+            if (!text) return;
+            try {
+                if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    this.notify('Copied', 'success');
+                    return;
+                }
+            } catch (_err) {}
+            try {
+                const input = document.createElement('input');
+                input.value = text;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                this.notify('Copied', 'success');
+            } catch (_err) {
+                this.notify('Copy failed', 'error');
+            }
+        },
+
+        async submitCreate() {
+            this.createSubmitting = true;
+            this.createError = null;
+            this.createSuccess = null;
+
+            try {
+                const payload = {
+                    email: String(this.form.email || '').trim(),
+                    password: String(this.form.password || ''),
+                    role: String(this.form.role || '').trim(),
+                    fullName: String(this.form.fullName || '').trim(),
+                    phone: String(this.form.phone || '').trim() || null,
+                    isActive: !!this.form.isActive
+                };
+
+                if (!payload.email || !payload.password || !payload.role || !payload.fullName) {
+                    this.createError = 'Email, password, role and full name are required.';
+                    return;
+                }
+
+                if (payload.password.length < 8) {
+                    this.createError = 'Password must be at least 8 characters.';
+                    return;
+                }
+
+                if (this.roleNeedsSchool(payload.role)) {
+                    const sid = String(this.form.schoolId || '').trim();
+                    if (!sid) {
+                        this.createError = 'Select a school for this role.';
+                        return;
+                    }
+                    payload.schoolId = sid;
+                }
+
+                const res = await window.ShikolaAPI.post('/api/admin/accounts', payload);
+                if (!res.success) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '../frontend/public/super-admin-signin.html';
+                        return;
+                    }
+                    this.createError = res.error || 'Failed to create user';
+                    return;
+                }
+
+                this.createSuccess = 'User created successfully.';
+                this.notify('User created successfully', 'success');
+
+                this.form.email = '';
+                this.form.fullName = '';
+                this.form.phone = '';
+                this.form.password = '';
+                this.form.isActive = true;
+
+                await this.loadUsers();
+            } catch (err) {
+                this.createError = (err && err.message) ? err.message : 'Failed to create user';
+            } finally {
+                this.createSubmitting = false;
+            }
+        },
+
+        async toggleUserActive(user) {
+            if (!user || !user.id) return;
+            const nextValue = !user.isActive;
+
+            try {
+                const res = await window.ShikolaAPI.put('/api/admin/accounts/' + encodeURIComponent(user.id), {
+                    isActive: nextValue
+                });
+
+                if (!res.success) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '../frontend/public/super-admin-signin.html';
+                        return;
+                    }
+                    this.notify(res.error || 'Failed to update user', 'error');
+                    return;
+                }
+
+                user.isActive = nextValue;
+                if (this.selectedUserDetails && this.selectedUserDetails.id === user.id) {
+                    this.selectedUserDetails.isActive = nextValue;
+                }
+                this.notify('User updated', 'success');
+            } catch (_err) {
+                this.notify('Failed to update user', 'error');
+            }
+        },
+
+        async resetUserPassword(user, providedPassword) {
+            if (!user || !user.id) return;
+            const usingInline = providedPassword !== undefined;
+            const newPassword = usingInline ? String(providedPassword || '') : String(window.prompt('Enter a new password (min 8 characters):') || '');
+            if (!newPassword) return;
+            if (newPassword.length < 8) {
+                if (usingInline) {
+                    this.resetPasswordForm.error = 'Password must be at least 8 characters';
+                    this.resetPasswordForm.success = null;
+                }
+                this.notify('Password must be at least 8 characters', 'error');
+                return;
+            }
+
+            if (usingInline) {
+                this.resetPasswordForm.submitting = true;
+                this.resetPasswordForm.error = null;
+                this.resetPasswordForm.success = null;
+            }
+
+            try {
+                const res = await window.ShikolaAPI.post('/api/admin/accounts/' + encodeURIComponent(user.id) + '/reset-password', {
+                    password: String(newPassword)
+                });
+
+                if (!res.success) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '../frontend/public/super-admin-signin.html';
+                        return;
+                    }
+                    if (usingInline) {
+                        this.resetPasswordForm.error = res.error || 'Failed to reset password';
+                        this.resetPasswordForm.success = null;
+                    }
+                    this.notify(res.error || 'Failed to reset password', 'error');
+                    return;
+                }
+
+                if (usingInline) {
+                    this.resetPasswordForm.password = '';
+                    this.resetPasswordForm.success = 'Password reset successfully.';
+                }
+                this.notify('Password reset successfully', 'success');
+            } catch (err) {
+                if (usingInline) {
+                    this.resetPasswordForm.error = (err && err.message) ? err.message : 'Failed to reset password';
+                    this.resetPasswordForm.success = null;
+                }
+                this.notify('Failed to reset password', 'error');
+            } finally {
+                if (usingInline) {
+                    this.resetPasswordForm.submitting = false;
+                }
+            }
+        }
+    })" x-init="initPage()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-8 w-full">
+            <aside class="flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex items-center gap-3 mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-15 rounded-2xl object-cover">
+                    <div>
+                        <div class="text-sm text-slate-400">Console</div>
+                    </div>
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Console</span>
+                    </a>
+                    
+                    <a href="schools.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-school"></i></span>
+                        <span class="flex-1">Schools</span>
+                    </a>
+                    
+                    <a href="users-and-roles.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-users"></i></span>
+                        <span class="flex-1">Users & Roles</span>
+                    </a>
+                    
+                    <a href="create-user.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 text-orange-600 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-plus"></i></span>
+                        <span class="font-medium flex-1">Create Users</span>
+                    </a>
+                    
+                    <a href="global-user-search.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-search"></i></span>
+                        <span class="flex-1">Global Search</span>
+                    </a>
+                    
+                    <a href="payments-coupons.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-ticket-alt"></i></span>
+                        <span class="flex-1">Payments & Coupons</span>
+                    </a>
+                    
+                    <a href="subscriptions.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-layer-group"></i></span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    
+                    <a href="plans.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">Plans & Events</span>
+                    </a>
+                    
+                    <a href="activity-log.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="flex-1">Activity Log</span>
+                    </a>
+                    
+                    <a href="system-health.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-heartbeat"></i></span>
+                        <span class="flex-1">System Health</span>
+                    </a>
+                    
+                    <a href="settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-gear"></i></span>
+                        <span class="flex-1">Settings</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center mt-6 px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium w-full justify-center">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="flex-1 w-full px-6 py-6 pl-72">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl lg:text-3xl font-semibold text-slate-800" x-text="pageTitle"></h1>
+                            <p class="text-sm text-slate-400 mt-1" x-text="pageSubtitle"></p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6" x-show="profileLoading" x-cloak>
+                        <div class="py-6 text-center text-slate-400 text-sm">Loading...</div>
+                    </div>
+
+                    <div class="mt-6" x-show="profileError" x-cloak>
+                        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4 text-sm text-rose-700" x-text="profileError"></div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 xl:grid-cols-[1.25fr,1fr] gap-6 flex-1" x-show="!profileLoading && !profileError" x-cloak>
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Create account</div>
+                                    <div class="text-xs text-slate-400 mt-1">Role assignment controls permissions</div>
+                                </div>
+                            </div>
+
+                            <form @submit.prevent="submitCreate()" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <div class="text-xs uppercase tracking-wide text-slate-400 mb-2">Email</div>
+                                    <input type="email" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 focus:outline-none" x-model.trim="form.email" placeholder="user@example.com" required>
+                                </div>
+                                <div>
+                                    <div class="text-xs uppercase tracking-wide text-slate-400 mb-2">Full name</div>
+                                    <input type="text" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 focus:outline-none" x-model.trim="form.fullName" placeholder="Full name" required>
+                                </div>
+                                <div>
+                                    <div class="text-xs uppercase tracking-wide text-slate-400 mb-2">Phone (optional)</div>
+                                    <input type="text" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 focus:outline-none" x-model.trim="form.phone" placeholder="+260...">
+                                </div>
+                                <div>
+                                    <div class="text-xs uppercase tracking-wide text-slate-400 mb-2">Role</div>
+                                    <select class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 bg-white" x-model="form.role" aria-label="Role" title="Role" required>
+                                        <optgroup label="System roles">
+                                            <option value="operations">Operations</option>
+                                        </optgroup>
+                                        <optgroup label="School roles">
+                                            <option value="admin">Admin</option>
+                                            <option value="teacher">Teacher</option>
+                                            <option value="accountant">Accountant</option>
+                                            <option value="parent">Parent</option>
+                                            <option value="pupil">Pupil</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+
+                                <div class="sm:col-span-2" x-show="roleNeedsSchool(form.role)" x-cloak>
+                                    <div class="text-xs uppercase tracking-wide text-slate-400 mb-2">School</div>
+                                    <select class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 bg-white" x-model="form.schoolId" :disabled="schoolsLoading" aria-label="School" title="School" :required="roleNeedsSchool(form.role)">
+                                        <option value="">Select a school</option>
+                                        <template x-for="s in schools" :key="s.id">
+                                            <option :value="s.id" x-text="(s.schoolName || 'Unnamed') + ' (' + (s.email || s.id) + ')' "></option>
+                                        </template>
+                                    </select>
+                                    <div class="mt-2 text-xs text-slate-400" x-show="schoolsLoading" x-cloak>Loading schools...</div>
+                                    <div class="mt-2 text-xs text-rose-600" x-show="schoolsError" x-cloak x-text="schoolsError"></div>
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    <div class="text-xs uppercase tracking-wide text-slate-400 mb-2">Password</div>
+                                    <input type="password" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 focus:outline-none" x-model="form.password" placeholder="Minimum 8 characters" required minlength="8">
+                                </div>
+
+                                <div class="sm:col-span-2 flex items-center justify-between">
+                                    <label class="flex items-center gap-2 text-xs text-slate-600">
+                                        <input type="checkbox" class="rounded border-slate-300" x-model="form.isActive">
+                                        <span>Active</span>
+                                    </label>
+
+                                    <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-white text-xs font-semibold" :disabled="createSubmitting">
+                                        <span x-show="!createSubmitting">Create user</span>
+                                        <span x-show="createSubmitting" x-cloak>Creating...</span>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <div class="mt-4" x-show="createError" x-cloak>
+                                <div class="rounded-xl bg-rose-50 border border-rose-100 p-3 text-xs text-rose-700" x-text="createError"></div>
+                            </div>
+                            <div class="mt-4" x-show="createSuccess" x-cloak>
+                                <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-xs text-emerald-700" x-text="createSuccess"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">System users</div>
+                                    <div class="text-xs text-slate-400 mt-1">Enable/disable or reset passwords</div>
+                                </div>
+                                <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600" @click="loadUsers()">Refresh</button>
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="relative flex items-center bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
+                                    <i class="fas fa-search text-slate-400 text-xs mr-2"></i>
+                                    <input type="text" placeholder="Search users" class="bg-transparent text-xs text-slate-600 placeholder-slate-400 focus:outline-none flex-1" x-model="usersSearch">
+                                </div>
+                            </div>
+
+                            <div class="mt-4" x-show="usersLoading" x-cloak>
+                                <div class="py-6 text-center text-slate-400 text-sm">Loading users...</div>
+                            </div>
+
+                            <div class="mt-4" x-show="usersError" x-cloak>
+                                <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4 text-sm text-rose-700" x-text="usersError"></div>
+                            </div>
+
+                            <div class="mt-4 overflow-x-auto text-xs flex-1" x-show="!usersLoading && !usersError" x-cloak>
+                                <table class="min-w-full">
+                                    <thead>
+                                        <tr class="text-left text-slate-400">
+                                            <th class="pb-2 pr-4 font-medium">Email</th>
+                                            <th class="pb-2 pr-4 font-medium">Role</th>
+                                            <th class="pb-2 pr-4 font-medium">Status</th>
+                                            <th class="pb-2 font-medium text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                                        <template x-for="u in filteredUsers()" :key="u.id">
+                                            <tr class="hover:bg-slate-50 cursor-pointer" @click="openUserModal(u)">
+                                                <td class="py-2 pr-4">
+                                                    <div class="font-medium text-slate-800" x-text="u.email"></div>
+                                                    <div class="text-xs text-slate-400" x-text="u.fullName || ''"></div>
+                                                </td>
+                                                <td class="py-2 pr-4">
+                                                    <span class="px-2 py-1 rounded-full bg-slate-50 text-slate-600 text-xs" x-text="u.role"></span>
+                                                </td>
+                                                <td class="py-2 pr-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs" :class="u.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-500'" x-text="u.isActive ? 'Active' : 'Inactive'"></span>
+                                                </td>
+                                                <td class="py-2 text-right">
+                                                    <div class="inline-flex items-center gap-2">
+                                                        <button type="button" class="px-2 py-1 rounded-lg bg-slate-50 text-xs text-slate-600 border border-slate-200" @click.stop="toggleUserActive(u)" x-text="u.isActive ? 'Disable' : 'Enable'"></button>
+                                                        <button type="button" class="px-2 py-1 rounded-lg bg-orange-50 text-xs text-orange-700 border border-orange-100" @click.stop="openUserModal(u)">Reset password</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+
+                                        <tr x-show="filteredUsers().length === 0">
+                                            <td colspan="4" class="py-6 text-center text-slate-400">No users found.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60" x-show="userModalOpen" x-cloak @click.self="closeUserModal()" @keydown.escape.window="closeUserModal()">
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl mx-4">
+                <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                    <div>
+                        <div class="text-sm font-semibold text-slate-800">User details</div>
+                        <div class="text-xs text-slate-400 mt-1" x-text="selectedUser ? selectedUser.email : ''"></div>
+                    </div>
+                    <button type="button" class="px-2 py-1 rounded-lg bg-slate-50 border border-slate-100 text-slate-600" @click="closeUserModal()">Close</button>
+                </div>
+
+                <div class="px-5 py-4 text-xs text-slate-700 space-y-4">
+                    <div x-show="userModalLoading" x-cloak class="py-4 text-center text-slate-400">Loading...</div>
+                    <div x-show="userModalError" x-cloak class="rounded-xl bg-rose-50 border border-rose-100 p-3 text-xs text-rose-700" x-text="userModalError"></div>
+
+                    <div x-show="!userModalLoading && !userModalError" x-cloak>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <div class="text-xs uppercase tracking-wide text-slate-400">Full name</div>
+                                <div class="mt-1 font-semibold text-slate-800" x-text="(selectedUserDetails && selectedUserDetails.fullName) ? selectedUserDetails.fullName : (selectedUser && selectedUser.fullName ? selectedUser.fullName : '—')"></div>
+                            </div>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <div class="text-xs uppercase tracking-wide text-slate-400">Email</div>
+                                <div class="mt-1 font-semibold text-slate-800" x-text="(selectedUserDetails && selectedUserDetails.email) ? selectedUserDetails.email : (selectedUser ? selectedUser.email : '—')"></div>
+                            </div>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <div class="text-xs uppercase tracking-wide text-slate-400">Role</div>
+                                <div class="mt-1 font-semibold text-slate-800" x-text="(selectedUserDetails && selectedUserDetails.role) ? selectedUserDetails.role : (selectedUser ? selectedUser.role : '—')"></div>
+                            </div>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <div class="text-xs uppercase tracking-wide text-slate-400">Status</div>
+                                <div class="mt-1 font-semibold text-slate-800" x-text="(selectedUser && selectedUser.isActive) ? 'Active' : 'Inactive'"></div>
+                            </div>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <div class="text-xs uppercase tracking-wide text-slate-400">Phone</div>
+                                <div class="mt-1 font-semibold text-slate-800" x-text="(selectedUserDetails && selectedUserDetails.phone) ? selectedUserDetails.phone : (selectedUser && selectedUser.phone ? selectedUser.phone : '—')"></div>
+                            </div>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <div class="text-xs uppercase tracking-wide text-slate-400">School</div>
+                                <div class="mt-1 font-semibold text-slate-800" x-text="schoolNameFromId(selectedUserDetails ? selectedUserDetails.schoolId : (selectedUser ? selectedUser.schoolId : null))"></div>
+                            </div>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <div class="text-xs uppercase tracking-wide text-slate-400">Created</div>
+                                <div class="mt-1 font-semibold text-slate-800" x-text="formatDateTime(selectedUserDetails ? selectedUserDetails.createdAt : (selectedUser ? selectedUser.createdAt : null))"></div>
+                            </div>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                <div class="text-xs uppercase tracking-wide text-slate-400">Updated</div>
+                                <div class="mt-1 font-semibold text-slate-800" x-text="formatDateTime(selectedUserDetails ? selectedUserDetails.updatedAt : (selectedUser ? selectedUser.updatedAt : null))"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex items-center justify-between gap-2">
+                            <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600" @click="toggleUserActive(selectedUser)" aria-label="Toggle user active status" title="Toggle user active status">
+                                <span x-text="(selectedUser && selectedUser.isActive) ? 'Disable user' : 'Enable user'"></span>
+                            </button>
+                        </div>
+
+                        <div class="mt-4 rounded-2xl border border-slate-100 p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Reset password</div>
+                                    <div class="text-xs text-slate-400 mt-1">Set a new password for this user</div>
+                                </div>
+                                <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600" @click="resetPasswordForm.show = !resetPasswordForm.show" x-text="resetPasswordForm.show ? 'Hide password' : 'Show password'"></button>
+                            </div>
+
+                            <div class="mt-3">
+                                <input :type="resetPasswordForm.show ? 'text' : 'password'" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700 focus:outline-none" x-model="resetPasswordForm.password" placeholder="Minimum 8 characters" aria-label="New password" title="New password">
+                            </div>
+
+                            <div class="mt-3 flex items-center justify-end gap-2">
+                                <button type="button" class="px-4 py-2 rounded-xl bg-orange-500 text-white text-xs font-semibold" :disabled="resetPasswordForm.submitting" @click="resetUserPassword(selectedUser, resetPasswordForm.password)">
+                                    <span x-show="!resetPasswordForm.submitting">Reset password</span>
+                                    <span x-show="resetPasswordForm.submitting" x-cloak>Resetting...</span>
+                                </button>
+                            </div>
+
+                            <div class="mt-3" x-show="resetPasswordForm.error" x-cloak>
+                                <div class="rounded-xl bg-rose-50 border border-rose-100 p-3 text-xs text-rose-700" x-text="resetPasswordForm.error"></div>
+                            </div>
+                            <div class="mt-3" x-show="resetPasswordForm.success" x-cloak>
+                                <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-xs text-emerald-700" x-text="resetPasswordForm.success"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 rounded-2xl border border-slate-100 p-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Temporary password</div>
+                                    <div class="text-xs text-slate-400 mt-1">Generates a new password and shows it once</div>
+                                </div>
+                                <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600" :disabled="tempPassword.loading" @click="generateTempPassword(selectedUser)">
+                                    <span x-show="!tempPassword.loading">Generate</span>
+                                    <span x-show="tempPassword.loading" x-cloak>Generating...</span>
+                                </button>
+                            </div>
+
+                            <div class="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl p-3">
+                                This will immediately invalidate any active sessions for the user.
+                            </div>
+
+                            <div class="mt-3" x-show="tempPassword.error" x-cloak>
+                                <div class="rounded-xl bg-rose-50 border border-rose-100 p-3 text-xs text-rose-700" x-text="tempPassword.error"></div>
+                            </div>
+
+                            <div class="mt-3" x-show="tempPassword.show && tempPassword.value" x-cloak>
+                                <div class="flex items-center gap-2">
+                                    <label for="temp-password-output" class="sr-only">Temporary password</label>
+                                    <input id="temp-password-output" :type="(tempPassword.revealed ? 'text' : 'password')" readonly class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700" :value="tempPassword.value" aria-label="Temporary password" title="Temporary password" placeholder="Temporary password">
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600" @click="copyTempPassword()">Copy</button>
+                                </div>
+                                <div class="mt-2 flex items-center justify-end">
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600" @click="tempPassword.revealed = !tempPassword.revealed" x-text="tempPassword.revealed ? 'Hide' : 'Show'"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

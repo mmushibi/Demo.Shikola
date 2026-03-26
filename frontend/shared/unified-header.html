@@ -1,0 +1,123 @@
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+<!-- Unified Header Component for Shikola Portals -->
+<script src="../js/security.js"></script>
+<header class="bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-4">
+    <div class="flex items-center justify-between">
+        <!-- Mobile Menu Toggle -->
+        <button type="button" class="lg:hidden h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" @click="sidebarOpen = true" title="Open navigation menu">
+            <i class="fas fa-bars text-sm"></i>
+        </button>
+
+        <!-- Page Title -->
+        <div class="flex-1 lg:flex-initial">
+            <h1 class="text-xl font-semibold text-slate-800" x-text="pageTitle || 'Dashboard'"></h1>
+            <p class="text-sm text-slate-500" x-text="pageSubtitle || 'Welcome back'"></p>
+        </div>
+
+        <!-- Right Side Actions -->
+        <div class="flex items-center gap-3">
+            <!-- Notifications -->
+            <button class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 transition" type="button" aria-label="Notifications" title="View notifications">
+                <i class="far fa-bell"></i>
+            </button>
+
+            <!-- Portal Switcher (Desktop) -->
+            <div x-show="availablePortals.length > 1" class="hidden lg:block relative" x-data="{ open: false }" @click.outside="open = false">
+                <button type="button" @click="open = !open" class="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 transition">
+                    <i class="fas fa-exchange-alt text-slate-400 text-xs"></i>
+                    <span class="text-xs font-medium text-slate-600">Switch Portal</span>
+                </button>
+                
+                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-lg border border-slate-100 py-2 z-50">
+                    <template x-for="portal in availablePortals" :key="portal.id">
+                        <a :href="portal.url" class="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 transition">
+                            <span class="w-5 flex justify-center text-slate-400">
+                                <i :class="portal.icon"></i>
+                            </span>
+                            <span class="text-sm text-slate-700" x-text="portal.name"></span>
+                        </a>
+                    </template>
+                </div>
+            </div>
+
+            <!-- User Profile -->
+            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                <button type="button" @click="open = !open" class="flex items-center gap-3 pl-1 hover:bg-slate-50 rounded-xl transition -mx-2 px-2 py-1">
+                    <!-- Avatar -->
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm font-medium">
+                        <span x-show="user" x-text="getInitials(user.name)"></span>
+                        <i x-show="!user" class="fas fa-user text-xs"></i>
+                    </div>
+                    
+                    <!-- User Info (Desktop) -->
+                    <div class="hidden sm:block text-left">
+                        <div class="text-sm font-medium text-slate-700" x-text="user?.name || 'Guest User'"></div>
+                        <div class="text-xs text-slate-400 capitalize" x-text="user?.role || 'Not logged in'"></div>
+                    </div>
+                    
+                    <!-- Dropdown Arrow -->
+                    <i class="fas fa-chevron-down text-xs text-slate-400"></i>
+                </button>
+
+                <!-- Profile Dropdown -->
+                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-lg border border-slate-100 py-2 z-50">
+                    <!-- Profile Link -->
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 transition">
+                        <span class="w-5 flex justify-center text-slate-400">
+                            <i class="fas fa-id-badge"></i>
+                        </span>
+                        <span class="text-sm text-slate-700">View Profile</span>
+                    </a>
+                    
+                    <!-- Settings Link -->
+                    <a href="#" class="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 transition">
+                        <span class="w-5 flex justify-center text-slate-400">
+                            <i class="fas fa-cog"></i>
+                        </span>
+                        <span class="text-sm text-slate-700">Settings</span>
+                    </a>
+                    
+                    <div class="my-1 border-t border-slate-100"></div>
+                    
+                    <!-- Portal Switcher (Mobile) -->
+                    <div x-show="availablePortals.length > 1" class="lg:hidden">
+                        <div class="px-4 py-1">
+                            <div class="text-xs font-medium text-slate-400 mb-1">Switch Portal</div>
+                        </div>
+                        <template x-for="portal in availablePortals" :key="portal.id">
+                            <a :href="portal.url" class="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 transition">
+                                <span class="w-5 flex justify-center text-slate-400">
+                                    <i :class="portal.icon"></i>
+                                </span>
+                                <span class="text-sm text-slate-700" x-text="portal.name"></span>
+                            </a>
+                        </template>
+                        <div class="my-1 border-t border-slate-100"></div>
+                    </div>
+                    
+                    <!-- Logout -->
+                    <button @click="logout()" class="flex items-center gap-3 px-4 py-2 hover:bg-red-50 text-red-500 transition w-full text-left">
+                        <span class="w-5 flex justify-center">
+                            <i class="fas fa-right-from-bracket"></i>
+                        </span>
+                        <span class="text-sm">Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

@@ -1,0 +1,25 @@
+ClassName,GradeLevel,MaxCapacity,Room,Description
+Grade 1A,Early Childhood,25,Room 101,Early Childhood Education Class
+Grade 1B,Early Childhood,25,Room 102,Early Childhood Education Class
+Grade 2A,Primary,30,Room 103,Primary Education Class
+Grade 2B,Primary,30,Room 104,Primary Education Class
+Grade 3A,Primary,35,Room 105,Primary Education Class
+Grade 3B,Primary,35,Room 106,Primary Education Class
+Grade 4A,Primary,35,Room 107,Primary Education Class
+Grade 4B,Primary,35,Room 108,Primary Education Class
+Grade 5A,Primary,40,Room 109,Primary Education Class
+Grade 5B,Primary,40,Room 110,Primary Education Class
+Grade 6A,Primary,40,Room 111,Primary Education Class
+Grade 6B,Primary,40,Room 112,Primary Education Class
+Grade 7A,Primary,45,Room 113,Upper Primary Education Class
+Grade 7B,Primary,45,Room 114,Upper Primary Education Class
+Grade 8A,Secondary,50,Room 201,Junior Secondary Mathematics Class
+Grade 8B,Secondary,50,Room 202,Junior Secondary English Class
+Grade 9A,Secondary,50,Room 203,Senior Secondary Science Class
+Grade 9B,Secondary,50,Room 204,Senior Secondary History Class
+Grade 10A,Secondary,50,Room 205,Senior Secondary Mathematics Class
+Grade 10B,Secondary,50,Room 206,Senior Secondary English Class
+Grade 11A,Secondary,50,Room 207,Advanced Secondary Physics Class
+Grade 11B,Secondary,50,Room 208,Advanced Secondary Chemistry Class
+Grade 12A,Secondary,50,Room 209,Final Secondary Mathematics Class
+Grade 12B,Secondary,50,Room 210,Final Secondary English Class

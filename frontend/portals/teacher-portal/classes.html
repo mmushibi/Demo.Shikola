@@ -1,0 +1,1679 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - My Classes</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../config.js"></script>
+    <script src="../school-admin/classes-api.js" defer></script>
+    <script src="teacher-api.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../shared-assets/js/shared-realtime-sync.js" defer></script>
+    <script src="../../shared-assets/js/shared-universal-notifications.js" defer></script>
+    <script src="../../shared-assets/js/shared-messages.js" defer></script>
+    <script src="../../shared-assets/js/button-functions.js" defer></script>
+    <script src="../../shared-assets/js/shared-admin-notifications.js" defer></script>
+    <script src="../../shared-assets/js/shared-notifications.js" defer></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+    <body class="dashboard-page">
+    <div x-data="{
+            sidebarOpen: false,
+            chatOpen: false,
+            activeTab: 'homework',
+            loading: false,
+            error: null,
+
+            // Simple localStorage helpers
+            saveToStorage(key, data) {
+                try {
+                    localStorage.setItem(`shikola_${key}`, JSON.stringify(data));
+                } catch (e) {}
+            },
+            loadFromStorage(key, fallback = null) {
+                try {
+                    const v = localStorage.getItem(`shikola_${key}`);
+                    return v ? JSON.parse(v) : fallback;
+                } catch (e) {
+                    return fallback;
+                }
+            },
+
+            // Derived teacher + classes
+            currentTeacherName: '',
+            availableClasses: [],
+            myClasses: [],
+            coreSubjects: [],
+            studentsCount: null,
+
+            // Homework / assignments
+            showNewAssignmentModal: false,
+            showAssignmentDetailModal: false,
+            showAssignmentSubmissionsModal: false,
+            editingAssignmentId: null,
+            selectedAssignment: null,
+            newAssignment: {
+                title: '',
+                description: '',
+                dueDate: '',
+                classes: [],
+                attachmentMode: 'upload',
+                attachmentFileName: '',
+                attachmentText: ''
+            },
+            assignments: [],
+            assignmentSubmissions: [],
+
+            buildAssignmentStoreKey() {
+                return 'assignments_v1';
+            },
+            buildBehaviourStoreKey() {
+                return 'behaviour_v1';
+            },
+            buildLiveClassStoreKey() {
+                return 'live_classes_v1';
+            },
+            buildRecordingStoreKey() {
+                return 'live_recordings_v1';
+            },
+
+            normalizeAssignments(raw) {
+                if (!Array.isArray(raw)) return [];
+                return raw.map(function (a) {
+                    if (!a) return null;
+                    const cls = Array.isArray(a.classes) ? a.classes : [];
+                    const submissions = Array.isArray(a.submissions) ? a.submissions : [];
+                    const submittedCount = submissions.filter(function (s) { return s && s.status === 'submitted'; }).length;
+                    const totalCount = submissions.length;
+                    const label = totalCount ? (submittedCount + ' of ' + totalCount + ' submissions') : '0 submissions';
+                    let status = 'Assigned';
+                    let badgeClass = 'bg-slate-100 text-slate-700';
+                    if (a.dueDate) {
+                        const now = new Date();
+                        const due = new Date(a.dueDate);
+                        if (now > due) {
+                            status = 'Overdue';
+                            badgeClass = 'bg-red-100 text-red-700';
+                        } else {
+                            status = 'Upcoming';
+                            badgeClass = 'bg-orange-100 text-orange-700';
+                        }
+                    }
+                    return {
+                        id: a.id,
+                        title: a.title || '',
+                        className: cls.join(', '),
+                        classes: cls,
+                        status: status,
+                        badgeClass: badgeClass,
+                        submissionsLabel: label,
+                        submissions: submissions,
+                        description: a.description || (a.attachmentFileName ? ('Attached: ' + a.attachmentFileName) : 'Typed assignment'),
+                        rawDescription: a.description || '',
+                        attachmentMode: a.attachmentMode || 'upload',
+                        attachmentFileName: a.attachmentFileName || '',
+                        attachmentText: a.attachmentText || '',
+                        assigned: a.assignedAt || a.createdAt || new Date().toISOString(),
+                        due: a.dueDate || '',
+                        cardClass: 'bg-slate-50'
+                    };
+                }).filter(Boolean);
+            },
+            async loadAssignments() {
+                // Try API first
+                try {
+                    if (window.ShikolaTeacherApi) {
+                        const remote = await window.ShikolaTeacherApi.getAssignments();
+                        if (Array.isArray(remote)) {
+                            this.assignments = this.normalizeAssignments(remote);
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to load assignments from API, using local fallback', e);
+                }
+                // Fallback to localStorage
+                const key = this.buildAssignmentStoreKey();
+                const stored = this.loadFromStorage(key, []);
+                this.assignments = this.normalizeAssignments(stored);
+            },
+            persistAssignments() {
+                const key = this.buildAssignmentStoreKey();
+                const raw = this.assignments.map(function (a) {
+                    return {
+                        id: a.id,
+                        title: a.title,
+                        description: a.rawDescription,
+                        dueDate: a.due,
+                        classes: a.classes,
+                        attachmentMode: a.attachmentMode,
+                        attachmentFileName: a.attachmentFileName,
+                        attachmentText: a.attachmentText,
+                        assignedAt: a.assigned,
+                        submissions: Array.isArray(a.submissions) ? a.submissions : []
+                    };
+                });
+                this.saveToStorage(key, raw);
+            },
+            resetAssignmentForm() {
+                this.newAssignment = {
+                    title: '',
+                    description: '',
+                    dueDate: '',
+                    classes: [],
+                    attachmentMode: 'upload',
+                    attachmentFileName: '',
+                    attachmentText: ''
+                };
+                this.editingAssignmentId = null;
+            },
+            openNewAssignment() {
+                this.resetAssignmentForm();
+                this.showNewAssignmentModal = true;
+            },
+            openAssignmentDetail(assignment) {
+                if (!assignment) return;
+                this.selectedAssignment = assignment;
+                this.showAssignmentDetailModal = true;
+                this.assignmentSubmissions = Array.isArray(assignment.submissions) ? assignment.submissions : [];
+            },
+            openAssignmentForEdit(assignment) {
+                if (!assignment) return;
+                this.editingAssignmentId = assignment.id;
+                this.newAssignment = {
+                    title: assignment.title || '',
+                    description: assignment.rawDescription || '',
+                    dueDate: assignment.due || '',
+                    classes: Array.isArray(assignment.classes) ? assignment.classes.slice() : [],
+                    attachmentMode: assignment.attachmentMode || 'upload',
+                    attachmentFileName: assignment.attachmentFileName || '',
+                    attachmentText: assignment.attachmentText || ''
+                };
+                this.showNewAssignmentModal = true;
+            },
+            ensureAssignmentNotification(assignment, action) {
+                try {
+                    if (!window.ShikolaNotifications || typeof window.ShikolaNotifications.add !== 'function') return;
+                    const title = action === 'created' ? 'New assignment posted' : action === 'updated' ? 'Assignment updated' : 'Assignment removed';
+                    const message = assignment && assignment.title ? assignment.title : '';
+                    window.ShikolaNotifications.add({
+                        title: title,
+                        message: message,
+                        link: ''
+                    });
+                } catch (e) {}
+            },
+            async saveAssignment() {
+                if (!this.newAssignment.title || !this.newAssignment.classes.length) return;
+                this.loading = true;
+                const self = this;
+                const nowIso = new Date().toISOString();
+
+                try {
+                    if (window.ShikolaTeacherApi) {
+                        if (self.editingAssignmentId) {
+                            // Update via API
+                            await window.ShikolaTeacherApi.updateAssignment(self.editingAssignmentId, {
+                                title: self.newAssignment.title,
+                                description: self.newAssignment.description,
+                                classes: self.newAssignment.classes,
+                                dueDate: self.newAssignment.dueDate,
+                                attachmentName: self.newAssignment.attachmentFileName
+                            });
+                        } else {
+                            // Create via API
+                            await window.ShikolaTeacherApi.createAssignment({
+                                title: self.newAssignment.title,
+                                description: self.newAssignment.description,
+                                classes: self.newAssignment.classes,
+                                dueDate: self.newAssignment.dueDate,
+                                attachmentName: self.newAssignment.attachmentFileName
+                            });
+                        }
+                        // Reload from API
+                        await self.loadAssignments();
+                        self.showNewAssignmentModal = false;
+                        self.resetAssignmentForm();
+                        self.loading = false;
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('API save failed, using local fallback', e);
+                }
+
+                // Fallback to localStorage
+                setTimeout(function () {
+                    if (self.editingAssignmentId) {
+                        self.assignments = self.assignments.map(function (a) {
+                            if (a.id !== self.editingAssignmentId) return a;
+                            const updated = {
+                                id: a.id,
+                                title: self.newAssignment.title,
+                                className: self.newAssignment.classes.join(', '),
+                                classes: self.newAssignment.classes.slice(),
+                                status: a.status,
+                                badgeClass: a.badgeClass,
+                                submissionsLabel: a.submissionsLabel,
+                                submissions: Array.isArray(a.submissions) ? a.submissions : [],
+                                description: self.newAssignment.description || (self.newAssignment.attachmentFileName ? ('Attached: ' + self.newAssignment.attachmentFileName) : 'Typed assignment'),
+                                rawDescription: self.newAssignment.description || '',
+                                attachmentMode: self.newAssignment.attachmentMode,
+                                attachmentFileName: self.newAssignment.attachmentFileName || '',
+                                attachmentText: self.newAssignment.attachmentText || '',
+                                assigned: a.assigned || nowIso,
+                                due: self.newAssignment.dueDate || '',
+                                cardClass: 'bg-slate-50'
+                            };
+                            return updated;
+                        });
+                        const edited = self.assignments.find(function (x) { return x.id === self.editingAssignmentId; });
+                        if (edited) {
+                            self.ensureAssignmentNotification(edited, 'updated');
+                        }
+                    } else {
+                        const id = 'ASG-' + Date.now().toString(36);
+                        const base = {
+                            id: id,
+                            title: self.newAssignment.title,
+                            className: self.newAssignment.classes.join(', '),
+                            classes: self.newAssignment.classes.slice(),
+                            status: self.newAssignment.dueDate ? 'Upcoming' : 'Assigned',
+                            badgeClass: self.newAssignment.dueDate ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-700',
+                            submissionsLabel: '0 submissions',
+                            submissions: [],
+                            description: self.newAssignment.description || (self.newAssignment.attachmentFileName ? ('Attached: ' + self.newAssignment.attachmentFileName) : 'Typed assignment'),
+                            rawDescription: self.newAssignment.description || '',
+                            attachmentMode: self.newAssignment.attachmentMode,
+                            attachmentFileName: self.newAssignment.attachmentFileName || '',
+                            attachmentText: self.newAssignment.attachmentText || '',
+                            assigned: nowIso,
+                            due: self.newAssignment.dueDate || '',
+                            cardClass: 'bg-slate-50'
+                        };
+                        self.assignments.unshift(base);
+                        self.ensureAssignmentNotification(base, 'created');
+                    }
+                    self.persistAssignments();
+                    self.showNewAssignmentModal = false;
+                    self.resetAssignmentForm();
+                    self.loading = false;
+                }, 200);
+            },
+            async deleteAssignment(id) {
+                if (!id) return;
+                const existing = this.assignments.find(function (a) { return a.id === id; });
+                
+                // Try API first
+                try {
+                    if (window.ShikolaTeacherApi) {
+                        await window.ShikolaTeacherApi.deleteAssignment(id);
+                        await this.loadAssignments();
+                        if (existing) {
+                            this.ensureAssignmentNotification(existing, 'deleted');
+                        }
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('API delete failed, using local fallback', e);
+                }
+
+                // Fallback to localStorage
+                this.assignments = this.assignments.filter(function (a) { return a.id !== id; });
+                this.persistAssignments();
+                if (existing) {
+                    this.ensureAssignmentNotification(existing, 'deleted');
+                }
+            },
+            // Live classes (local only)
+            showLiveClassModal: false,
+            liveClassModalMode: 'start',
+            liveClassModalSession: null,
+            liveClassForm: {
+                classLabel: '',
+                topic: '',
+                scheduledAt: ''
+            },
+            liveClasses: [],
+            livePermissionsGranted: false,
+
+            async loadLiveClasses() {
+                // Try API first
+                try {
+                    if (window.ShikolaTeacherApi) {
+                        const remote = await window.ShikolaTeacherApi.getLiveClasses();
+                        if (Array.isArray(remote)) {
+                            this.liveClasses = remote.map(function(lc) {
+                                return {
+                                    id: lc.id,
+                                    classLabel: lc.title || '',
+                                    topic: lc.topic || '',
+                                    status: lc.status || 'scheduled',
+                                    startedAt: lc.startedAt,
+                                    scheduledAt: lc.scheduledAt,
+                                    joinedCount: lc.joined || 0,
+                                    recordings: []
+                                };
+                            });
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to load live classes from API, using local fallback', e);
+                }
+                // Fallback to localStorage
+                const key = this.buildLiveClassStoreKey();
+                const raw = this.loadFromStorage(key, []);
+                this.liveClasses = Array.isArray(raw) ? raw : [];
+            },
+            persistLiveClasses() {
+                const key = this.buildLiveClassStoreKey();
+                this.saveToStorage(key, this.liveClasses || []);
+            },
+            async requestLivePermissions() {
+                try {
+                    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                        await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    }
+                } catch (e) {}
+                try {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(function () {}, function () {});
+                    }
+                } catch (e) {}
+                this.livePermissionsGranted = true;
+            },
+            openLiveClassModal(mode, session) {
+                this.liveClassModalMode = mode;
+                this.liveClassModalSession = session || null;
+                const defaultClass = (session && session.classLabel) || ((Array.isArray(this.availableClasses) && this.availableClasses.length) ? this.availableClasses[0] : '');
+                this.liveClassForm = {
+                    classLabel: defaultClass,
+                    topic: (session && session.topic) || '',
+                    scheduledAt: (session && session.scheduledAt) || ''
+                };
+                this.showLiveClassModal = true;
+            },
+            closeLiveClassModal() {
+                this.showLiveClassModal = false;
+                this.liveClassModalSession = null;
+            },
+            async startOrScheduleClass(mode) {
+                const now = new Date();
+                if (mode === 'start') {
+                    await this.requestLivePermissions();
+                }
+
+                // Try API first
+                try {
+                    if (window.ShikolaTeacherApi) {
+                        if (mode === 'schedule') {
+                            await window.ShikolaTeacherApi.scheduleLiveClass({
+                                title: this.liveClassForm.classLabel || '',
+                                topic: this.liveClassForm.topic || '',
+                                scheduledAt: this.liveClassForm.scheduledAt || null,
+                                classes: [this.liveClassForm.classLabel]
+                            });
+                        } else if (mode === 'start' && this.liveClassModalSession && this.liveClassModalSession.id) {
+                            await window.ShikolaTeacherApi.startLiveClass(this.liveClassModalSession.id);
+                        } else {
+                            // Schedule first then start
+                            const scheduled = await window.ShikolaTeacherApi.scheduleLiveClass({
+                                title: this.liveClassForm.classLabel || '',
+                                topic: this.liveClassForm.topic || '',
+                                classes: [this.liveClassForm.classLabel]
+                            });
+                            if (scheduled && scheduled.id) {
+                                await window.ShikolaTeacherApi.startLiveClass(scheduled.id);
+                            }
+                        }
+                        await this.loadLiveClasses();
+                        this.closeLiveClassModal();
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('API live class operation failed, using local fallback', e);
+                }
+
+                // Fallback to localStorage
+                const id = this.liveClassModalSession && this.liveClassModalSession.id ? this.liveClassModalSession.id : ('LC-' + now.getTime().toString(36));
+                const base = {
+                    id: id,
+                    classLabel: this.liveClassForm.classLabel || '',
+                    topic: this.liveClassForm.topic || '',
+                    status: mode === 'start' ? 'live' : 'upcoming',
+                    startedAt: mode === 'start' ? now.toISOString() : null,
+                    scheduledAt: mode === 'schedule' ? this.liveClassForm.scheduledAt || null : null,
+                    joinedCount: 0,
+                    recordings: []
+                };
+                const existingIndex = this.liveClasses.findIndex(function (c) { return c.id === id; });
+                if (existingIndex >= 0) {
+                    this.liveClasses[existingIndex] = base;
+                } else {
+                    this.liveClasses.unshift(base);
+                }
+                this.persistLiveClasses();
+                this.closeLiveClassModal();
+            },
+            async joinLiveClass(session) {
+                if (!session) return;
+                await this.requestLivePermissions();
+                const id = session.id;
+                const updated = this.liveClasses.map(function (c) {
+                    if (c.id !== id) return c;
+                    const count = c.joinedCount || 0;
+                    return Object.assign({}, c, { joinedCount: count + 1, status: 'live', startedAt: c.startedAt || new Date().toISOString() });
+                });
+                this.liveClasses = updated;
+                this.persistLiveClasses();
+            },
+            manageLiveClassAction(session, action) {
+                if (!session) return;
+                const id = session.id;
+                const nowIso = new Date().toISOString();
+                this.liveClasses = this.liveClasses.map(function (c) {
+                    if (c.id !== id) return c;
+                    if (action === 'end') {
+                        return Object.assign({}, c, { status: 'completed', endedAt: nowIso });
+                    }
+                    if (action === 'mute_all') {
+                        return Object.assign({}, c, { lastMuteAllAt: nowIso });
+                    }
+                    if (action === 'lock_room') {
+                        return Object.assign({}, c, { locked: true, lockedAt: nowIso });
+                    }
+                    return c;
+                });
+                this.persistLiveClasses();
+                try {
+                    if (window.ShikolaNotifications && typeof window.ShikolaNotifications.add === 'function') {
+                        let title = '';
+                        let message = '';
+                        if (action === 'end') {
+                            title = 'Live class ended';
+                            message = session.classLabel || '';
+                        } else if (action === 'mute_all') {
+                            title = 'Live class control';
+                            message = 'Mute all participants for ' + (session.classLabel || '');
+                        } else if (action === 'lock_room') {
+                            title = 'Live class control';
+                            message = 'Room locked for ' + (session.classLabel || '');
+                        }
+                        if (title) {
+                            window.ShikolaNotifications.add({
+                                title: title,
+                                message: message,
+                                link: ''
+                            });
+                        }
+                    }
+                } catch (e) {}
+            },
+            editScheduledClass(session) {
+                if (!session) return;
+                this.openLiveClassModal('edit', session);
+            },
+            saveEditedScheduledClass() {
+                if (!this.liveClassModalSession) return;
+                const id = this.liveClassModalSession.id;
+                this.liveClasses = this.liveClasses.map((c) => {
+                    if (c.id !== id) return c;
+                    return Object.assign({}, c, {
+                        classLabel: this.liveClassForm.classLabel || c.classLabel,
+                        topic: this.liveClassForm.topic || c.topic,
+                        scheduledAt: this.liveClassForm.scheduledAt || c.scheduledAt
+                    });
+                });
+                this.persistLiveClasses();
+                this.closeLiveClassModal();
+            },
+            cancelScheduledClass(session) {
+                if (!session) return;
+                const id = session.id;
+                this.liveClasses = this.liveClasses.filter(function (c) { return c.id !== id; });
+                this.persistLiveClasses();
+                this.closeLiveClassModal();
+            },
+            recordCurrentClass(session) {
+                if (!session) return;
+                const key = this.buildRecordingStoreKey();
+                const existing = this.loadFromStorage(key, []);
+                const list = Array.isArray(existing) ? existing : [];
+                const rec = {
+                    id: 'REC-' + Date.now().toString(36),
+                    sessionId: session.id,
+                    title: session.classLabel || 'Live class',
+                    topic: session.topic || '',
+                    createdAt: new Date().toISOString()
+                };
+                list.unshift(rec);
+                this.saveToStorage(key, list);
+            },
+            getRecordingsFor(session) {
+                if (!session) return [];
+                const key = this.buildRecordingStoreKey();
+                const existing = this.loadFromStorage(key, []);
+                const list = Array.isArray(existing) ? existing : [];
+                return list.filter(function (r) { return r.sessionId === session.id; });
+            },
+
+            // Behaviour & Skills
+            showBehaviourModal: false,
+            behaviourForm: {
+                scope: 'single',
+                pupil: '',
+                className: '',
+                type: 'positive',
+                note: ''
+            },
+            behaviourPupils: [],
+            behaviourClasses: [],
+            behaviourEntries: [],
+
+            async loadBehaviourEntries() {
+                // Try API first
+                try {
+                    if (window.ShikolaTeacherApi) {
+                        const response = await window.ShikolaTeacherApi.getBehaviourEntries();
+                        if (response && response.success && Array.isArray(response.behaviourEntries)) {
+                            // Transform backend data to frontend format
+                            this.behaviourEntries = response.behaviourEntries.map(be => ({
+                                id: be.id,
+                                scope: be.pupilName ? 'single' : 'bulk',
+                                pupil: be.pupilName || '',
+                                className: be.className || '',
+                                type: be.category === 'positive' ? 'positive' : 'negative',
+                                note: be.description || '',
+                                createdAt: be.createdAt,
+                                points: be.points
+                            }));
+                            return;
+                        } else if (Array.isArray(response)) {
+                            // Handle legacy response format
+                            this.behaviourEntries = response;
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to load behaviour entries from API, using local fallback', e);
+                }
+                // Fallback to localStorage
+                const key = this.buildBehaviourStoreKey();
+                const stored = this.loadFromStorage(key, []);
+                this.behaviourEntries = Array.isArray(stored) ? stored : [];
+            },
+            persistBehaviourEntries() {
+                const key = this.buildBehaviourStoreKey();
+                this.saveToStorage(key, this.behaviourEntries || []);
+            },
+            async saveBehaviourEntry() {
+                if (!this.behaviourForm.note) return;
+                const nowIso = new Date().toISOString();
+
+                // Try API first
+                try {
+                    if (window.ShikolaTeacherApi) {
+                        // Prepare data for backend
+                        const pupilId = this.behaviourForm.scope === 'single' ? this.behaviourForm.pupil : null;
+                        const className = this.behaviourForm.className || this.behaviourForm.pupil;
+                        
+                        const entryData = {
+                            pupilId: pupilId,
+                            className: className,
+                            type: this.behaviourForm.type,
+                            note: this.behaviourForm.note,
+                            scope: this.behaviourForm.scope,
+                            incidentDate: nowIso
+                        };
+
+                        const response = await window.ShikolaTeacherApi.createBehaviourEntry(entryData);
+                        if (response && response.success) {
+                            await this.loadBehaviourEntries();
+                            this.behaviourForm.note = '';
+                            this.showBehaviourModal = false;
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('API behaviour entry save failed, using local fallback', e);
+                }
+
+                // Fallback to localStorage
+                const id = 'BEH-' + Date.now().toString(36);
+                const entry = {
+                    id: id,
+                    scope: this.behaviourForm.scope,
+                    pupil: this.behaviourForm.pupil || null,
+                    className: this.behaviourForm.className || null,
+                    type: this.behaviourForm.type,
+                    note: this.behaviourForm.note,
+                    createdAt: nowIso
+                };
+                this.behaviourEntries.unshift({
+                    id: entry.id,
+                    scope: entry.scope,
+                    pupil: label,
+                    className: entry.className,
+                    type: entry.type,
+                    note: entry.note,
+                    createdAt: entry.createdAt
+                });
+                this.persistBehaviourEntries();
+                this.behaviourForm.note = '';
+                this.showBehaviourModal = false;
+            },
+
+            async deleteBehaviourEntry(id) {
+                if (!id) return;
+                
+                // Try API first
+                try {
+                    if (window.ShikolaTeacherApi) {
+                        const response = await window.ShikolaTeacherApi.deleteBehaviourEntry(id);
+                        if (response && response.success) {
+                            await this.loadBehaviourEntries();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('API delete behaviour entry failed, using local fallback', e);
+                }
+
+                // Fallback to localStorage
+                this.behaviourEntries = this.behaviourEntries.filter(function (be) { return be.id !== id; });
+                this.persistBehaviourEntries();
+            },
+
+            // init
+            async init() {
+                try {
+                    if (window.ShikolaAuth && typeof window.ShikolaAuth.getSession === 'function') {
+                        const session = window.ShikolaAuth.getSession();
+                        if (session && session.user) {
+                            this.currentTeacherName = session.user.name || '';
+                        }
+                    }
+                } catch (e) {}
+
+                // Try to load classes from API first
+                try {
+                    if (window.ShikolaTeacherApi) {
+                        const classData = await window.ShikolaTeacherApi.getMyClasses();
+                        if (classData && Array.isArray(classData.classes)) {
+                            this.availableClasses = classData.classes.map(c => c.name);
+                            this.behaviourClasses = classData.classes.map(c => c.name);
+                        }
+                        if (classData && Array.isArray(classData.subjects)) {
+                            this.coreSubjects = classData.subjects;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to load classes from API', e);
+                }
+
+                // Fallback to local store if no API data
+                if (!this.availableClasses.length) {
+                    try {
+                        const defaults = [];
+                        if (window.ShikolaClassesUi && typeof window.ShikolaClassesUi.getClassOptions === 'function') {
+                            const names = window.ShikolaClassesUi.getClassOptions(defaults);
+                            if (Array.isArray(names) && names.length) {
+                                this.availableClasses = names;
+                                this.behaviourClasses = names.slice();
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                if (!this.coreSubjects.length) {
+                    try {
+                        if (window.ShikolaClassesStore && typeof window.ShikolaClassesStore.listSubjects === 'function') {
+                            const subs = window.ShikolaClassesStore.listSubjects();
+                            if (Array.isArray(subs)) {
+                                this.coreSubjects = subs;
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                try {
+                    if (window.ShikolaPupilsStore && typeof window.ShikolaPupilsStore.list === 'function') {
+                        const pupils = window.ShikolaPupilsStore.list() || [];
+                        this.studentsCount = Array.isArray(pupils) ? pupils.length : 0;
+                    }
+                } catch (e) {}
+
+                await this.loadAssignments();
+                await this.loadLiveClasses();
+                await this.loadBehaviourEntries();
+            }
+        }" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                        <span class="flex-1">Attendance</span>
+                    </a>
+                    <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">My Timetable</span>
+                    </a>
+                    <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                        <span class="flex-1">Classes</span>
+                    </a>
+                    <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                        <span class="flex-1">Exams</span>
+                    </a>
+                    <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                        <span class="flex-1">Class Tests</span>
+                    </a>
+                    <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a href="javascript:void(0)" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div x-show="sidebarOpen" x-cloak x-transition:enter="transition ease-in-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in-out duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    </div>
+
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                            <span class="flex-1">Attendance</span>
+                        </a>
+                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                            <span class="flex-1">My Timetable</span>
+                        </a>
+                        <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                            <span class="flex-1">Classes</span>
+                        </a>
+                        <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                            <span class="flex-1">Exams</span>
+                        </a>
+                        <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                            <span class="flex-1">Class Tests</span>
+                        </a>
+                        <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                            <span class="flex-1">Reports</span>
+                        </a>
+                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                            <span class="flex-1">Messaging</span>
+                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                            <span class="flex-1">Profile</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center justify-center px-2">
+                            <a href="javascript:void(0)" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <!-- Global Loading/Error Banner -->
+                <div x-show="loading || error" x-cloak class="mb-4 p-3 rounded-xl border flex items-center gap-3"
+                     :class="error ? 'bg-red-50 border-red-100 text-red-700' : 'bg-blue-50 border-blue-100 text-blue-700'">
+                    <i class="fas" :class="error ? 'fa-exclamation-triangle' : 'fa-spinner fa-spin'"></i>
+                    <span class="text-[11px]" x-text="error || 'Loading data...'"></span>
+                    <button x-show="error" @click="error = null" class="ml-auto text-red-500 hover:text-red-700" title="Dismiss error">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-10 w-auto rounded-2xl lg:hidden ml-16 pl-9" x-show="!sidebarOpen">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">My Classes</h1>
+                                <p class="text-xs sm:text-sm text-slate-400 mt-1 hidden sm:block">Snapshot of the classes and students you teach.</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-3">
+                            <div
+                                x-data="{
+                                    query: '',
+                                    focus: false,
+                                    selectedIndex: -1,
+                                    pupils: [],
+                                    classes: [],
+                                    views: ['Homework Assignments', 'Live Classes', 'Behaviour & Skills'],
+                                    get allSuggestions() {
+                                        const allItems = [
+                                            ...this.pupils.map(p => ({ type: 'pupil', name: p, icon: 'fa-user-graduate', url: '#' })),
+                                            ...this.classes.map(c => ({ type: 'class', name: c, icon: 'fa-chalkboard', url: '#classes' })),
+                                            ...this.views.map(v => ({ type: 'view', name: v, icon: 'fa-layer-group', url: '#' }))
+                                        ];
+                                        if (!this.query) return allItems.slice(0, 8);
+                                        const q = this.query.toLowerCase();
+                                        return allItems.filter(item => item.name.toLowerCase().includes(q)).slice(0, 8);
+                                    },
+                                    selectSuggestion(item) {
+                                        if (item.url && item.url !== '#') {
+                                            window.location.href = item.url;
+                                        }
+                                        this.query = item.name;
+                                        this.focus = false;
+                                    },
+                                    moveSelection(direction) {
+                                        const items = this.allSuggestions;
+                                        if (direction === 'down') {
+                                            this.selectedIndex = Math.min(this.selectedIndex + 1, items.length - 1);
+                                        } else {
+                                            this.selectedIndex = Math.max(this.selectedIndex - 1, -1);
+                                        }
+                                    },
+                                    selectCurrent() {
+                                        if (this.selectedIndex >= 0 && this.allSuggestions[this.selectedIndex]) {
+                                            this.selectSuggestion(this.allSuggestions[this.selectedIndex]);
+                                        }
+                                    }
+                                }"
+                                class="relative hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-80"
+                                @click.outside="focus = false"
+                                @keydown.arrow-down.prevent="moveSelection('down')"
+                                @keydown.arrow-up.prevent="moveSelection('up')"
+                                @keydown.enter.prevent="selectCurrent()"
+                                @keydown.escape="focus = false">
+                                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search pupils, classes, views..."
+                                    class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1"
+                                    x-model="query"
+                                    @focus="focus = true; selectedIndex = -1"
+                                    @input="focus = true; selectedIndex = -1">
+                                <div
+                                    x-show="focus && allSuggestions.length"
+                                    x-cloak
+                                    class="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-20 max-h-80 overflow-y-auto">
+                                    <template x-for="(item, index) in allSuggestions" :key="item.name">
+                                        <button
+                                            type="button"
+                                            class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                                            :class="index === selectedIndex ? 'bg-orange-50 border-l-2 border-orange-400' : ''"
+                                            @mousedown.prevent="selectSuggestion(item)">
+                                            <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                                 :class="{
+                                                     'bg-indigo-100 text-indigo-600': item.type === 'pupil',
+                                                     'bg-emerald-100 text-emerald-600': item.type === 'class',
+                                                     'bg-orange-100 text-orange-600': item.type === 'view'
+                                                 }">
+                                                <i :class="item.icon + ' text-xs'"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="font-medium text-slate-700 truncate" x-text="item.name"></div>
+                                                <div class="text-[10px] text-slate-400 capitalize" x-text="item.type"></div>
+                                            </div>
+                                        </button>
+                                    </template>
+                                    <div x-show="!allSuggestions.length && query" class="px-3 py-4 text-center text-slate-400">
+                                        <i class="fas fa-search mb-2 text-lg"></i>
+                                        <div>No results found</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative" x-data="window.ShikolaAdminNotifications ? window.ShikolaAdminNotifications.dropdown({ links: { pupilCreated: 'classes.html#students', employeeCreated: '', feesPaymentRecorded: '', attendanceUpdated: 'attendance.html' } }) : { open: false, notifications: [], unreadCount() { return 0; }, loadServerNotifications() {}, markAllRead() {} }" @click.outside="open = false">
+                                <button type="button" class="relative h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" @click="open = !open; if (open) { loadServerNotifications(); }" aria-label="Notifications">
+                                    <i class="far fa-bell"></i>
+                                    <span x-show="unreadCount() > 0" x-cloak class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center" x-text="unreadCount()"></span>
+                                </button>
+                                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-80 rounded-xl bg-white shadow-lg border border-slate-100 z-30 overflow-hidden">
+                                    <div class="p-4 border-b border-slate-100">
+                                        <div class="flex items-center justify-between">
+                                            <h3 class="text-sm font-semibold text-slate-800">Notifications</h3>
+                                            <button x-show="unreadCount() > 0" @click="markAllRead()" class="text-xs text-orange-500 hover:text-orange-600 font-medium">Mark all read</button>
+                                        </div>
+                                    </div>
+                                    <div class="max-h-96 overflow-y-auto">
+                                        <template x-for="notification in notifications" :key="notification.id">
+                                            <div class="p-4 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 cursor-pointer transition-colors" 
+                                                 :class="!notification.read ? 'bg-orange-50/30' : ''"
+                                                 @click="handleClick(notification)">
+                                                <div class="flex gap-3">
+                                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                         :class="notification.type === 'success' ? 'bg-emerald-100 text-emerald-600' : notification.type === 'error' ? 'bg-red-100 text-red-600' : notification.type === 'warning' ? 'bg-yellow-100 text-yellow-600' : 'bg-blue-100 text-blue-600'">
+                                                        <i class="fas fa-bell text-xs"></i>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="flex items-center gap-2 mb-1">
+                                                            <div class="text-sm font-medium text-slate-800 truncate" x-text="notification.title || notification.message || 'Notification'"></div>
+                                                            <div x-show="!notification.read" class="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0"></div>
+                                                        </div>
+                                                        <div class="text-xs text-slate-600 mb-1 break-words max-h-10 overflow-hidden" x-text="notification.message || ''"></div>
+                                                        <div class="text-[10px] text-slate-400" x-text="notification.time || ''"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="p-3 border-t border-slate-100">
+                                        <button class="w-full text-center text-xs text-orange-500 hover:text-orange-600 font-medium">View all notifications</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <div class="text-xs font-medium text-slate-700">Shikola</div>
+                                        <div class="text-[10px] text-slate-400">Teacher</div>
+                                    </div>
+                                </button>
+                                <div
+                                    x-show="open"
+                                    x-cloak
+                                    class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
+                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
+                                        <span class="w-4 flex justify-center text-slate-400">
+                                            <i class="fas fa-id-badge"></i>
+                                        </span>
+                                        <span>Profile</span>
+                                    </a>
+                                    <div class="my-1 border-t border-slate-100"></div>
+                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                        <span class="w-4 flex justify-center">
+                                            <i class="fas fa-right-from-bracket"></i>
+                                        </span>
+                                        <span>Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap gap-2 text-[11px]">
+                        <button type="button" @click="activeTab = 'homework'" :class="activeTab === 'homework' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-book"></i>
+                            <span>Homework</span>
+                        </button>
+                        <button type="button" @click="activeTab = 'live-classes'" :class="activeTab === 'live-classes' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-video"></i>
+                            <span>Live classes</span>
+                        </button>
+                        <button type="button" @click="activeTab = 'behaviour-skills'" :class="activeTab === 'behaviour-skills' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-heart"></i>
+                            <span>Behaviour &amp; Skills</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+                        <!-- Total Classes (localStorage-backed) -->
+                        <div x-data="{ open: false }" class="relative">
+                            <button type="button" @click="open = !open" @click.outside="open = false" class="w-full rounded-2xl bg-indigo-50 border border-indigo-100 p-4 flex items-center justify-between hover:bg-indigo-100 transition-colors">
+                                <div>
+                                    <div class="text-[11px] uppercase tracking-wide text-indigo-500">Total classes</div>
+                                    <div class="mt-1 text-2xl font-semibold text-slate-800" x-text="Array.isArray(availableClasses) ? availableClasses.length : 0"></div>
+                                    <div class="mt-1 text-[11px] text-slate-500">From School Admin setup</div>
+                                </div>
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-indigo-500">
+                                    <i class="fas fa-chalkboard text-sm"></i>
+                                </div>
+                            </button>
+                            <div x-show="open" x-cloak class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-20">
+                                <div class="text-sm font-semibold text-slate-800 mb-3">Your classes</div>
+                                <div class="space-y-1 max-h-40 overflow-y-auto">
+                                    <template x-if="!availableClasses || !availableClasses.length">
+                                        <div class="text-[11px] text-slate-400">No classes assigned to you yet.</div>
+                                    </template>
+                                    <template x-for="cls in availableClasses" :key="cls">
+                                        <div class="text-[11px] text-slate-700" x-text="cls"></div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Students Taught (localStorage-backed when available) -->
+                        <div x-data="{ open: false }" class="relative">
+                            <button type="button" @click="open = !open" @click.outside="open = false" class="w-full rounded-2xl bg-emerald-50 border border-emerald-100 p-4 flex items-center justify-between hover:bg-emerald-100 transition-colors">
+                                <div>
+                                    <div class="text-[11px] uppercase tracking-wide text-emerald-500">Students taught</div>
+                                    <div class="mt-1 text-2xl font-semibold text-slate-800" x-text="studentsCount === null ? '—' : studentsCount"></div>
+                                    <div class="mt-1 text-[11px] text-slate-500" x-text="studentsCount === null ? 'Pupil counts will appear once pupil records are added.' : 'Total pupils in school records.'"></div>
+                                </div>
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-emerald-500">
+                                    <i class="fas fa-users text-sm"></i>
+                                </div>
+                            </button>
+                            <div x-show="open" x-cloak class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-20">
+                                <div class="text-sm font-semibold text-slate-800 mb-3">Pupil Summary</div>
+                                <div class="text-[11px] text-slate-500">
+                                    <span x-show="studentsCount === null">Connect pupil admission records in the admin portal to see counts here.</span>
+                                    <span x-show="studentsCount !== null" x-text="'Total pupils recorded: ' + studentsCount"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Result Entries -->
+                        <div x-data="{ open: false }" class="relative">
+                            <button type="button" @click="open = !open" @click.outside="open = false" class="w-full rounded-2xl bg-red-50 border border-red-100 p-4 flex items-center justify-between hover:bg-red-100 transition-colors">
+                                <div>
+                                    <div class="text-[11px] uppercase tracking-wide text-red-500">Pending result entries</div>
+                                    <div class="mt-1 text-2xl font-semibold text-slate-800">—</div>
+                                    <div class="mt-1 text-[11px] text-slate-500">Manage from Exams &amp; Class Tests.</div>
+                                </div>
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-red-500">
+                                    <i class="fas fa-clipboard-check text-sm"></i>
+                                </div>
+                            </button>
+                            <div x-show="open" x-cloak class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-20">
+                                <div class="text-sm font-semibold text-slate-800 mb-3">Pending Result Entries</div>
+                                <div class="text-[11px] text-slate-500">
+                                    This page does not yet summarise pending result entries. Use the Exams and Class Tests sections to enter and review marks.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 space-y-6 text-xs flex-1">
+                        <!-- Homework Tab -->
+                        <section x-show="activeTab === 'homework'" x-cloak>
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Homework Assignments</div>
+                                        <div class="text-xs text-slate-400 mt-1">Manage and track homework across all classes.</div>
+                                    </div>
+                                    <button type="button" @click="openNewAssignment()" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 flex items-center gap-2">
+                                        <i class="fas fa-plus text-[10px]"></i>
+                                        <span>New Assignment</span>
+                                    </button>
+                                </div>
+                                <div class="space-y-3">
+                                    <template x-for="assignment in assignments" :key="assignment.id">
+                                        <div class="rounded-xl border border-slate-100 p-3" :class="assignment.cardClass">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-medium" :class="assignment.badgeClass" x-text="assignment.status"></span>
+                                                    <span class="font-medium text-slate-700" x-text="assignment.className"></span>
+                                                </div>
+                                                <button type="button" class="text-[10px] text-slate-500 hover:text-slate-700 underline-offset-2" @click="openAssignmentDetail(assignment)">
+                                                    <span x-text="assignment.submissionsLabel"></span>
+                                                </button>
+                                            </div>
+                                            <button type="button" class="text-left w-full text-[11px] text-slate-600 hover:text-slate-800" @click="openAssignmentDetail(assignment)">
+                                                <span x-text="assignment.description"></span>
+                                            </button>
+                                            <div class="mt-2 flex items-center gap-3 text-[10px] text-slate-500">
+                                                <span>
+                                                    <i class="fas fa-clock mr-1"></i>
+                                                    <span x-text="'Assigned: ' + assignment.assigned"></span>
+                                                </span>
+                                                <span x-show="assignment.due">
+                                                    <i class="fas fa-calendar-check mr-1"></i>
+                                                    <span x-text="'Due: ' + assignment.due"></span>
+                                                </span>
+                                                <div class="ml-auto flex items-center gap-2">
+                                                    <button type="button" class="px-2 py-1 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50" @click.stop="openAssignmentForEdit(assignment)">
+                                                        <i class="fas fa-pen text-[9px] mr-1"></i>
+                                                        <span>Edit</span>
+                                                    </button>
+                                                    <button type="button" class="px-2 py-1 rounded-lg border border-red-100 bg-red-50 text-red-600 hover:bg-red-100" @click.stop="deleteAssignment(assignment.id)">
+                                                        <i class="fas fa-trash text-[9px] mr-1"></i>
+                                                        <span>Delete</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- New Assignment Modal -->
+                                <div x-show="showNewAssignmentModal" x-cloak class="fixed inset-0 bg-black/40 z-40 flex items-center justify-center">
+                                    <div class="bg-white rounded-2xl p-5 w-full max-w-lg mx-4 text-xs">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="text-sm font-semibold text-slate-800">New Homework Assignment</div>
+                                            <button type="button" class="h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200" @click="showNewAssignmentModal = false" title="Close new assignment modal">
+                                                <i class="fas fa-times text-[11px]"></i>
+                                            </button>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Title</label>
+                                                <input type="text" x-model="newAssignment.title" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400" placeholder="e.g. Fractions Homework - Grade 7B">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Classes</label>
+                                                <div class="grid grid-cols-2 gap-2">
+                                                    <template x-for="cls in availableClasses" :key="cls">
+                                                        <label class="flex items-center gap-2 text-[11px] text-slate-600">
+                                                            <input type="checkbox" class="rounded border-slate-300 text-orange-500 focus:ring-orange-400" :value="cls" x-model="newAssignment.classes">
+                                                            <span x-text="cls"></span>
+                                                        </label>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Due date (optional)</label>
+                                                    <input type="date" x-model="newAssignment.dueDate" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400" title="Select optional due date">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Attachment type</label>
+                                                    <div class="flex gap-2">
+                                                        <button type="button" @click="newAssignment.attachmentMode = 'upload'" :class="newAssignment.attachmentMode === 'upload' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-2 py-1 rounded-lg border border-slate-200 text-[10px] font-medium">Upload file</button>
+                                                        <button type="button" @click="newAssignment.attachmentMode = 'text'" :class="newAssignment.attachmentMode === 'text' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-2 py-1 rounded-lg border border-slate-200 text-[10px] font-medium">Type assignment</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div x-show="newAssignment.attachmentMode === 'upload'" x-cloak>
+                                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Upload file (PDF/DOC/DOCX)</label>
+                                                <input type="file" accept=".pdf,.doc,.docx" class="w-full text-[11px]" @change="newAssignment.attachmentFileName = $event.target.files[0] ? $event.target.files[0].name : ''" title="Upload assignment file (PDF, DOC, DOCX)">
+                                                <p class="text-[10px] text-slate-400 mt-1" x-show="newAssignment.attachmentFileName" x-text="'Selected: ' + newAssignment.attachmentFileName"></p>
+                                            </div>
+                                            <div x-show="newAssignment.attachmentMode === 'text'" x-cloak>
+                                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Assignment details</label>
+                                                <textarea x-model="newAssignment.attachmentText" rows="3" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400" placeholder="Type the assignment instructions here..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4 flex justify-end gap-2">
+                                            <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-[11px] font-medium hover:bg-slate-100" @click="showNewAssignmentModal = false">Cancel</button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-medium hover:bg-slate-800" :disabled="loading" @click="saveAssignment()">
+                                                <span x-show="!loading">Save Assignment</span>
+                                                <span x-show="loading" class="inline-flex items-center gap-1">
+                                                    <i class="fas fa-spinner fa-spin text-[10px]"></i>
+                                                    Saving...
+                                                </span>
+                                            </button>
+                                        </div>
+                                        <div x-show="error" x-cloak class="mt-2 p-2 rounded-lg bg-red-50 border border-red-100 text-[10px] text-red-700">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                                            <span x-text="error"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Assignment Detail + Submissions Modal -->
+                                <div x-show="showAssignmentDetailModal" x-cloak class="fixed inset-0 bg-black/40 z-40 flex items-center justify-center">
+                                    <div class="bg-white rounded-2xl p-5 w-full max-w-xl mx-4 text-xs">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div>
+                                                <div class="text-sm font-semibold text-slate-800" x-text="selectedAssignment ? (selectedAssignment.title || 'Assignment details') : 'Assignment details'"></div>
+                                                <div class="text-[11px] text-slate-500 mt-0.5" x-show="selectedAssignment" x-text="selectedAssignment.className || ''"></div>
+                                            </div>
+                                            <button type="button" class="h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200" @click="showAssignmentDetailModal = false" title="Close assignment details modal">
+                                                <i class="fas fa-times text-[11px]"></i>
+                                            </button>
+                                        </div>
+                                        <template x-if="selectedAssignment">
+                                            <div class="space-y-3">
+                                                <div class="text-[11px] text-slate-600" x-text="selectedAssignment.description"></div>
+                                                <div class="flex flex-wrap gap-3 text-[10px] text-slate-500">
+                                                    <span>
+                                                        <i class="fas fa-clock mr-1"></i>
+                                                        <span x-text="'Assigned: ' + (selectedAssignment.assigned || '')"></span>
+                                                    </span>
+                                                    <span x-show="selectedAssignment.due">
+                                                        <i class="fas fa-calendar-check mr-1"></i>
+                                                        <span x-text="'Due: ' + selectedAssignment.due"></span>
+                                                    </span>
+                                                    <span>
+                                                        <i class="fas fa-users mr-1"></i>
+                                                        <span x-text="selectedAssignment.submissionsLabel"></span>
+                                                    </span>
+                                                </div>
+                                                <div class="border-t border-slate-100 pt-3 mt-2">
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <div class="text-[11px] font-semibold text-slate-700">Submissions</div>
+                                                    </div>
+                                                    <div class="max-h-52 overflow-y-auto divide-y divide-slate-100">
+                                                        <template x-if="!assignmentSubmissions.length">
+                                                            <div class="py-3 text-[10px] text-slate-400">No submissions recorded yet.</div>
+                                                        </template>
+                                                        <template x-for="sub in assignmentSubmissions" :key="sub.pupilId + '-' + (sub.status || '')">
+                                                            <div class="py-2 flex items-center justify-between text-[10px]">
+                                                                <div>
+                                                                    <div class="font-medium text-slate-700" x-text="sub.pupilName || 'Pupil'"></div>
+                                                                    <div class="text-slate-400" x-text="sub.className || ''"></div>
+                                                                </div>
+                                                                <div class="text-right">
+                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full" :class="sub.status === 'submitted' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'">
+                                                                        <i class="fas" :class="sub.status === 'submitted' ? 'fa-check-circle mr-1' : 'fa-clock mr-1'"></i>
+                                                                        <span x-text="sub.status === 'submitted' ? 'Submitted' : 'Pending'"></span>
+                                                                    </span>
+                                                                    <div class="text-slate-400 mt-1" x-show="sub.submittedAt" x-text="new Date(sub.submittedAt).toLocaleString()"></div>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <div class="mt-4 flex justify-end gap-2">
+                                            <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-[11px] font-medium hover:bg-slate-100" @click="showAssignmentDetailModal = false">Close</button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-[11px] font-medium hover:bg-slate-50" x-show="selectedAssignment" @click="openAssignmentForEdit(selectedAssignment)">
+                                                <i class="fas fa-pen text-[9px] mr-1"></i>
+                                                <span>Edit</span>
+                                            </button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-red-600 text-white text-[11px] font-medium hover:bg-red-700" x-show="selectedAssignment" @click="deleteAssignment(selectedAssignment.id); showAssignmentDetailModal = false;">
+                                                <i class="fas fa-trash text-[9px] mr-1"></i>
+                                                <span>Delete</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Behaviour & Skills Tab -->
+                        <section x-show="activeTab === 'behaviour-skills'" x-cloak>
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Behaviour & Skills Tracking</div>
+                                        <div class="text-xs text-slate-400 mt-1">Monitor student behaviour and skill development.</div>
+                                    </div>
+                                    <button type="button" @click="showBehaviourModal = true" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 flex items-center gap-2">
+                                        <i class="fas fa-plus text-[10px]"></i>
+                                        <span>Add Entry</span>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                                        <div class="text-sm font-medium text-slate-800 mb-2">Recent Positive Behaviour</div>
+                                        <div class="space-y-2">
+                                            <template x-for="entry in behaviourEntries" :key="entry.id">
+                                                <div class="flex items-start gap-2">
+                                                    <span class="text-emerald-500 mt-0.5"><i class="fas fa-star text-[10px]"></i></span>
+                                                    <div>
+                                                        <div class="text-[11px] font-medium text-slate-700" x-text="entry.pupil"></div>
+                                                        <div class="text-[10px] text-slate-500" x-text="entry.note"></div>
+                                                        <div class="text-[10px] text-slate-400" x-text="entry.when + (entry.scopeLabel === 'Bulk' ? ' · Bulk entry' : '')"></div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                                        <div class="text-sm font-medium text-slate-800 mb-2">Skills Development</div>
+                                        <div class="space-y-2">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-[11px] text-slate-600">Leadership</span>
+                                                <div class="flex gap-1">
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-slate-200"></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-[11px] text-slate-600">Teamwork</span>
+                                                <div class="flex gap-1">
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-[11px] text-slate-600">Problem Solving</span>
+                                                <div class="flex gap-1">
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-slate-200"></span>
+                                                    <span class="w-2 h-2 rounded-full bg-slate-200"></span>
+                                                </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Behaviour Entry Modal -->
+                                <div x-show="showBehaviourModal" x-cloak class="fixed inset-0 bg-black/40 z-40 flex items-center justify-center">
+                                    <div class="bg-white rounded-2xl p-5 w-full max-w-md mx-4 text-xs">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="text-sm font-semibold text-slate-800">Add Behaviour Entry</div>
+                                            <button type="button" class="h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200" @click="showBehaviourModal = false" title="Close behaviour entry modal">
+                                                <i class="fas fa-times text-[11px]"></i>
+                                            </button>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Scope</label>
+                                                <div class="flex gap-2">
+                                                    <button type="button" @click="behaviourForm.scope = 'single'" :class="behaviourForm.scope === 'single' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-medium">Single pupil</button>
+                                                    <button type="button" @click="behaviourForm.scope = 'bulk'" :class="behaviourForm.scope === 'bulk' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-lg border border-slate-200 text-[10px] font-medium">Bulk for class</button>
+                                                </div>
+                                            </div>
+                                            <div x-show="behaviourForm.scope === 'single'" x-cloak>
+                                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Select pupil</label>
+                                                <select x-model="behaviourForm.pupil" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400" title="Select pupil for behaviour entry">
+                                                    <option value="">Choose pupil</option>
+                                                    <template x-for="p in behaviourPupils" :key="p">
+                                                        <option :value="p" x-text="p"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                            <div x-show="behaviourForm.scope === 'bulk'" x-cloak>
+                                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Select class</label>
+                                                <select x-model="behaviourForm.className" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400" title="Select class for bulk behaviour entry">
+                                                    <template x-for="c in behaviourClasses" :key="c">
+                                                        <option :value="c" x-text="c"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Type</label>
+                                                <div class="flex gap-2">
+                                                    <button type="button" @click="behaviourForm.type = 'positive'" :class="behaviourForm.type === 'positive' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-lg border text-[10px] font-medium">Positive</button>
+                                                    <button type="button" @click="behaviourForm.type = 'concern'" :class="behaviourForm.type === 'concern' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-lg border text-[10px] font-medium">Concern</button>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Note</label>
+                                                <textarea x-model="behaviourForm.note" rows="3" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400" placeholder="Describe the behaviour or skill observed..."></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4 flex justify-end gap-2">
+                                            <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-[11px] font-medium hover:bg-slate-100" @click="showBehaviourModal = false">Cancel</button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-medium hover:bg-slate-800" :disabled="loading" @click="saveBehaviourEntry()">
+                                                <span x-show="!loading">Save Entry</span>
+                                                <span x-show="loading" class="inline-flex items-center gap-1">
+                                                    <i class="fas fa-spinner fa-spin text-[10px]"></i>
+                                                    Saving...
+                                                </span>
+                                            </button>
+                                        </div>
+                                        <div x-show="error" x-cloak class="mt-2 p-2 rounded-lg bg-red-50 border border-red-100 text-[10px] text-red-700">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                                            <span x-text="error"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Live Classes Tab -->
+                        <section x-show="activeTab === 'live-classes'" x-cloak>
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Live Class Sessions</div>
+                                        <div class="text-xs text-slate-400 mt-1">Schedule and conduct virtual classes.</div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 flex items-center gap-2" @click="openLiveClassModal('start', null)">
+                                            <i class="fas fa-video text-[10px]"></i>
+                                            <span>Start Class</span>
+                                        </button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-medium hover:bg-slate-100 flex items-center gap-2" @click="openLiveClassModal('schedule', null)">
+                                            <i class="fas fa-calendar-plus text-[10px]"></i>
+                                            <span>Schedule Class</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <template x-if="!liveClasses.length">
+                                        <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-3 text-[11px] text-slate-500">
+                                            No live sessions yet. Use "Start Class" or "Schedule Class" to create one.
+                                        </div>
+                                    </template>
+                                    <template x-for="session in liveClasses" :key="session.id">
+                                        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-medium"
+                                                          :class="session.status === 'live' ? 'bg-red-100 text-red-700 animate-pulse' : (session.status === 'upcoming' ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-700')"
+                                                          x-text="session.status === 'live' ? 'LIVE NOW' : (session.status === 'upcoming' ? 'UPCOMING' : 'COMPLETED')"></span>
+                                                    <span class="font-medium text-slate-700" x-text="session.classLabel || 'Class session'"></span>
+                                                </div>
+                                                <span class="text-[10px] text-slate-500"
+                                                      x-text="session.status === 'live' ? ((session.joinedCount || 0) + ' joined') : (session.status === 'completed' ? ((session.joinedCount || 0) + ' attended') : 'Scheduled')"></span>
+                                            </div>
+                                            <div class="text-[11px] text-slate-600 mb-2" x-text="session.topic ? ('Topic: ' + session.topic) : 'No topic set yet.'"></div>
+                                            <div class="flex items-center gap-3 text-[10px] text-slate-500">
+                                                <template x-if="session.status === 'live'">
+                                                    <div class="flex items-center gap-2">
+                                                        <button type="button" class="px-2 py-1 rounded-lg bg-emerald-600 text-white text-[10px] font-medium hover:bg-emerald-700" @click="openLiveClassModal('join', session)">Join</button>
+                                                        <button type="button" class="px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[10px] font-medium hover:bg-slate-100" @click="openLiveClassModal('manage', session)">Manage</button>
+                                                        <button type="button" class="px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[10px] font-medium hover:bg-slate-100" @click="recordCurrentClass(session)">Record</button>
+                                                    </div>
+                                                </template>
+                                                <template x-if="session.status === 'upcoming'">
+                                                    <div class="flex items-center gap-2">
+                                                        <button type="button" class="px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[10px] font-medium hover:bg-slate-100" @click="editScheduledClass(session)">Edit</button>
+                                                        <button type="button" class="px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[10px] font-medium hover:bg-slate-100" @click="openLiveClassModal('cancel', session)">Cancel</button>
+                                                    </div>
+                                                </template>
+                                                <template x-if="session.status === 'completed'">
+                                                    <div class="flex items-center gap-2">
+                                                        <button type="button" class="px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[10px] font-medium hover:bg-slate-100" @click="openLiveClassModal('recording', session)">View Recordings</button>
+                                                    </div>
+                                                </template>
+                                                <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-500">
+                                                    <i class="fas fa-clock"></i>
+                                                    <span x-text="session.status === 'live'
+                                                        ? (session.startedAt ? new Date(session.startedAt).toLocaleString() : 'Live now')
+                                                        : (session.status === 'upcoming'
+                                                            ? (session.scheduledAt ? new Date(session.scheduledAt).toLocaleString() : 'Not scheduled')
+                                                            : (session.endedAt ? new Date(session.endedAt).toLocaleString() : 'Completed'))"></span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Live Class Modal -->
+                                <div x-show="showLiveClassModal" x-cloak class="fixed inset-0 bg-black/40 z-40 flex items-center justify-center">
+                                    <div class="bg-white rounded-2xl p-5 w-full max-w-md mx-4 text-xs">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="text-sm font-semibold text-slate-800" x-text="liveClassModalMode === 'start' ? 'Start Live Class' : liveClassModalMode === 'schedule' ? 'Schedule Class' : liveClassModalMode === 'join' ? 'Join Class' : liveClassModalMode === 'manage' ? 'Manage Class' : liveClassModalMode === 'edit' ? 'Edit Scheduled Class' : liveClassModalMode === 'cancel' ? 'Cancel Class' : 'View Recording'"></div>
+                                            <button type="button" class="h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200" @click="closeLiveClassModal()" title="Close live class modal">
+                                                <i class="fas fa-times text-[11px]"></i>
+                                            </button>
+                                        </div>
+                                        <div class="space-y-3">
+                                            <div x-show="liveClassModalMode === 'start' || liveClassModalMode === 'schedule'" x-cloak>
+                                                <div>
+                                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Class</label>
+                                                    <select x-model="liveClassForm.classLabel" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-400" title="Select class for live session">
+                                                        <option value="">Select class</option>
+                                                        <template x-for="cls in availableClasses" :key="cls">
+                                                            <option :value="cls" x-text="cls"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Topic</label>
+                                                    <input type="text" x-model="liveClassForm.topic" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-400" placeholder="e.g. Introduction to Algebraic Expressions">
+                                                </div>
+                                                <div x-show="liveClassModalMode === 'schedule'" x-cloak>
+                                                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Schedule date & time</label>
+                                                    <input type="datetime-local" x-model="liveClassForm.scheduledAt" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-400" title="Select schedule date and time">
+                                                </div>
+                                            </div>
+                                            <div x-show="liveClassModalMode === 'join'" x-cloak>
+                                                <div class="text-[11px] text-slate-600 mb-3">You are about to join the live session for <span x-text="liveClassModalSession ? (liveClassModalSession.classLabel || '') : ''" class="font-medium text-slate-800"></span>.</div>
+                                                <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-[11px] text-emerald-700">
+                                                    <i class="fas fa-info-circle mr-1"></i> Make sure your camera and microphone are ready.
+                                                </div>
+                                            </div>
+                                            <div x-show="liveClassModalMode === 'manage'" x-cloak>
+                                                <div class="text-[11px] text-slate-600 mb-3">Manage participants, settings, and controls for <span x-text="liveClassModalSession ? (liveClassModalSession.classLabel || '') : ''" class="font-medium text-slate-800"></span>.</div>
+                                                <div class="space-y-2">
+                                                    <button type="button" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[10px] font-medium hover:bg-slate-100 text-left" @click="manageLiveClassAction(liveClassModalSession, 'mute_all')">Mute All Participants</button>
+                                                    <button type="button" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[10px] font-medium hover:bg-slate-100 text-left" @click="manageLiveClassAction(liveClassModalSession, 'lock_room')">Lock Room</button>
+                                                    <button type="button" class="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[10px] font-medium hover:bg-slate-100 text-left" @click="manageLiveClassAction(liveClassModalSession, 'end'); closeLiveClassModal();">End Class for All</button>
+                                                </div>
+                                            </div>
+                                            <div x-show="liveClassModalMode === 'edit'" x-cloak>
+                                                <div class="text-[11px] text-slate-600 mb-3">Reschedule or change topic for <span x-text="liveClassModalSession ? (liveClassModalSession.classLabel || '') : ''" class="font-medium text-slate-800"></span>.</div>
+                                                <div class="space-y-2">
+                                                    <div>
+                                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">New date & time</label>
+                                                        <input type="datetime-local" x-model="liveClassForm.scheduledAt" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-400" title="Select new date and time">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Topic</label>
+                                                        <input type="text" x-model="liveClassForm.topic" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-400" placeholder="e.g. Physics - Forces and Motion">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div x-show="liveClassModalMode === 'cancel'" x-cloak>
+                                                <div class="text-[11px] text-slate-600 mb-3">Are you sure you want to cancel the scheduled class for <span x-text="liveClassModalSession ? (liveClassModalSession.classLabel || '') : ''" class="font-medium text-slate-800"></span>?</div>
+                                                <div class="bg-red-50 border border-red-100 rounded-xl p-3 text-[11px] text-red-700">
+                                                    <i class="fas fa-exclamation-triangle mr-1"></i> This action cannot be undone.
+                                                </div>
+                                            </div>
+                                            <div x-show="liveClassModalMode === 'recording'" x-cloak>
+                                                <div class="text-[11px] text-slate-600 mb-3">View and download recordings for <span x-text="liveClassModalSession ? (liveClassModalSession.classLabel || '') : ''" class="font-medium text-slate-800"></span>.</div>
+                                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-[11px] text-slate-600 max-h-56 overflow-y-auto">
+                                                    <template x-if="!liveClassModalSession || !getRecordingsFor(liveClassModalSession).length">
+                                                        <div class="text-[10px] text-slate-400">No recordings saved for this session yet.</div>
+                                                    </template>
+                                                    <template x-for="rec in liveClassModalSession ? getRecordingsFor(liveClassModalSession) : []" :key="rec.id">
+                                                        <div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-b-0">
+                                                            <div>
+                                                                <div class="font-medium text-slate-700" x-text="rec.title"></div>
+                                                                <div class="text-[10px] text-slate-400" x-text="new Date(rec.createdAt).toLocaleString()"></div>
+                                                            </div>
+                                                            <button type="button" class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-[10px] font-medium hover:bg-emerald-700">Download</button>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4 flex justify-end gap-2">
+                                            <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-[11px] font-medium hover:bg-slate-100" @click="closeLiveClassModal()">Cancel</button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-[11px] font-medium hover:bg-emerald-700" x-show="liveClassModalMode === 'start'" :disabled="loading" @click="startOrScheduleClass('start')">
+                                                <span x-show="!loading">Start Now</span>
+                                                <span x-show="loading" class="inline-flex items-center gap-1">
+                                                    <i class="fas fa-spinner fa-spin text-[10px]"></i>
+                                                    Starting...
+                                                </span>
+                                            </button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-[11px] font-medium hover:bg-emerald-700" x-show="liveClassModalMode === 'schedule'" :disabled="loading" @click="startOrScheduleClass('schedule')">
+                                                <span x-show="!loading">Schedule</span>
+                                                <span x-show="loading" class="inline-flex items-center gap-1">
+                                                    <i class="fas fa-spinner fa-spin text-[10px]"></i>
+                                                    Scheduling...
+                                                </span>
+                                            </button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-[11px] font-medium hover:bg-emerald-700" x-show="liveClassModalMode === 'join'" :disabled="loading" @click="joinLiveClass(liveClassModalSession)">
+                                                <span x-show="!loading">Join Class</span>
+                                                <span x-show="loading" class="inline-flex items-center gap-1">
+                                                    <i class="fas fa-spinner fa-spin text-[10px]"></i>
+                                                    Joining...
+                                                </span>
+                                            </button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-[11px] font-medium hover:bg-emerald-700" x-show="liveClassModalMode === 'edit'" :disabled="loading" @click="saveEditedScheduledClass()">
+                                                <span x-show="!loading">Save Changes</span>
+                                                <span x-show="loading" class="inline-flex items-center gap-1">
+                                                    <i class="fas fa-spinner fa-spin text-[10px]"></i>
+                                                    Updating...
+                                                </span>
+                                            </button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-red-600 text-white text-[11px] font-medium hover:bg-red-700" x-show="liveClassModalMode === 'cancel'" :disabled="loading" @click="cancelScheduledClass(liveClassModalSession)">
+                                                <span x-show="!loading">Confirm Cancel</span>
+                                                <span x-show="loading" class="inline-flex items-center gap-1">
+                                                    <i class="fas fa-spinner fa-spin text-[10px]"></i>
+                                                    Cancelling...
+                                                </span>
+                                            </button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-700 text-white text-[11px] font-medium hover:bg-slate-800" x-show="liveClassModalMode === 'recording'" :disabled="loading" @click="closeLiveClassModal()">
+                                                <span x-show="!loading">Close</span>
+                                                <span x-show="loading" class="inline-flex items-center gap-1">
+                                                    <i class="fas fa-spinner fa-spin text-[10px]"></i>
+                                                    Closing...
+                                                </span>
+                                            </button>
+                                        </div>
+                                        <div x-show="error" x-cloak class="mt-2 p-2 rounded-lg bg-red-50 border border-red-100 text-[10px] text-red-700">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                                            <span x-text="error"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+    <div id="custom-cursor"></div>
+    <script src="../../shared-assets/js/script.js"></script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

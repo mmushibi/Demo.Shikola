@@ -1,0 +1,1910 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - School Provisioning</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script>
+    function getInitials(name) {
+        return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
+    
+    // Desktop-only enforcement
+    function enforceDesktopOnly() {
+        if (window.innerWidth < 1024) {
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-slate-900">
+                    <div class="text-center p-8">
+                        <i class="fas fa-desktop text-6xl text-slate-400 mb-4"></i>
+                        <h1 class="text-2xl font-semibold text-white mb-2">Desktop Required</h1>
+                        <p class="text-slate-400 mb-6">The Super Admin Console requires a desktop browser (1024px or larger).</p>
+                        <p class="text-slate-500 text-sm">Please switch to a desktop device to access this console.</p>
+                    </div>
+                </div>
+            `;
+            return false;
+        }
+        return true;
+    }
+    
+    // Check on load and resize
+    window.addEventListener('load', enforceDesktopOnly);
+    window.addEventListener('resize', () => {
+        if (!enforceDesktopOnly()) {
+            location.reload();
+        }
+    });
+    </script>
+    <script src="/config/config.js"></script>
+    <script src="/frontend/shared-assets/js/shared-auth.js"></script>
+    <script src="/frontend/shared-assets/js/shared-api-client.js"></script>
+    <script src="super-admin-offline-manager.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="/shared-assets/js/shared-export-print.js" defer></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+
+    <script>
+        // Debug Alpine.js initialization
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            console.log('Alpine available:', typeof window.Alpine);
+        });
+
+        // Check if Alpine is available before trying to initialize
+        function initializeAlpine() {
+            console.log('Checking for Alpine...');
+            if (typeof window.Alpine === 'undefined') {
+                console.error('Alpine.js not loaded');
+                return;
+            }
+            
+            console.log('Alpine.js found, initializing...');
+            window.Alpine.start();
+            console.log('Alpine.js initialized');
+        }
+
+        // Try to initialize Alpine after scripts load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeAlpine);
+        } else {
+            initializeAlpine();
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/frontend/assets/css/styles.css">
+</head>
+<body class="dashboard-page super-admin-page">
+    <div x-data="schoolsData()" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-8 w-full">
+            <aside class="flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex items-center gap-3 mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-15 rounded-2xl object-cover">
+                    <div>
+                        <div class="text-sm text-slate-400">Console</div>
+                    </div>
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Console</span>
+                    </a>
+                    <a href="schools.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 text-orange-600 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-school"></i></span>
+                        <span class="font-medium flex-1">Schools</span>
+                    </a>
+                    <a href="users-and-roles.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-users"></i></span>
+                        <span class="flex-1">Users & Roles</span>
+                    </a>
+                    <a href="create-user.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-plus"></i></span>
+                        <span class="flex-1">Create Users</span>
+                    </a>
+                    <a href="global-user-search.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-search"></i></span>
+                        <span class="flex-1">Global Search</span>
+                    </a>
+                    <a href="payments-coupons.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-ticket-alt"></i></span>
+                        <span class="flex-1">Payments & Coupons</span>
+                    </a>
+                    <a href="subscriptions.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-layer-group"></i></span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    <a href="plans.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">Plans & Events</span>
+                    </a>
+                    <a href="activity-log.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="flex-1">Activity Log</span>
+                    </a>
+                    <a href="system-health.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-heartbeat"></i></span>
+                        <span class="flex-1">System Health</span>
+                    </a>
+                    <a href="settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-gear"></i></span>
+                        <span class="flex-1">Settings</span>
+                    </a>
+                </nav>
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center mt-6 px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium w-full justify-center">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="flex-1 w-full px-6 py-6 pl-72">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl lg:text-3xl font-semibold text-slate-800">School Provisioning</h1>
+                            <p class="text-sm text-slate-400 mt-1">Create, activate, suspend or delete schools across the platform</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600">
+                                <i class="fas fa-database text-slate-400"></i>
+                                <span>Default Tier: Growth</span>
+                            </button>
+                            <button type="button" class="px-3 py-2 rounded-xl bg-orange-500 text-white text-sm font-semibold shadow flex items-center gap-2" @click="goProvision()">
+                                <i class="fas fa-plus"></i>
+                                <span>Provision New School</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-4 text-xs">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-xs uppercase tracking-wide text-slate-400">Total schools</div>
+                                <i class="fas fa-school text-slate-300"></i>
+                            </div>
+                            <div class="text-2xl font-semibold text-slate-800" x-text="stats.total"></div>
+                            <div class="text-xs text-slate-500 mt-1">All time</div>
+                        </div>
+                        <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-xs uppercase tracking-wide text-emerald-600">Active</div>
+                                <i class="fas fa-circle text-emerald-400 text-xs"></i>
+                            </div>
+                            <div class="text-2xl font-semibold text-slate-800" x-text="stats.active"></div>
+                            <div class="text-xs text-emerald-600 mt-1">Healthy schools</div>
+                        </div>
+                        <div class="rounded-2xl bg-sky-50 border border-sky-100 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-xs uppercase tracking-wide text-sky-600">In trial</div>
+                                <i class="fas fa-flask text-sky-400"></i>
+                            </div>
+                            <div class="text-2xl font-semibold text-slate-800" x-text="stats.trial"></div>
+                            <div class="text-xs text-sky-600 mt-1">Ends in &lt; 30 days</div>
+                        </div>
+                        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-xs uppercase tracking-wide text-rose-600">Deactivated</div>
+                                <i class="fas fa-triangle-exclamation text-rose-400"></i>
+                            </div>
+                            <div class="text-2xl font-semibold text-slate-800" x-text="stats.deactivated"></div>
+                            <div class="text-xs text-rose-600 mt-1">Requires attention</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 xl:grid-cols-[2.2fr,1.2fr] gap-6 flex-1">
+                        <div id="superadmin-schools-section" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Schools directory</div>
+                                    <div class="text-xs text-slate-400 mt-1">Search and manage schools across all tiers</div>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 text-xs">
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs text-slate-600" @click="exportSchoolsCsv()">
+                                        <i class="fas fa-file-csv text-slate-400"></i>
+                                        <span>Export CSV</span>
+                                    </button>
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs text-slate-600" @click="printSchools()">
+                                        <i class="fas fa-print text-slate-400"></i>
+                                        <span>Print</span>
+                                    </button>
+                                    <div class="relative flex items-center bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 w-full sm:w-56">
+                                        <i class="fas fa-search text-slate-400 text-xs mr-2"></i>
+                                        <input type="text" placeholder="Search by name, email or ID" x-model="filters.search" @input.debounce.350ms="onSearchInput()" class="bg-transparent text-xs text-slate-600 placeholder-slate-400 focus:outline-none flex-1" title="Search schools by name, email or ID">
+
+                                        <div x-show="suggestionsOpen && suggestions.length" x-cloak @click.outside="suggestionsOpen = false" class="absolute left-0 top-full mt-2 w-full bg-white border border-slate-200 rounded-xl shadow-lg p-2 text-xs z-20">
+                                            <template x-for="s in suggestions" :key="s.id">
+                                                <button type="button" class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50" @click="selectSuggestion(s)">
+                                                    <div class="font-medium text-slate-800" x-text="s.schoolName"></div>
+                                                    <div class="text-xs text-slate-400" x-text="s.email"></div>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+
+                                    <select aria-label="Filter by status" title="Filter by status" x-model="filters.status" @change="loadSchools()" class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 bg-white">
+                                        <option value="all">All statuses</option>
+                                        <option value="active">Active</option>
+                                        <option value="trial">Trial</option>
+                                        <option value="deactivated">Deactivated</option>
+                                    </select>
+                                    <select aria-label="Filter by tier" title="Filter by tier" class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 bg-white">
+                                        <option value="all">All tiers</option>
+                                        <option>Growth</option>
+                                        <option>Pro</option>
+                                        <option>Ultimate</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 overflow-x-auto text-xs flex-1">
+                                <table id="superadmin-schools-table" class="min-w-full">
+                                    <thead>
+                                        <tr class="text-left text-slate-400">
+                                            <th class="pb-2 pr-4 font-medium">School</th>
+                                            <th class="pb-2 pr-4 font-medium">Tier</th>
+                                            <th class="pb-2 pr-4 font-medium">Status</th>
+                                            <th class="pb-2 pr-4 font-medium">Pupils</th>
+                                            <th class="pb-2 pr-4 font-medium">Employees</th>
+                                            <th class="pb-2 pr-4 font-medium">Subscription</th>
+                                            <th class="pb-2 font-medium text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                                        <tr x-show="loading">
+                                            <td colspan="7" class="py-6 text-center text-slate-400">Loading schools...</td>
+                                        </tr>
+
+                                        <tr x-show="!loading && error">
+                                            <td colspan="7" class="py-6 text-center text-rose-500" x-text="error"></td>
+                                        </tr>
+
+                                        <template x-for="school in schools" :key="school.id">
+                                            <tr>
+                                                <td class="py-2 pr-4">
+                                                    <div class="font-medium text-slate-800" x-text="school.schoolName || 'Unnamed school'"></div>
+                                                    <div class="text-xs text-slate-400" x-text="school.email || ''"></div>
+                                                </td>
+                                                <td class="py-2 pr-4">
+                                                    <span class="px-2 py-1 rounded-full bg-slate-50 text-slate-600 text-xs" x-text="(school.subscriptionPlan || 'Trial')"></span>
+                                                </td>
+                                                <td class="py-2 pr-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs"
+                                                        :class="(school.status || '').toLowerCase() === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'"
+                                                        x-text="(school.status || 'active').toLowerCase() === 'active' ? 'Active' : 'Deactivated'"></span>
+                                                </td>
+                                                <td class="py-2 pr-4 text-xs" x-text="(school.currentPupils || 0)"></td>
+                                                <td class="py-2 pr-4 text-xs" x-text="(school.currentTeachers || 0)"></td>
+                                                <td class="py-2 pr-4 text-xs">
+                                                    <div x-text="formatSubscriptionRange(school)"></div>
+                                                    <div :class="school.subscriptionStatus === 'Trial' ? 'text-amber-600' : 'text-emerald-600'" x-text="formatSubscriptionNote(school)"></div>
+                                                </td>
+                                                <td class="py-2 text-right">
+                                                    <div class="inline-flex items-center gap-1">
+                                                        <button type="button" class="px-2 py-1 rounded-lg bg-slate-50 text-xs text-slate-600 border border-slate-200" @click="viewSchool(school)">View</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+
+                                        <tr x-show="!loading && !error && schools.length === 0">
+                                            <td colspan="7" class="py-6 text-center text-slate-400">No schools found.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Provisioning checklist</div>
+                                        <div class="text-xs text-slate-400 mt-1">Steps applied when onboarding a new school</div>
+                                    </div>
+                                </div>
+                                <ol class="list-decimal list-inside space-y-2 text-slate-600">
+                                    <li>Create school record and assign subscription tier</li>
+                                    <li>Create primary School Admin user and send activation email/SMS</li>
+                                    <li>Apply default settings (timezone, currency, theme)</li>
+                                    <li>Seed classes, subjects and fee structures (optional)</li>
+                                    <li>Verify payment method and first invoice status</li>
+                                </ol>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Limits and alerts</div>
+                                        <div class="text-xs text-slate-400 mt-1">Quick view of schools approaching limits</div>
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50">
+                                        <div>
+                                            <div class="font-medium text-slate-800">Pupil capacity nearly reached</div>
+                                            <div class="text-xs text-slate-500">Not available</div>
+                                        </div>
+                                        <button type="button" class="text-xs text-amber-600 font-semibold">View</button>
+                                    </div>
+                                    <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-sky-50">
+                                        <div>
+                                            <div class="font-medium text-slate-800">Employees over limit</div>
+                                            <div class="text-xs text-slate-500">Not available</div>
+                                        </div>
+                                        <button type="button" class="text-xs text-sky-600 font-semibold" @click="reviewOverrides()">Review overrides</button>
+                                    </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" class="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold" @click="overrideTierLimit()">
+                                            Override Tier Limit
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </main>
+        </div>
+
+    <div x-show="showSchoolModal" x-cloak @keydown.escape.window="if (showSchoolModal) closeModal()" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div class="w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-xl border border-slate-100 flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div>
+                    <div class="text-sm font-semibold text-slate-800" x-text="selectedSchool?.schoolName || 'School details'"></div>
+                    <div class="text-xs text-slate-400" x-text="selectedSchool?.email || ''"></div>
+                </div>
+                <button type="button" class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" @click="closeModal()" aria-label="Close" title="Close">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="px-5 py-5 text-sm flex-1 overflow-y-auto min-h-0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                        <div class="text-xs uppercase tracking-wide text-slate-400">Phone</div>
+                        <div class="mt-1 text-slate-700" x-text="selectedSchool?.phone || '—'"></div>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                        <div class="text-xs uppercase tracking-wide text-slate-400">Status</div>
+                        <div class="mt-1 text-slate-700" x-text="selectedSchool?.status || '—'"></div>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4 sm:col-span-2">
+                        <div class="text-xs uppercase tracking-wide text-slate-400">Address</div>
+                        <div class="mt-1 text-slate-700" x-text="selectedSchool?.address || '—'"></div>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                        <div class="text-xs uppercase tracking-wide text-slate-400">Subscription</div>
+                        <div class="mt-1 text-slate-700" x-text="(selectedSchool?.subscriptionPlan || '—') + ' • ' + (selectedSchool?.subscriptionStatus || '—')"></div>
+                    </div>
+                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                        <div class="text-xs uppercase tracking-wide text-slate-400">Onboarding</div>
+                        <div class="mt-1 text-slate-700" x-text="selectedSchool?.onboardingStatus || '—'"></div>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <div class="text-sm font-semibold text-slate-800">Tier change requests</div>
+                            <div class="text-xs text-slate-400 mt-1">Approve or decline tier upgrade requests.</div>
+                        </div>
+                        <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600" @click="loadTierChangeRequests()" :disabled="tierChangeLoading">
+                            <span x-show="!tierChangeLoading" x-cloak>Reload</span>
+                            <span x-show="tierChangeLoading" x-cloak>Loading...</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-3 rounded-2xl border border-slate-100 overflow-hidden">
+                        <div class="px-4 py-2 bg-slate-50 border-b border-slate-100 text-xs text-slate-500 font-semibold uppercase">Requests</div>
+
+                        <div class="px-4 py-4 text-xs text-rose-600" x-show="tierChangeError" x-cloak x-text="tierChangeError"></div>
+
+                        <div class="divide-y divide-slate-100" x-show="tierChangeRequests.length" x-cloak>
+                            <template x-for="reqItem in tierChangeRequests" :key="reqItem.id">
+                                <div class="px-4 py-3">
+                                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                                        <div>
+                                            <div class="text-xs font-semibold text-slate-800" x-text="formatRequestHeadline(reqItem)"></div>
+                                            <div class="text-xs text-slate-500 mt-0.5" x-text="formatRequestMeta(reqItem)"></div>
+
+                                            <div class="text-xs text-slate-500 mt-1" x-show="reqItem.paymentMethod || reqItem.paymentReference" x-cloak>
+                                                <span class="font-semibold">Payment:</span>
+                                                <span x-text="formatPaymentMeta(reqItem)"></span>
+                                            </div>
+
+                                            <div class="text-xs text-slate-500 mt-1" x-show="reqItem.instructions" x-cloak>
+                                                <span class="font-semibold">Instructions:</span>
+                                                <span x-text="reqItem.instructions"></span>
+                                            </div>
+
+                                            <div class="text-xs text-slate-500 mt-1" x-show="reqItem.decisionNotes" x-cloak>
+                                                <span class="font-semibold">Decision:</span>
+                                                <span x-text="reqItem.decisionNotes"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-right">
+                                            <div class="text-xs text-slate-400" x-text="formatDateTime(reqItem.createdAt)"></div>
+
+                                            <div class="mt-2 inline-flex items-center gap-2" x-show="String(reqItem.status || '').toLowerCase() === 'pending' && String(reqItem.changeType || '').toLowerCase() === 'upgrade'" x-cloak>
+                                                <button type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold" @click="approveTierChangeRequest(reqItem)" :disabled="tierDecisionLoading">Approve</button>
+                                                <button type="button" class="px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-semibold" @click="declineTierChangeRequest(reqItem)" :disabled="tierDecisionLoading">Decline</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="px-4 py-6 text-xs text-slate-400 text-center" x-show="!tierChangeLoading && !tierChangeRequests.length" x-cloak>
+                            No tier change requests.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <div class="text-sm font-semibold text-slate-800">Overage requests</div>
+                            <div class="text-xs text-slate-400 mt-1">Approve or decline pay-per-use requests for exceeding limits.</div>
+                        </div>
+                        <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600" @click="loadOverageRequests()" :disabled="overageLoading">
+                            <span x-show="!overageLoading" x-cloak>Reload</span>
+                            <span x-show="overageLoading" x-cloak>Loading...</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-3 rounded-2xl border border-slate-100 overflow-hidden">
+                        <div class="px-4 py-2 bg-slate-50 border-b border-slate-100 text-xs text-slate-500 font-semibold uppercase">Requests</div>
+
+                        <div class="px-4 py-4 text-xs text-rose-600" x-show="overageError" x-cloak x-text="overageError"></div>
+
+                        <div class="divide-y divide-slate-100" x-show="overageRequests.length" x-cloak>
+                            <template x-for="reqItem in overageRequests" :key="reqItem.id">
+                                <div class="px-4 py-3">
+                                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                                        <div>
+                                            <div class="text-xs font-semibold text-slate-800" x-text="formatOverageHeadline(reqItem)"></div>
+                                            <div class="text-xs text-slate-500 mt-0.5" x-text="formatOverageMeta(reqItem)"></div>
+
+                                            <div class="text-xs text-slate-500 mt-1" x-show="reqItem.paymentMethod || reqItem.paymentReference" x-cloak>
+                                                <span class="font-semibold">Payment:</span>
+                                                <span x-text="formatPaymentMeta(reqItem)"></span>
+                                            </div>
+
+                                            <div class="text-xs text-slate-500 mt-1" x-show="reqItem.justification" x-cloak>
+                                                <span class="font-semibold">Justification:</span>
+                                                <span x-text="reqItem.justification"></span>
+                                            </div>
+
+                                            <div class="text-xs text-slate-500 mt-1" x-show="reqItem.approvalNotes" x-cloak>
+                                                <span class="font-semibold">Decision:</span>
+                                                <span x-text="reqItem.approvalNotes"></span>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-right">
+                                            <div class="text-xs text-slate-400" x-text="formatDateTime(reqItem.createdAt)"></div>
+
+                                            <div class="mt-2 inline-flex items-center gap-2" x-show="String(reqItem.status || '').toLowerCase() === 'pending'" x-cloak>
+                                                <button type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold" @click="approveOverageRequest(reqItem)" :disabled="overageDecisionLoading">Approve</button>
+                                                <button type="button" class="px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-xs font-semibold" @click="declineOverageRequest(reqItem)" :disabled="overageDecisionLoading">Decline</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="px-4 py-6 text-xs text-slate-400 text-center" x-show="!overageLoading && !overageRequests.length" x-cloak>
+                            No overage requests.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <div class="text-sm font-semibold text-slate-800">Customer Class</div>
+                            <div class="text-xs text-slate-400 mt-1">Assign pricing tier based on school segment (A=Elite, G=Budget).</div>
+                        </div>
+                        <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600" @click="loadCustomerClasses()" :disabled="customerClassLoading">
+                            <span x-show="!customerClassLoading" x-cloak>Reload</span>
+                            <span x-show="customerClassLoading" x-cloak>Loading...</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-3 rounded-2xl border border-slate-100 overflow-hidden">
+                        <div class="px-4 py-2 bg-slate-50 border-b border-slate-100 text-xs text-slate-500 font-semibold uppercase">Current Assignment</div>
+
+                        <div class="px-4 py-4" x-show="selectedSchool" x-cloak>
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-slate-800">
+                                        <span x-text="selectedSchool?.customerClass || 'No class assigned'"></span>
+                                        <span class="ml-2 px-2 py-1 rounded-full text-xs font-semibold"
+                                              :class="selectedSchool?.customerClassCode === 'A' ? 'bg-purple-100 text-purple-800' :
+                                                     selectedSchool?.customerClassCode === 'B' ? 'bg-blue-100 text-blue-800' :
+                                                     selectedSchool?.customerClassCode === 'C' ? 'bg-green-100 text-green-800' :
+                                                     selectedSchool?.customerClassCode === 'D' ? 'bg-yellow-100 text-yellow-800' :
+                                                     selectedSchool?.customerClassCode === 'E' ? 'bg-orange-100 text-orange-800' :
+                                                     selectedSchool?.customerClassCode === 'F' ? 'bg-red-100 text-red-800' :
+                                                     selectedSchool?.customerClassCode === 'G' ? 'bg-gray-100 text-gray-800' :
+                                                     'bg-slate-100 text-slate-600'"
+                                              x-text="selectedSchool?.customerClassCode || '—'"></span>
+                                    </div>
+                                    <div class="text-xs text-slate-500 mt-1">
+                                        <span>Multiplier: </span>
+                                        <span x-text="(selectedSchool?.customerClassMultiplier || 1.0) + 'x'"></span>
+                                        <span class="ml-2">•</span>
+                                        <span x-text="selectedSchool?.customerClassDescription || 'No description available'"></span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <select x-model="selectedCustomerClass" class="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white" title="Select customer class for school">
+                                        <option value="">Choose class...</option>
+                                        <template x-for="cls in customerClasses" :key="cls.id">
+                                            <option :value="cls.id" x-text="cls.class_code + ' - ' + cls.class_name"></option>
+                                        </template>
+                                    </select>
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+                                            @click="assignCustomerClass()" :disabled="!selectedCustomerClass">
+                                        Assign
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="px-4 py-6 text-xs text-slate-400 text-center" x-show="!selectedSchool" x-cloak>
+                            Select a school to manage customer class.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-5 py-4 border-t border-slate-100 flex justify-end">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button type="button" class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600" @click="openPricingModal()">Classes & Pricing</button>
+
+                    <button type="button" class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600" @click="goFullDetails()">Show full details</button>
+
+                    <button type="button" class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600" @click="confirmImpersonate()">Impersonate</button>
+
+                    <button type="button" class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600" @click="openTierModal()">Upgrade / Downgrade</button>
+
+                    <button type="button" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold" @click="extendTrial()">Extend trial (+7d)</button>
+
+                    <button type="button" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold" @click="reactivateSchool()">Reactivate</button>
+
+                    <button type="button" class="px-4 py-2 rounded-xl bg-rose-50 border border-rose-100 text-sm text-rose-600" @click="toggleBan()" x-text="(selectedSchool?.status || '').toLowerCase() === 'banned' ? 'Unban' : 'Ban'" aria-label="Toggle ban status for school"></button>
+
+                    <button type="button" class="px-4 py-2 rounded-xl bg-rose-600 text-white text-sm font-semibold" @click="deleteSchool()">Delete</button>
+
+                    <button type="button" class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600" @click="closeModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showTierModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div>
+                    <div class="text-sm font-semibold text-slate-800">Change tier</div>
+                    <div class="text-xs text-slate-400" x-text="selectedSchool?.schoolName || ''"></div>
+                </div>
+                <button type="button" class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" @click="closeTierModal()" aria-label="Close" title="Close">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="px-5 py-5 text-sm">
+                <label class="text-xs text-slate-500">Select tier</label>
+                <select x-model="tierSelection" class="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-white" aria-label="Select subscription tier">
+                    <option value="Growth">Growth</option>
+                    <option value="Pro">Pro</option>
+                    <option value="Ultimate">Ultimate</option>
+                </select>
+            </div>
+
+            <div class="px-5 py-4 border-t border-slate-100 flex justify-end gap-2">
+                <button type="button" class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600" @click="closeTierModal()">Cancel</button>
+                <button type="button" class="px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-semibold" @click="confirmChangeTier()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showPricingModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl border border-slate-100 max-h-[90vh] overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div>
+                    <div class="text-sm font-semibold text-slate-800">Classes & Pricing Management</div>
+                    <div class="text-xs text-slate-400" x-text="selectedSchool?.schoolName || ''"></div>
+                </div>
+                <button type="button" class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" @click="closePricingModal()" aria-label="Close" title="Close">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-5" x-show="selectedSchool" x-cloak>
+                <!-- Current Customer Class & Pricing -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4">Current Customer Class & Pricing</h3>
+                    <div class="bg-slate-50 rounded-xl p-4" x-show="!pricingLoading" x-cloak>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                                <div class="text-xs text-slate-500 mb-1">Customer Class</div>
+                                <div class="flex items-center gap-2">
+                                    <span x-show="!selectedSchool?.customerClassCode" class="px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">Not Assigned</span>
+                                    <span x-show="selectedSchool?.customerClassCode" class="px-2 py-1 rounded-full text-xs font-semibold"
+                                          :class="selectedSchool?.customerClassCode === 'A' ? 'bg-purple-100 text-purple-800' :
+                                                 selectedSchool?.customerClassCode === 'B' ? 'bg-blue-100 text-blue-800' :
+                                                 selectedSchool?.customerClassCode === 'C' ? 'bg-green-100 text-green-800' :
+                                                 selectedSchool?.customerClassCode === 'D' ? 'bg-yellow-100 text-yellow-800' :
+                                                 selectedSchool?.customerClassCode === 'E' ? 'bg-orange-100 text-orange-800' :
+                                                 selectedSchool?.customerClassCode === 'F' ? 'bg-red-100 text-red-800' :
+                                                 selectedSchool?.customerClassCode === 'G' ? 'bg-gray-100 text-gray-800' :
+                                                 'bg-slate-100 text-slate-600'"
+                                          x-text="selectedSchool?.customerClassCode"></span>
+                                    <span x-show="selectedSchool?.customerClass" class="text-sm font-medium text-slate-800" x-text="selectedSchool?.customerClass"></span>
+                                </div>
+                                <div class="text-xs text-slate-400 mt-1" x-text="selectedSchool?.customerClassDescription || 'No class assigned'"></div>
+                            </div>
+
+                            <div>
+                                <div class="text-xs text-slate-500 mb-1">Pricing Multiplier</div>
+                                <div class="text-lg font-semibold text-slate-800" x-text="selectedSchool?.customerClassMultiplier ? selectedSchool.customerClassMultiplier + 'x' : 'N/A'"></div>
+                                <div class="text-xs text-slate-400">Applied to all pricing</div>
+                            </div>
+
+                            <div>
+                                <div class="text-xs text-slate-500 mb-1">Pricing Visibility</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                                          :class="selectedSchool?.customerClassCode ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'"
+                                          x-text="selectedSchool?.customerClassCode ? 'Visible' : 'Hidden'"></span>
+                                </div>
+                                <div class="text-xs text-slate-400" x-text="selectedSchool?.customerClassCode ? 'School can see pricing' : 'Prices hidden until class assigned'"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-center py-8" x-show="pricingLoading" x-cloak>
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+                    </div>
+                </div>
+
+                <!-- Pricing Breakdown -->
+                <div class="mb-6" x-show="pricingData && selectedSchool?.customerClassCode" x-cloak>
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4">Pricing Breakdown</h3>
+                    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                        <div class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+                            <div class="text-sm font-medium text-slate-800">Subscription Tiers</div>
+                        </div>
+                        <div class="divide-y divide-slate-100">
+                            <template x-for="tier in pricingData?.tiers || []" :key="tier.id">
+                                <div class="px-4 py-3">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-slate-800" x-text="tier.displayName || tier.name"></div>
+                                            <div class="text-xs text-slate-500" x-text="tier.description"></div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-sm font-semibold text-slate-800" x-text="'ZMW ' + (tier.pricing?.finalMonthlyPrice || 0) + '/month'"></div>
+                                            <div class="text-xs text-slate-400" x-text="'ZMW ' + (tier.pricing?.finalAnnualPrice || 0) + '/year'"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assign Customer Class -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4">Assign Customer Class</h3>
+                    <div class="bg-white border border-slate-200 rounded-xl p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Select Customer Class</label>
+                                <select x-model="selectedCustomerClass" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" title="Select customer class to assign">
+                                    <option value="">Choose a class...</option>
+                                    <template x-for="cls in customerClasses" :key="cls.id">
+                                        <option :value="cls.id" x-text="cls.class_code + ' - ' + cls.class_name + ' (' + cls.price_multiplier + 'x)'"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button type="button" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
+                                        @click="assignCustomerClass()" :disabled="!selectedCustomerClass">
+                                    Assign Class
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Class Information -->
+                        <div x-show="selectedCustomerClass" class="bg-slate-50 rounded-xl p-4" x-cloak>
+                            <h4 class="font-medium text-slate-800 mb-2">Class Information</h4>
+                            <template x-for="cls in customerClasses" :key="cls.id">
+                                <div x-show="cls.id === selectedCustomerClass" x-cloak>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <div class="text-xs text-slate-500">Class Code</div>
+                                            <div class="text-sm font-medium" x-text="cls.class_code"></div>
+                                        </div>
+                                        <div>
+                                            <div class="text-xs text-slate-500">Price Multiplier</div>
+                                            <div class="text-sm font-medium" x-text="cls.price_multiplier + 'x'"></div>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <div class="text-xs text-slate-500">Target Market</div>
+                                            <div class="text-sm" x-text="cls.target_market || 'Not specified'"></div>
+                                        </div>
+                                        <div class="md:col-span-2">
+                                            <div class="text-xs text-slate-500">Requirements</div>
+                                            <div class="text-sm" x-text="cls.requirements || 'Not specified'"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All Available Classes -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4">Available Customer Classes</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <template x-for="cls in customerClasses" :key="cls.id">
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-1 rounded-full text-xs font-semibold"
+                                              :class="cls.class_code === 'A' ? 'bg-purple-100 text-purple-800' :
+                                                     cls.class_code === 'B' ? 'bg-blue-100 text-blue-800' :
+                                                     cls.class_code === 'C' ? 'bg-green-100 text-green-800' :
+                                                     cls.class_code === 'D' ? 'bg-yellow-100 text-yellow-800' :
+                                                     cls.class_code === 'E' ? 'bg-orange-100 text-orange-800' :
+                                                     cls.class_code === 'F' ? 'bg-red-100 text-red-800' :
+                                                     cls.class_code === 'G' ? 'bg-gray-100 text-gray-800' :
+                                                     'bg-slate-100 text-slate-600'"
+                                              x-text="cls.class_code"></span>
+                                        <span class="font-medium text-slate-800" x-text="cls.class_name"></span>
+                                    </div>
+                                    <div class="text-sm font-semibold text-slate-600" x-text="cls.price_multiplier + 'x'"></div>
+                                </div>
+                                <div class="text-xs text-slate-500 mb-2" x-text="cls.description"></div>
+                                <div class="text-xs text-slate-400" x-text="cls.target_market"></div>
+                            </div>
+                        </template>
+                    </div>
+                <!-- Payment Methods Configuration -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4">Payment Methods Configuration</h3>
+                    <div class="space-y-4">
+                        <template x-for="method in paymentMethods" :key="method.id">
+                            <div class="bg-white border border-slate-200 rounded-xl p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800" x-text="method.display_name"></span>
+                                        <span class="text-sm text-slate-600" x-text="method.description"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-slate-500" x-text="'Processing: ' + (method.processing_time_hours || 24) + 'h'"></span>
+                                        <span class="text-xs text-slate-500" x-text="'Fee: ' + (method.processing_fee || 0) + '%'"></span>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Instructions</label>
+                                        <textarea x-model="method.instructions"
+                                                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                                rows="4"
+                                                placeholder="Enter payment instructions..." title="Enter payment method instructions"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Account Details</label>
+                                        <textarea x-model="method.account_details_text"
+                                                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono text-xs"
+                                                rows="4"
+                                                placeholder="Account details in JSON format..." title="Enter account details in JSON format"></textarea>
+                                        <div class="text-xs text-slate-400 mt-1">JSON format for account numbers, names, etc.</div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Processing Fee (%)</label>
+                                        <input type="number" step="0.01" x-model="method.processing_fee"
+                                               class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" title="Enter processing fee percentage"></input>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Min Amount (ZMW)</label>
+                                        <input type="number" step="0.01" x-model="method.minimum_amount"
+                                               class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" title="Enter minimum amount in ZMW"></input>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Max Amount (ZMW)</label>
+                                        <input type="number" x-model="method.maximum_amount"
+                                               class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" title="Enter maximum amount in ZMW"></input>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Processing Time (hours)</label>
+                                        <input type="number" x-model="method.processing_time_hours"
+                                               class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" title="Enter processing time in hours"></input>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Contact Info</label>
+                                        <input type="text" x-model="method.contact_info"
+                                               class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                               placeholder="sepiopixel@gmail.com" title="Enter contact information"></input>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <label class="flex items-center gap-2 text-sm">
+                                            <input type="checkbox" x-model="method.is_active" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" title="Toggle payment method active status"></input>
+                                            <span class="text-slate-700">Active</span>
+                                        </label>
+                                    </div>
+                                    <button type="button" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
+                                            @click="updatePaymentMethod(method)">
+                                        Update Method
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="flex justify-center py-4" x-show="!paymentMethods || paymentMethods.length === 0" x-cloak>
+                        <div class="text-sm text-slate-500">Loading payment methods...</div>
+                    </div>
+                </div>
+                <button type="button" class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600" @click="closePricingModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function schoolsData() {
+            return {
+                sidebarOpen: false,
+                pageTitle: 'School Provisioning',
+                pageSubtitle: 'Schools lifecycle and onboarding',
+                loading: false,
+                error: '',
+                schools: [],
+                stats: { total: 0, active: 0, trial: 0, deactivated: 0 },
+                alerts: { trialsExpiringSoon: 0 },
+                filters: { search: '', status: 'all' },
+
+                suggestionsOpen: false,
+                suggestions: [],
+
+                showTierModal: false,
+                tierSelection: 'Growth',
+
+                tierChangeRequests: [],
+                tierChangeLoading: false,
+                tierChangeError: '',
+                tierDecisionLoading: false,
+
+                overageRequests: [],
+                overageLoading: false,
+                overageError: '',
+                overageDecisionLoading: false,
+
+                customerClasses: [],
+                customerClassLoading: false,
+                selectedCustomerClass: null,
+
+                showPricingModal: false,
+                pricingData: null,
+                pricingLoading: false,
+
+                paymentMethods: [],
+                paymentMethodsLoading: false,
+
+                init() {
+                    console.log('init called');
+                    // Load schools from API
+                    this.loadSchools().catch(err => {
+                        console.warn('Failed to load schools:', err);
+                        // Show error state instead of using sample data
+                        this.error = 'Failed to load schools data';
+                    });
+                },
+
+                exportSchoolsCsv() {
+                    console.log('exportSchoolsCsv called');
+                    try {
+                        if (!this.schools || this.schools.length === 0) {
+                            this.notify('No data to export', 'warning');
+                            return;
+                        }
+
+                        console.log('Exporting', this.schools.length, 'schools');
+                        const csvData = this.schools.map(school => ({
+                            'School': school.schoolName || 'Unnamed school',
+                            'Tier': this.formatTierName(school.subscriptionPlan),
+                            'Status': this.formatStatusName(school.status),
+                            'Pupils': school.currentPupils || 0,
+                            'Employees': school.currentTeachers || 0,
+                            'Subscription': this.formatSubscriptionRange(school)
+                        }));
+
+                        const headers = ['School', 'Tier', 'Status', 'Pupils', 'Employees', 'Subscription'];
+                        const csvContent = [
+                            headers.join(','),
+                            ...csvData.map(row => 
+                                headers.map(header => `"${row[header]}"`).join(',')
+                            )
+                        ].join('\n');
+
+                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                        const link = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        link.setAttribute('href', url);
+                        link.setAttribute('download', `schools_directory_${new Date().toISOString().split('T')[0]}.csv`);
+                        link.style.visibility = 'hidden';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        this.notify('School directory exported successfully', 'success');
+                    } catch (error) {
+                        console.error('Export failed:', error);
+                        this.notify('Export failed. Please try again.', 'error');
+                    }
+                },
+                printSchools() {
+                    console.log('printSchools called');
+                    try {
+                        if (!this.schools || this.schools.length === 0) {
+                            this.notify('No data to print', 'warning');
+                            return;
+                        }
+
+                        console.log('Printing', this.schools.length, 'schools');
+                        const printData = this.schools.map(school => ({
+                            'School': school.schoolName || 'Unnamed school',
+                            'Tier': this.formatTierName(school.subscriptionPlan),
+                            'Status': this.formatStatusName(school.status),
+                            'Pupils': school.currentPupils || 0,
+                            'Employees': school.currentTeachers || 0,
+                            'Subscription': this.formatSubscriptionRange(school)
+                        }));
+
+                        const printWindow = window.open('', '_blank');
+                        const htmlContent = `
+                            <html>
+                                <head>
+                                    <title>School Directory</title>
+                                    <style>
+                                        body { font-family: Arial, sans-serif; margin: 20px; }
+                                        h1 { text-align: center; margin-bottom: 30px; }
+                                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                                        th { background-color: #f2f2f2; font-weight: bold; }
+                                        @media print { body { margin: 10px; } }
+                                    </style>
+                                </head>
+                                <body>
+                                    <h1>School Directory - ${new Date().toLocaleDateString()}</h1>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>School</th>
+                                                <th>Tier</th>
+                                                <th>Status</th>
+                                                <th>Pupils</th>
+                                                <th>Employees</th>
+                                                <th>Subscription</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${printData.map(row => `
+                                                <tr>
+                                                    <td>${row.School}</td>
+                                                    <td>${row.Tier}</td>
+                                                    <td>${row.Status}</td>
+                                                    <td>${row.Pupils}</td>
+                                                    <td>${row.Employees}</td>
+                                                    <td>${row.Subscription}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                    <p style="text-align: center; color: #666; font-size: 12px;">
+                                        Generated on ${new Date().toLocaleString()} | Total: ${this.schools.length} schools
+                                    </p>
+                                </body>
+                            </html>
+                        `;
+                        
+                        printWindow.document.write(htmlContent);
+                        printWindow.document.close();
+                        printWindow.print();
+                        printWindow.close();
+                        
+                        this.notify('Print dialog opened', 'success');
+                    } catch (error) {
+                        console.error('Print failed:', error);
+                        this.notify('Print failed. Please try again.', 'error');
+                    }
+                },
+
+                notify(message, type) {
+                    console.log('notify called');
+                    try {
+                        if (window.shikolaButtons && typeof window.shikolaButtons.showNotification === 'function') {
+                            window.shikolaButtons.showNotification(message, type || 'info');
+                            return;
+                        }
+                    } catch (e) {}
+                },
+
+                formatTierName(plan) {
+                    const raw = (plan || '').toString().trim();
+                    if (!raw) return 'Trial';
+                    const lower = raw.toLowerCase();
+                    if (lower === 'pro') return 'Pro';
+                    return raw.charAt(0).toUpperCase() + raw.slice(1);
+                },
+
+                formatStatusName(status) {
+                    const raw = (status || '').toString().trim();
+                    if (!raw) return 'Active';
+                    return raw.toLowerCase() === 'active' ? 'Active' : 'Deactivated';
+                },
+
+                reviewOverrides() {
+                    console.log('reviewOverrides called');
+                    this.notify('Opening tier limit overrides...', 'info');
+                    // This would open a modal with override requests
+                    this.showPricingModal = true;
+                },
+
+                overrideTierLimit() {
+                    console.log('overrideTierLimit called');
+                    this.notify('Opening tier limit override...', 'info');
+                    // This would open the tier override modal
+                    this.showPricingModal = true;
+                },
+
+                goProvision() {
+                    window.location.href = 'provision-school.html';
+                },
+
+                goFullDetails() {
+                    if (!this.selectedSchool?.id) return;
+                    window.location.href = `school-details.html?id=${encodeURIComponent(this.selectedSchool.id)}`;
+                },
+
+                async loadStats() {
+                    if (!window.ShikolaAPI) return;
+                    try {
+                        const result = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/schools/stats');
+                        if (result.success && result.data) {
+                            this.stats = {
+                                total: Number(result.data.total || 0),
+                                active: Number(result.data.active || 0),
+                                trial: Number(result.data.trial || 0),
+                                deactivated: Number(result.data.deactivated || 0)
+                            };
+                        }
+                    } catch (_err) {}
+                },
+
+                async onSearchInput() {
+                    this.loadSchools();
+                    await this.loadSuggestions();
+                },
+
+                async loadSuggestions() {
+                    if (!window.ShikolaAPI) return;
+                    const q = (this.filters.search || '').trim();
+                    if (!q) {
+                        this.suggestions = [];
+                        this.suggestionsOpen = false;
+                        return;
+                    }
+                    try {
+                        const result = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/schools/suggestions', { q, limit: 8 });
+                        if (result.success) {
+                            this.suggestions = Array.isArray(result.data?.data) ? result.data.data : [];
+                            this.suggestionsOpen = this.suggestions.length > 0;
+                        }
+                    } catch (_err) {
+                        this.suggestions = [];
+                        this.suggestionsOpen = false;
+                    }
+                },
+
+                selectSuggestion(s) {
+                    this.filters.search = s.schoolName || s.email || '';
+                    this.suggestionsOpen = false;
+                    this.loadSchools();
+                },
+
+                formatDate(dateValue) {
+                    if (!dateValue) return '';
+                    try {
+                        const d = new Date(dateValue);
+                        if (Number.isNaN(d.getTime())) return '';
+                        return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+                    } catch (e) {
+                        return '';
+                    }
+                },
+
+                formatDateTime(dateValue) {
+                    if (!dateValue) return '';
+                    try {
+                        const d = new Date(dateValue);
+                        if (Number.isNaN(d.getTime())) return '';
+                        return d.toLocaleString();
+                    } catch (e) {
+                        return '';
+                    }
+                },
+
+                formatTierLabel(plan) {
+                    const raw = (plan || '').toString().trim();
+                    if (!raw) return '—';
+                    const lower = raw.toLowerCase();
+                    if (lower === 'pro') return 'Pro';
+                    return raw.charAt(0).toUpperCase() + raw.slice(1);
+                },
+
+                formatRequestHeadline(reqItem) {
+                    const from = this.formatTierLabel(reqItem.currentPlan);
+                    const to = this.formatTierLabel(reqItem.requestedPlan);
+                    const type = (reqItem.changeType || 'request').toString().toUpperCase();
+                    return `${type}: ${from} → ${to}`;
+                },
+
+                formatRequestMeta(reqItem) {
+                    const status = (reqItem.status || '—').toString();
+                    const by = reqItem.requestedByEmail ? ` • ${reqItem.requestedByEmail}` : '';
+                    const payment = reqItem.paymentStatus ? ` • payment ${reqItem.paymentStatus}` : '';
+                    return `Status: ${status}${payment}${by}`;
+                },
+
+                formatPaymentMeta(reqItem) {
+                    const method = reqItem.paymentMethod ? reqItem.paymentMethod : '—';
+                    const ref = reqItem.paymentReference ? ` • ref ${reqItem.paymentReference}` : '';
+                    return `${method}${ref}`;
+                },
+
+                async loadTierChangeRequests() {
+                    if (!window.ShikolaAPI) return;
+                    if (!this.selectedSchool?.id) {
+                        this.tierChangeRequests = [];
+                        return;
+                    }
+                    this.tierChangeLoading = true;
+                    this.tierChangeError = '';
+                    try {
+                        const result = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/subscription/tier-change-requests', {
+                            schoolId: this.selectedSchool.id,
+                            limit: 20,
+                            offset: 0
+                        });
+                        if (!result.success) {
+                            this.tierChangeRequests = [];
+                            this.tierChangeError = result.error || 'Failed to load requests.';
+                            return;
+                        }
+                        const list = Array.isArray(result.data?.data) ? result.data.data : [];
+                        this.tierChangeRequests = list;
+                    } catch (_err) {
+                        this.tierChangeRequests = [];
+                        this.tierChangeError = 'Failed to load requests.';
+                    } finally {
+                        this.tierChangeLoading = false;
+                    }
+                },
+
+                async approveTierChangeRequest(reqItem) {
+                    if (!window.ShikolaAPI) return;
+                    if (!reqItem?.id) return;
+                    if (!confirm('Approve this tier upgrade request?')) return;
+                    const notes = prompt('Approval notes (optional)', '') || '';
+                    this.tierDecisionLoading = true;
+                    try {
+                        const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/subscription/tier-change-requests/${reqItem.id}/approve`, { decisionNotes: notes });
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to approve request', 'error');
+                            return;
+                        }
+                        this.notify('Tier upgrade approved', 'success');
+                        if (result.data?.to && this.selectedSchool && this.selectedSchool.id === result.data.schoolId) {
+                            this.selectedSchool.subscriptionPlan = result.data.to;
+                        }
+                        this.tierChangeRequests = (this.tierChangeRequests || []).filter(r => r.id !== reqItem.id);
+                        await this.loadSchools();
+                    } catch (_err) {
+                        this.notify('Failed to approve request', 'error');
+                    } finally {
+                        this.tierDecisionLoading = false;
+                    }
+                },
+
+                async declineTierChangeRequest(reqItem) {
+                    if (!window.ShikolaAPI) return;
+                    if (!reqItem?.id) return;
+                    if (!confirm('Decline this tier upgrade request?')) return;
+                    const notes = prompt('Decline reason (optional)', '') || '';
+                    this.tierDecisionLoading = true;
+                    try {
+                        const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/subscription/tier-change-requests/${reqItem.id}/decline`, { decisionNotes: notes });
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to decline request', 'error');
+                            return;
+                        }
+                        this.notify('Request declined', 'success');
+                        this.tierChangeRequests = (this.tierChangeRequests || []).filter(r => r.id !== reqItem.id);
+                    } catch (_err) {
+                        this.notify('Failed to decline request', 'error');
+                    } finally {
+                        this.tierDecisionLoading = false;
+                    }
+                },
+
+                // Overage request methods
+                async loadOverageRequests() {
+                    if (!window.ShikolaAPI) return;
+                    if (!this.selectedSchool?.id) {
+                        this.overageRequests = [];
+                        return;
+                    }
+                    this.overageLoading = true;
+                    this.overageError = '';
+                    try {
+                        const result = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/overage-requests', {
+                            schoolId: this.selectedSchool.id,
+                            limit: 20,
+                            offset: 0
+                        });
+                        if (!result.success) {
+                            this.overageRequests = [];
+                            this.overageError = result.error || 'Failed to load overage requests.';
+                            return;
+                        }
+                        const list = Array.isArray(result.data?.data) ? result.data.data : [];
+                        this.overageRequests = list;
+                    } catch (_err) {
+                        this.overageRequests = [];
+                        this.overageError = 'Failed to load overage requests.';
+                    } finally {
+                        this.overageLoading = false;
+                    }
+                },
+
+                formatOverageHeadline(reqItem) {
+                    const featureName = reqItem.featureName || reqItem.feature_id || 'Unknown Feature';
+                    const amount = reqItem.requestedAmount || reqItem.requested_amount || 0;
+                    const unit = reqItem.unit || 'units';
+                    const type = reqItem.requestType || reqItem.request_type || 'overage';
+                    return `OVERAGE: ${amount} ${unit} of ${featureName}`;
+                },
+
+                formatOverageMeta(reqItem) {
+                    const status = (reqItem.status || '—').toString();
+                    const by = reqItem.requestedByEmail ? ` • ${reqItem.requestedByEmail}` : '';
+                    const urgency = reqItem.urgency ? ` • ${reqItem.urgency} priority` : '';
+                    return `Status: ${status}${urgency}${by}`;
+                },
+
+                async approveOverageRequest(reqItem) {
+                    if (!window.ShikolaAPI) return;
+                    if (!reqItem?.id) return;
+                    if (!confirm('Approve this overage request? This will allow the school to exceed their tier limits.')) return;
+
+                    const approvedAmount = prompt('Approved amount (leave empty to approve requested amount)', reqItem.requestedAmount || reqItem.requested_amount) || reqItem.requestedAmount || reqItem.requested_amount;
+                    const approvedPrice = prompt('Approved price per unit (leave empty to approve requested price)', reqItem.requestedPrice || reqItem.requested_price) || reqItem.requestedPrice || reqItem.requested_price;
+                    const approvalType = confirm('Make this a permanent allowance? (Cancel = temporary)') ? 'permanent' : 'temporary';
+                    const validUntil = approvalType === 'temporary' ? prompt('Valid until (optional ISO date, e.g. 2026-12-31)', '') : null;
+                    const specialTerms = prompt('Special terms or conditions (optional)', '') || null;
+                    const decisionNotes = prompt('Approval notes (optional)', '') || '';
+
+                    this.overageDecisionLoading = true;
+                    try {
+                        const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/approve-overage/${reqItem.id}`, {
+                            action: 'approve',
+                            approvedAmount: parseInt(approvedAmount),
+                            approvedPrice: parseFloat(approvedPrice),
+                            approvalType,
+                            validUntil,
+                            specialTerms,
+                            decisionNotes
+                        });
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to approve overage request', 'error');
+                            return;
+                        }
+                        this.notify('Overage request approved. School can now exceed limits.', 'success');
+                        this.overageRequests = (this.overageRequests || []).filter(r => r.id !== reqItem.id);
+                        await this.loadSchools(); // Refresh school data
+                    } catch (_err) {
+                        this.notify('Failed to approve overage request', 'error');
+                    } finally {
+                        this.overageDecisionLoading = false;
+                    }
+                },
+
+                async declineOverageRequest(reqItem) {
+                    if (!window.ShikolaAPI) return;
+                    if (!reqItem?.id) return;
+                    if (!confirm('Decline this overage request?')) return;
+                    const notes = prompt('Decline reason (optional)', '') || '';
+                    this.overageDecisionLoading = true;
+                    try {
+                        const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/approve-overage/${reqItem.id}`, {
+                            action: 'reject',
+                            decisionNotes: notes
+                        });
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to decline overage request', 'error');
+                            return;
+                        }
+                        this.notify('Overage request declined', 'success');
+                        this.overageRequests = (this.overageRequests || []).filter(r => r.id !== reqItem.id);
+                    } catch (_err) {
+                        this.notify('Failed to decline overage request', 'error');
+                    } finally {
+                        this.overageDecisionLoading = false;
+                    }
+                },
+
+                // Customer class management methods
+                async loadCustomerClasses() {
+                    if (!window.ShikolaAPI) return;
+                    this.customerClassLoading = true;
+                    try {
+                        const result = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/customer-classes');
+                        if (result.success) {
+                            this.customerClasses = Array.isArray(result.data) ? result.data : [];
+                        } else {
+                            this.customerClasses = [];
+                        }
+                    } catch (_err) {
+                        this.customerClasses = [];
+                    } finally {
+                        this.customerClassLoading = false;
+                    }
+                },
+
+                async assignCustomerClass() {
+                    if (!window.ShikolaAPI || !this.selectedSchool?.id || !this.selectedCustomerClass) return;
+
+                    try {
+                        const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/schools/${this.selectedSchool.id}/customer-class`, {
+                            classId: this.selectedCustomerClass
+                        });
+
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to assign customer class', 'error');
+                            return;
+                        }
+
+                        this.notify('Customer class assigned successfully', 'success');
+
+                        // Update the selected school with new customer class info
+                        if (result.data?.customerClass) {
+                            this.selectedSchool.customerClass = result.data.customerClass.class_name;
+                            this.selectedSchool.customerClassCode = result.data.customerClass.class_code;
+                            this.selectedSchool.customerClassMultiplier = result.data.customerClass.price_multiplier;
+                            this.selectedSchool.customerClassDescription = result.data.customerClass.description;
+                        }
+
+                        this.selectedCustomerClass = null;
+                        await this.loadSchools(); // Refresh school list
+                        await this.loadPricingData(); // Refresh pricing data
+
+                    } catch (_err) {
+                        this.notify('Failed to assign customer class', 'error');
+                    }
+                },
+
+                // Pricing modal methods
+                async openPricingModal() {
+                    if (!this.selectedSchool?.id) {
+                        this.notify('Please select a school first', 'error');
+                        return;
+                    }
+
+                    this.showPricingModal = true;
+                    await this.loadCustomerClasses();
+                    await this.loadPricingData();
+                    await this.loadPaymentMethods();
+                },
+
+                closePricingModal() {
+                    this.showPricingModal = false;
+                    this.pricingData = null;
+                    this.selectedCustomerClass = null;
+                },
+
+                async loadPricingData() {
+                    if (!this.selectedSchool?.id) return;
+
+                    this.pricingLoading = true;
+                    try {
+                        const result = await window.ShikolaAPI.get(`/api/frontend/portals/super-admin/schools/${this.selectedSchool.id}/pricing`);
+                        if (result.success) {
+                            this.pricingData = result.data;
+                        } else {
+                            this.pricingData = null;
+                        }
+                    } catch (_err) {
+                        this.pricingData = null;
+                    } finally {
+                        this.pricingLoading = false;
+                    }
+                },
+
+                // Payment methods methods
+                async loadPaymentMethods() {
+                    if (!window.ShikolaAPI) return;
+
+                    this.paymentMethodsLoading = true;
+                    try {
+                        const result = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/payment-methods');
+                        if (result.success) {
+                            // Add account_details_text for editing
+                            this.paymentMethods = (result.data || []).map(method => ({
+                                ...method,
+                                account_details_text: JSON.stringify(method.account_details || {}, null, 2)
+                            }));
+                        } else {
+                            this.paymentMethods = [];
+                        }
+                    } catch (_err) {
+                        this.paymentMethods = [];
+                    } finally {
+                        this.paymentMethodsLoading = false;
+                    }
+                },
+
+                async updatePaymentMethod(method) {
+                    if (!window.ShikolaAPI || !method?.method_name) return;
+
+                    try {
+                        // Parse account details JSON
+                        let accountDetails = {};
+                        try {
+                            accountDetails = JSON.parse(method.account_details_text || '{}');
+                        } catch (e) {
+                            this.notify('Invalid JSON format for account details', 'error');
+                            return;
+                        }
+
+                        const updateData = {
+                            displayName: method.display_name,
+                            description: method.description,
+                            instructions: method.instructions,
+                            accountDetails: accountDetails,
+                            processingFee: parseFloat(method.processing_fee) || 0,
+                            minimumAmount: parseFloat(method.minimum_amount) || 0,
+                            maximumAmount: method.maximum_amount ? parseFloat(method.maximum_amount) : null,
+                            processingTimeHours: parseInt(method.processing_time_hours) || 24,
+                            contactInfo: method.contact_info,
+                            isActive: method.is_active
+                        };
+
+                        const result = await window.ShikolaAPI.put(`/api/frontend/portals/super-admin/payment-methods/${method.method_name}`, updateData);
+
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to update payment method', 'error');
+                            return;
+                        }
+
+                        this.notify('Payment method updated successfully', 'success');
+
+                        // Update local data
+                        Object.assign(method, result.data);
+                        method.account_details_text = JSON.stringify(result.data.account_details || {}, null, 2);
+
+                    } catch (_err) {
+                        this.notify('Failed to update payment method', 'error');
+                    }
+                },
+
+                formatSubscriptionNote(school) {
+                    if (school.subscriptionStatus === 'Trial') return 'Trial active';
+                    if (school.subscriptionStatus === 'Expired') return 'Trial expired';
+                    if (school.subscriptionStatus) return school.subscriptionStatus;
+                    return '';
+                },
+
+                formatSubscriptionRange(school) {
+                    const start = this.formatDate(school.subscriptionStartDate);
+                    const end = this.formatDate(school.subscriptionEndDate);
+                    if (!start && !end) return '—';
+                    return `${start || '—'} → ${end || '—'}`;
+                },
+
+                computeStats(schools, total) {
+                    const list = Array.isArray(schools) ? schools : [];
+                    const stats = {
+                        total: total || list.length,
+                        active: 0,
+                        trial: 0,
+                        deactivated: 0
+                    };
+                    
+                    list.forEach(school => {
+                        const status = (school.status || '').toLowerCase();
+                        const subscriptionStatus = (school.subscriptionStatus || '').toLowerCase();
+                        
+                        if (status === 'active' || status === 'inactive') {
+                            if (status === 'active') {
+                                stats.active++;
+                            } else {
+                                stats.deactivated++;
+                            }
+                        } else if (subscriptionStatus === 'trial') {
+                            stats.trial++;
+                        } else if (status === 'active') {
+                            stats.active++;
+                        } else {
+                            stats.deactivated++;
+                        }
+                    });
+                    
+                    this.stats = stats;
+                },
+
+                showOfflineNotification(result) {
+                    if (result.cached) {
+                        if (window.shikolaButtons && typeof window.shikolaButtons.showNotification === 'function') {
+                            window.shikolaButtons.showNotification('Using cached school data - connection restored', 'info');
+                        }
+                    } else if (result.fallback) {
+                        if (window.shikolaButtons && typeof window.shikolaButtons.showNotification === 'function') {
+                            window.shikolaButtons.showNotification('Offline mode - limited school data available', 'warning');
+                        }
+                    }
+                },
+
+                async loadSchools() {
+                    console.log('loadSchools called');
+                    this.loading = true;
+                    this.error = '';
+
+                    // Clear any cached offline state first
+                    if (window.ShikolaOfflineManager) {
+                        window.ShikolaOfflineManager.clearCache('shikola_super_admin_schools');
+                    }
+
+                    const params = { limit: 200, offset: 0 };
+
+                    if (this.filters.search) {
+                        params.search = this.filters.search;
+                    }
+
+                    const status = this.filters.status;
+                    if (status === 'active') {
+                        params.status = 'active';
+                        params.subscriptionStatus = 'active';
+                    }
+                    if (status === 'trial') {
+                        params.subscriptionStatus = 'trial';
+                    }
+                    if (status === 'deactivated') {
+                        params.status = 'inactive';
+                    }
+
+                    console.log('API params:', params);
+                    console.log('window.ShikolaAPI available:', !!window.ShikolaAPI);
+
+                    try {
+                        // Try direct API call first
+                        let result;
+                        if (window.ShikolaAPI) {
+                            console.log('Making API call to schools endpoint');
+                            result = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/schools', params);
+                            console.log('API result:', result);
+                        } else {
+                            throw new Error('API client not available');
+                        }
+                        
+                        if (!result.success) {
+                            console.error('API call failed:', result);
+                            if (result.status === 401 || result.status === 403) {
+                                window.location.href = '../frontend/public/super-admin-signin.html';
+                                return;
+                            }
+                            this.error = result.error || 'Failed to load schools.';
+                            this.schools = [];
+                            this.computeStats([]);
+                            return;
+                        }
+
+                        const list = Array.isArray(result.data?.data) ? result.data.data : [];
+                        const total = Number(result.data?.pagination?.total);
+                        console.log('Loaded schools:', list.length, 'total:', total);
+                        this.schools = list;
+                        this.computeStats(list, total);
+                        this.maybeNotifyNewSchools(list);
+
+                        // Cache the successful response
+                        if (window.ShikolaOfflineManager) {
+                            window.ShikolaOfflineManager.setCache('shikola_super_admin_schools', result.data, 'SCHOOLS');
+                        }
+
+                    } catch (err) {
+                        console.error('API call exception:', err);
+                        // Fallback to offline manager if direct API fails
+                        console.warn('Direct API call failed, falling back to offline manager:', err);
+                        
+                        if (window.ShikolaOfflineManager) {
+                            console.log('Trying offline manager');
+                            result = await window.ShikolaOfflineManager.getSchools(params);
+                            if (!result.success) {
+                                console.error('Offline manager also failed:', result);
+                                this.error = result.error || 'Failed to load schools.';
+                                this.schools = [];
+                                this.computeStats([]);
+                                return;
+                            }
+
+                            const list = Array.isArray(result.data?.data) ? result.data.data : [];
+                            const total = Number(result.data?.pagination?.total);
+                            console.log('Loaded schools from offline:', list.length, 'total:', total);
+                            this.schools = list;
+                            this.computeStats(list, total);
+                            this.maybeNotifyNewSchools(list);
+
+                            // Show offline notification if needed
+                            if (result.offline || result.cached) {
+                                this.showOfflineNotification(result);
+                            }
+                        } else {
+                            console.error('No offline manager available');
+                            this.error = (err && err.message) ? err.message : 'Failed to load schools.';
+                            this.schools = [];
+                            this.computeStats([]);
+                        }
+                    } finally {
+                        this.loading = false;
+                        console.log('loadSchools finished, schools loaded:', this.schools.length);
+                    }
+                },
+
+                viewSchool(school) {
+                    this.selectedSchool = school;
+                    this.showSchoolModal = true;
+                    this.tierChangeRequests = [];
+                    this.tierChangeError = '';
+                    this.tierChangeLoading = false;
+                    this.tierDecisionLoading = false;
+                },
+
+                openTierModal() {
+                    const raw = String(this.selectedSchool?.subscriptionPlan || '').toLowerCase();
+                    const allowed = new Set(['growth', 'pro', 'ultimate']);
+                    this.tierSelection = allowed.has(raw) ? (raw.charAt(0).toUpperCase() + raw.slice(1)) : 'Growth';
+                    this.showTierModal = true;
+                },
+
+                closeTierModal() {
+                    this.showTierModal = false;
+                },
+
+                async confirmChangeTier() {
+                    if (!this.selectedSchool?.id) return;
+                    if (!confirm(`Confirm change tier to ${this.tierSelection}?`)) return;
+                    try {
+                        const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/schools/${this.selectedSchool.id}/change-tier`, { subscriptionPlan: this.tierSelection });
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to change tier', 'error');
+                            return;
+                        }
+                        this.notify('Tier updated', 'success');
+                        await this.loadSchools();
+                        this.closeTierModal();
+                    } catch (_err) {
+                        this.notify('Failed to change tier', 'error');
+                    }
+                },
+
+                async extendTrial() {
+                    if (!this.selectedSchool?.id) return;
+                    if (!confirm('Extend trial by 7 days (max 7-day extension over 21-day trial)?')) return;
+                    try {
+                        const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/schools/${this.selectedSchool.id}/extend-trial`, {});
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to extend trial', 'error');
+                            return;
+                        }
+                        this.notify('Trial extended', 'success');
+                        await this.loadSchools();
+                    } catch (_err) {
+                        this.notify('Failed to extend trial', 'error');
+                    }
+                },
+
+                async reactivateSchool() {
+                    if (!this.selectedSchool?.id) return;
+                    if (!confirm('Reactivate this school account?')) return;
+                    try {
+                        const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/schools/${this.selectedSchool.id}/reactivate`, {});
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to reactivate', 'error');
+                            return;
+                        }
+                        this.notify('School reactivated', 'success');
+                        await this.loadSchools();
+                    } catch (_err) {
+                        this.notify('Failed to reactivate', 'error');
+                    }
+                },
+
+                async toggleBan() {
+                    if (!this.selectedSchool?.id) return;
+                    const status = String(this.selectedSchool?.status || '').toLowerCase();
+                    if (status === 'banned') {
+                        if (!confirm('Unban this school?')) return;
+                        try {
+                            const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/schools/${this.selectedSchool.id}/unban`, {});
+                            if (!result.success) {
+                                this.notify(result.error || 'Failed to unban', 'error');
+                                return;
+                            }
+                            this.notify('School unbanned', 'success');
+                            await this.loadSchools();
+                        } catch (_err) {
+                            this.notify('Failed to unban', 'error');
+                        }
+                        return;
+                    }
+
+                    const banType = prompt('Ban type: temporary or permanent', 'temporary');
+                    if (!banType) return;
+                    const reason = prompt('Reason for ban (required)', '');
+                    if (!reason) {
+                        this.notify('Ban reason is required', 'error');
+                        return;
+                    }
+                    let until = null;
+                    if (String(banType).toLowerCase() === 'temporary') {
+                        until = prompt('Ban until (optional ISO date, e.g. 2027-01-31)', '');
+                    }
+                    if (!confirm('Confirm ban?')) return;
+                    try {
+                        const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/schools/${this.selectedSchool.id}/ban`, { type: banType, reason, until });
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to ban', 'error');
+                            return;
+                        }
+                        this.notify('School banned', 'success');
+                        await this.loadSchools();
+                    } catch (_err) {
+                        this.notify('Failed to ban', 'error');
+                    }
+                },
+
+                async deleteSchool() {
+                    if (!this.selectedSchool?.id) return;
+                    if (!confirm('Delete this school permanently? This cannot be undone.')) return;
+                    try {
+                        const result = await window.ShikolaAPI.del(`/api/frontend/portals/super-admin/schools/${this.selectedSchool.id}`);
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to delete school', 'error');
+                            return;
+                        }
+                        this.notify('School deleted', 'success');
+                        this.closeModal();
+                        await this.loadSchools();
+                    } catch (_err) {
+                        this.notify('Failed to delete school', 'error');
+                    }
+                },
+
+                async confirmImpersonate() {
+                    if (!this.selectedSchool?.id) return;
+                    if (!confirm(`Impersonate ${this.selectedSchool.schoolName || 'this school'}?`)) return;
+                    try {
+                        const result = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/schools/${this.selectedSchool.id}/impersonate`, {});
+                        if (!result.success) {
+                            this.notify(result.error || 'Failed to impersonate', 'error');
+                            return;
+                        }
+
+                        if (result.data?.token) {
+                            localStorage.setItem('authToken', result.data.token);
+                        }
+                        if (window.shikolaAuth && result.data?.user) {
+                            window.shikolaAuth.setSession({
+                                id: result.data.user.id,
+                                name: (result.data.user.email || '').split('@')[0] || 'User',
+                                email: result.data.user.email,
+                                role: result.data.user.role,
+                                avatar: 'fas fa-user-shield'
+                            }, 'school-admin', result.data.sessionId);
+                        }
+                        window.location.href = '../frontend/portals/school-admin/dashboard.html';
+                    } catch (_err) {
+                        this.notify('Failed to impersonate', 'error');
+                    }
+                },
+
+                maybeNotifyNewSchools(schools) {
+                    // This method can be used to notify about newly registered schools
+                    // For now, it's a placeholder that can be extended later
+                    const list = Array.isArray(schools) ? schools : [];
+                    if (list.length === 0) return;
+                    
+                    // Check if there are any new schools (e.g., created in last 24 hours)
+                    const now = new Date();
+                    const yesterday = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+                    
+                    const newSchools = list.filter(school => {
+                        const createdAt = school.createdAt || school.created_at;
+                        if (!createdAt) return false;
+                        try {
+                            const createdDate = new Date(createdAt);
+                            return createdDate > yesterday;
+                        } catch (e) {
+                            return false;
+                        }
+                    });
+                    
+                    if (newSchools.length > 0) {
+                        this.notify(`${newSchools.length} new school${newSchools.length > 1 ? 's' : ''} registered in the last 24 hours`, 'info');
+                    }
+                },
+
+                closeModal() {
+                    this.showSchoolModal = false;
+                    this.selectedSchool = null;
+                    this.tierChangeRequests = [];
+                    this.tierChangeError = '';
+                    this.tierChangeLoading = false;
+                    this.tierDecisionLoading = false;
+                }
+            };
+        }
+    </script>
+
+    <script>
+        // Register Alpine.js component
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('schoolsData', schoolsData);
+        });
+    </script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

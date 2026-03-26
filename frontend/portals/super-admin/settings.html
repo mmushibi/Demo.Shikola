@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Shikola</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    
+    <!-- Core Scripts -->
+    <script src="/config/config.js"></script>
+    <script src="/shared-assets/js/shared-auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="/shared-assets/js/shared-api-client.js"></script>
+    <script src="/shared-assets/js/shared-realtime-sync.js"></script>
+    <script src="super-admin-offline-manager.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="/shared-assets/js/shared-notifications.js" defer></script>
+    <script src="/shared-assets/js/shared-export-print.js" defer></script>
+    
+    <!-- Icons -->
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/frontend/assets/css/styles.css">
+</head>
+<body class="dashboard-page super-admin-page">
+    <div x-data="settingsData()" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-8 w-full">
+            <aside class="flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex items-center gap-3 mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-15 rounded-2xl object-cover">
+                    <div>
+                        <div class="text-sm text-slate-400">Console</div>
+                    </div>
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Console</span>
+                    </a>
+                    
+                    <a href="schools.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-school"></i></span>
+                        <span class="flex-1">Schools</span>
+                    </a>
+                    
+                    <a href="users-and-roles.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-users"></i></span>
+                        <span class="flex-1">Users & Roles</span>
+                    </a>
+                    
+                    <a href="create-user.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-plus"></i></span>
+                        <span class="flex-1">Create Users</span>
+                    </a>
+                    
+                    <a href="global-user-search.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-search"></i></span>
+                        <span class="flex-1">Global Search</span>
+                    </a>
+                    
+                    <a href="payments-coupons.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-ticket-alt"></i></span>
+                        <span class="flex-1">Payments & Coupons</span>
+                    </a>
+                    
+                    <a href="subscriptions.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-layer-group"></i></span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    
+                    <a href="plans.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">Plans & Events</span>
+                    </a>
+                    
+                    <a href="activity-log.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="flex-1">Activity Log</span>
+                    </a>
+                    
+                    <a href="system-health.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-heartbeat"></i></span>
+                        <span class="flex-1">System Health</span>
+                    </a>
+                    
+                    <a href="settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 text-orange-600 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-gear"></i></span>
+                        <span class="font-medium flex-1">Settings</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center mt-6 px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium w-full justify-center">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="flex-1 w-full px-6 py-6 pl-72">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl lg:text-3xl font-semibold text-slate-800">Platform Settings</h1>
+                        <p class="text-sm text-slate-400 mt-1">Configure system-wide preferences and policies</p>
+                    </div>
+                    <div x-show="syncStatus" x-transition class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" 
+                         :class="{
+                            'bg-emerald-50 text-emerald-700': syncStatus && syncStatus.status === 'online',
+                            'bg-amber-50 text-amber-700': syncStatus && syncStatus.status === 'recovering',
+                            'bg-slate-50 text-slate-500': syncStatus && syncStatus.status === 'offline'
+                         }">
+                        <i x-show="syncStatus && syncStatus.icon" :class="syncStatus && syncStatus.icon" class="text-xs"></i>
+                        <span x-text="syncStatus && syncStatus.message"></span>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <!-- Settings Navigation -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+                            <div class="text-sm font-semibold text-slate-800 mb-4">Settings Categories</div>
+                            <nav class="space-y-1 text-xs">
+                                <button type="button" @click="activeSection = 'general'" 
+                                        :class="activeSection === 'general' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'text-slate-600 hover:bg-slate-50'"
+                                        class="w-full text-left px-3 py-2 rounded-xl border border-transparent transition">
+                                    <i class="fas fa-cog w-4 text-center mr-2"></i>
+                                    General
+                                </button>
+                                <button type="button" @click="activeSection = 'security'" 
+                                        :class="activeSection === 'security' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'text-slate-600 hover:bg-slate-50'"
+                                        class="w-full text-left px-3 py-2 rounded-xl border border-transparent transition">
+                                    <i class="fas fa-shield-halved w-4 text-center mr-2"></i>
+                                    Security
+                                </button>
+                                <button type="button" @click="activeSection = 'notifications'" 
+                                        :class="activeSection === 'notifications' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'text-slate-600 hover:bg-slate-50'"
+                                        class="w-full text-left px-3 py-2 rounded-xl border border-transparent transition">
+                                    <i class="fas fa-bell w-4 text-center mr-2"></i>
+                                    Notifications
+                                </button>
+                                <button type="button" @click="activeSection = 'backup'" 
+                                        :class="activeSection === 'backup' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'text-slate-600 hover:bg-slate-50'"
+                                        class="w-full text-left px-3 py-2 rounded-xl border border-transparent transition">
+                                    <i class="fas fa-database w-4 text-center mr-2"></i>
+                                    Backup & Recovery
+                                </button>
+                                <button type="button" @click="activeSection = 'maintenance'" 
+                                        :class="activeSection === 'maintenance' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'text-slate-600 hover:bg-slate-50'"
+                                        class="w-full text-left px-3 py-2 rounded-xl border border-transparent transition">
+                                    <i class="fas fa-tools w-4 text-center mr-2"></i>
+                                    Maintenance
+                                </button>
+                                <button type="button" @click="activeSection = 'api'" 
+                                        :class="activeSection === 'api' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'text-slate-600 hover:bg-slate-50'"
+                                        class="w-full text-left px-3 py-2 rounded-xl border border-transparent transition">
+                                    <i class="fas fa-code w-4 text-center mr-2"></i>
+                                    API Configuration
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+
+                    <!-- Settings Content -->
+                    <div class="lg:col-span-3">
+                        <!-- General Settings -->
+                        <div x-show="activeSection === 'general'" x-transition class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">Platform Configuration</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Platform Name</label>
+                                            <input type="text" x-model="settings.general.platformName" 
+                                                   title="Enter platform name"
+                                                   placeholder="Enter platform name"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Default Timezone</label>
+                                            <select x-model="settings.general.defaultTimezone" 
+                                                    title="Select default timezone"
+                                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                                <option value="Africa/Lusaka">Africa/Lusaka</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Default Currency</label>
+                                            <select x-model="settings.general.defaultCurrency" 
+                                                    title="Select default currency"
+                                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                                <option value="ZMW">ZMW - Zambian Kwacha</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Session Timeout (minutes)</label>
+                                            <input type="number" x-model="settings.general.sessionTimeout" 
+                                                   title="Enter session timeout in minutes"
+                                                   placeholder="Enter session timeout"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Platform Version</label>
+                                            <input type="text" x-model="settings.general.version" readonly
+                                                   title="Platform version"
+                                                   placeholder="Platform version"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 text-slate-600">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Platform Description</label>
+                                        <textarea x-model="settings.general.platformDescription" rows="3"
+                                                  title="Enter platform description"
+                                                  placeholder="Enter platform description"
+                                                  class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">Registration Settings</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-slate-700">Allow Self-Registration</div>
+                                            <div class="text-slate-500">Enable new schools to register without approval</div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="settings.general.allowSelfRegistration" 
+                                                   title="Allow self-registration"
+                                                   class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-slate-700">Require Email Verification</div>
+                                            <div class="text-slate-500">New users must verify email addresses</div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="settings.general.requireEmailVerification" 
+                                                   title="Require email verification"
+                                                   class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Default Subscription Plan</label>
+                                        <select x-model="settings.general.defaultPlan" 
+                                                title="Select default subscription plan"
+                                                class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                            <option value="trial">Trial</option>
+                                            <option value="growth">Growth</option>
+                                            <option value="professional">Professional</option>
+                                            <option value="ultimate">Ultimate</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Security Settings -->
+                        <div x-show="activeSection === 'security'" x-transition class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">Password Policy</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Minimum Password Length</label>
+                                            <input type="number" x-model="settings.security.minPasswordLength" 
+                                                   title="Enter minimum password length"
+                                                   placeholder="Enter minimum length"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Password Expiry (days)</label>
+                                            <input type="number" x-model="settings.security.passwordExpiry" 
+                                                   title="Enter password expiry in days"
+                                                   placeholder="Enter expiry days"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <div class="font-medium text-slate-700">Require Uppercase Letters</div>
+                                                <div class="text-slate-500">Passwords must contain uppercase letters</div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" x-model="settings.security.requireUppercase" title="Require uppercase letters" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                            </label>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <div class="font-medium text-slate-700">Require Numbers</div>
+                                                <div class="text-slate-500">Passwords must contain numbers</div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" x-model="settings.security.requireNumbers" title="Require numbers in password" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                            </label>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <div class="font-medium text-slate-700">Require Special Characters</div>
+                                                <div class="text-slate-500">Passwords must contain special characters</div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" x-model="settings.security.requireSpecialChars" title="Require special characters in password" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">Two-Factor Authentication</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-slate-700">Enable 2FA for Admins</div>
+                                            <div class="text-slate-500">Require two-factor authentication for admin accounts</div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="settings.security.enable2FA" title="Enable 2FA for admins" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-slate-700">Enable 2FA for Teachers</div>
+                                            <div class="text-slate-500">Require two-factor authentication for teacher accounts</div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="settings.security.enable2FATeachers" title="Enable 2FA for teachers" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">Change Password</div>
+                                <div class="space-y-4 text-xs">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Current Password</label>
+                                        <input type="password" x-model="passwordChange.current" 
+                                               title="Enter current password"
+                                               placeholder="Enter current password"
+                                               class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">New Password</label>
+                                            <input type="password" x-model="passwordChange.new" 
+                                                   title="Enter new password"
+                                                   placeholder="Enter new password"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Confirm New Password</label>
+                                            <input type="password" x-model="passwordChange.confirm" 
+                                                   title="Confirm new password"
+                                                   placeholder="Confirm new password"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-xs text-slate-500">
+                                            Password must be at least <span x-text="settings.security.minPasswordLength"></span> characters
+                                        </div>
+                                        <button type="button" @click="changePassword()" 
+                                                class="px-4 py-2 rounded-xl bg-orange-500 text-white text-xs font-semibold hover:bg-orange-600 transition">
+                                            Change Password
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notification Settings -->
+                        <div x-show="activeSection === 'notifications'" x-transition class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">Email Configuration</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">SMTP Server</label>
+                                            <input type="text" x-model="settings.notifications.smtpServer" 
+                                                   title="SMTP server address"
+                                                   placeholder="Enter SMTP server"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">SMTP Port</label>
+                                            <input type="number" x-model="settings.notifications.smtpPort" 
+                                                   title="SMTP port number"
+                                                   placeholder="Enter SMTP port"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">SMTP Username</label>
+                                            <input type="text" x-model="settings.notifications.smtpUsername" 
+                                                   title="SMTP username"
+                                                   placeholder="Enter SMTP username"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">SMTP Password</label>
+                                            <input type="password" x-model="settings.notifications.smtpPassword" 
+                                                   title="SMTP password"
+                                                   placeholder="Enter SMTP password"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-slate-700">Use TLS</div>
+                                            <div class="text-slate-500">Enable TLS encryption for SMTP</div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="settings.notifications.useTLS" title="Enable TLS encryption" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">Notification Preferences</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <div class="font-medium text-slate-700">Account Creation Notifications</div>
+                                                <div class="text-slate-500">Notify when new accounts are created</div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" x-model="settings.notifications.accountCreation" title="Enable account creation notifications" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                            </label>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <div class="font-medium text-slate-700">Subscription Renewal Reminders</div>
+                                                <div class="text-slate-500">Send renewal reminders before expiry</div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" x-model="settings.notifications.renewalReminders" title="Enable renewal reminders" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                            </label>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <div class="font-medium text-slate-700">System Alerts</div>
+                                                <div class="text-slate-500">Critical system notifications</div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" x-model="settings.notifications.systemAlerts" title="Enable system alerts" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Backup Settings -->
+                        <div x-show="activeSection === 'backup'" x-transition class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">Automated Backups</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-slate-700">Enable Automated Backups</div>
+                                            <div class="text-slate-500">Schedule regular database backups</div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="settings.backup.enabled" title="Enable automated backups" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                        </label>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Backup Frequency</label>
+                                            <select x-model="settings.backup.frequency" 
+                                                    title="Select backup frequency"
+                                                    class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                                <option value="daily">Daily</option>
+                                                <option value="weekly">Weekly</option>
+                                                <option value="monthly">Monthly</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Retention Period (days)</label>
+                                            <input type="number" x-model="settings.backup.retention" 
+                                                   title="Enter retention period in days"
+                                                   placeholder="Enter retention days"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Backup Storage Location</label>
+                                        <input type="text" x-model="settings.backup.storageLocation" 
+                                               title="Enter backup storage location"
+                                               placeholder="/backups/shikola"
+                                               class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">Backup Actions</div>
+                                <div class="flex flex-wrap gap-3 text-xs">
+                                    <button type="button" @click="createBackup()" 
+                                            class="px-4 py-2 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition">
+                                        <i class="fas fa-download mr-2"></i>
+                                        Create Backup Now
+                                    </button>
+                                    <button type="button" @click="restoreBackup()" 
+                                            class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition">
+                                        <i class="fas fa-upload mr-2"></i>
+                                        Restore from Backup
+                                    </button>
+                                    <button type="button" @click="downloadBackup()" 
+                                            class="px-4 py-2 rounded-xl bg-sky-500 text-white font-semibold hover:bg-sky-600 transition">
+                                        <i class="fas fa-file-download mr-2"></i>
+                                        Download Latest
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Maintenance Settings -->
+                        <div x-show="activeSection === 'maintenance'" x-transition class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">System Maintenance</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-slate-700">Enable Maintenance Mode</div>
+                                            <div class="text-slate-500">Temporarily disable user access</div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="settings.maintenance.enabled" title="Enable maintenance mode" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-700 mb-1">Maintenance Message</label>
+                                        <textarea x-model="settings.maintenance.message" rows="3" 
+                                                  title="Enter maintenance message"
+                                                  placeholder="System is under maintenance. Please try again later."
+                                                  class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Scheduled Start</label>
+                                            <input type="datetime-local" x-model="settings.maintenance.scheduledStart" 
+                                                   title="Select scheduled start time"
+                                                   placeholder="Select start time"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Scheduled End</label>
+                                            <input type="datetime-local" x-model="settings.maintenance.scheduledEnd" 
+                                                   title="Select scheduled end time"
+                                                   placeholder="Select end time"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">System Cleanup</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-slate-700">Auto Clean Logs</div>
+                                            <div class="text-slate-500">Automatically clean old system logs</div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="settings.maintenance.autoCleanLogs" title="Enable auto clean logs" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                        </label>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Log Retention (days)</label>
+                                            <input type="number" x-model="settings.maintenance.logRetention" 
+                                                   title="Enter log retention period in days"
+                                                   placeholder="Enter log retention days"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">Cache Cleanup Interval (hours)</label>
+                                            <input type="number" x-model="settings.maintenance.cacheCleanup" 
+                                                   title="Enter cache cleanup interval in hours"
+                                                   placeholder="Enter cache cleanup hours"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API Settings -->
+                        <div x-show="activeSection === 'api'" x-transition class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">API Configuration</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">API Rate Limit (requests/hour)</label>
+                                            <input type="number" x-model="settings.api.rateLimit" 
+                                                   title="Enter API rate limit"
+                                                   placeholder="Enter rate limit"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-slate-700 mb-1">API Version</label>
+                                            <input type="text" x-model="settings.api.version" readonly
+                                                   title="API version"
+                                                   placeholder="API version"
+                                                   class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 text-slate-600">
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                            <div class="font-medium text-slate-700">Require API Key</div>
+                                            <div class="text-slate-500">Require API key for all endpoints</div>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" x-model="settings.api.requireKey" title="Require API key" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div class="text-sm font-semibold text-slate-800 mb-4">API Keys</div>
+                                <div class="space-y-4 text-xs">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="font-medium text-slate-700">Generate New API Key</div>
+                                            <div class="text-slate-500">Create a new API key for external access</div>
+                                        </div>
+                                        <button type="button" @click="generateApiKey()" 
+                                                class="px-3 py-1.5 rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600 transition">
+                                            Generate
+                                        </button>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <template x-for="key in apiKeys" :key="key.id">
+                                            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+                                                <div>
+                                                    <div class="font-medium text-slate-700" x-text="key.name"></div>
+                                                    <div class="text-slate-500" x-text="key.key"></div>
+                                                    <div class="text-slate-400 text-xs" x-text="'Created: ' + formatDate(key.createdAt)"></div>
+                                                </div>
+                                                <button type="button" @click="deleteApiKey(key.id)" 
+                                                        class="text-red-500 hover:text-red-600">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Actions -->
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                            <div class="flex flex-wrap items-center justify-between gap-4">
+                                <div class="text-xs text-slate-500">
+                                    Last updated: <span x-text="formatDate(settings.lastUpdated)"></span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <button type="button" @click="resetSettings()" 
+                                            class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200 transition">
+                                        <i class="fas fa-undo mr-2"></i>
+                                        Reset to Defaults
+                                    </button>
+                                    <button type="button" @click="saveSettings()" 
+                                            class="px-4 py-2 rounded-xl bg-orange-500 text-white text-xs font-semibold hover:bg-orange-600 transition">
+                                        <i class="fas fa-save mr-2"></i>
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function settingsData() {
+            return {
+                activeSection: 'general',
+                loading: false,
+                saving: false,
+                syncStatus: null,
+                apiKeys: [],
+                passwordChange: {
+                    current: '',
+                    new: '',
+                    confirm: ''
+                },
+                settings: {
+                    general: {
+                        platformName: 'Shikola',
+                        defaultTimezone: 'Africa/Lusaka',
+                        defaultCurrency: 'ZMW',
+                        sessionTimeout: 120,
+                        platformDescription: 'Comprehensive school management platform',
+                        allowSelfRegistration: false,
+                        requireEmailVerification: true,
+                        defaultPlan: 'trial',
+                        version: '1.2',
+                        lastUpdated: new Date().toISOString()
+                    },
+                    security: {
+                        minPasswordLength: 8,
+                        passwordExpiry: 90,
+                        requireUppercase: true,
+                        requireNumbers: true,
+                        requireSpecialChars: true,
+                        enable2FA: false,
+                        enable2FATeachers: false
+                    },
+                    notifications: {
+                        smtpServer: '',
+                        smtpPort: 587,
+                        smtpUsername: '',
+                        smtpPassword: '',
+                        useTLS: true,
+                        accountCreation: true,
+                        renewalReminders: true,
+                        systemAlerts: true
+                    },
+                    backup: {
+                        enabled: true,
+                        frequency: 'daily',
+                        retention: 30,
+                        storageLocation: '/backups/shikola'
+                    },
+                    maintenance: {
+                        enabled: false,
+                        message: 'System is under maintenance. Please try again later.',
+                        scheduledStart: '',
+                        scheduledEnd: '',
+                        autoCleanLogs: true,
+                        logRetention: 90,
+                        cacheCleanup: 24
+                    },
+                    api: {
+                        rateLimit: 1000,
+                        version: 'v1',
+                        enableDocs: true,
+                        requireKey: true
+                    }
+                },
+
+                init() {
+                    this.loadSettings();
+                    this.loadApiKeys();
+                    this.initializeSyncStatus();
+                },
+
+                async loadSettings() {
+                    this.loading = true;
+                    try {
+                        // Simulate API call to load settings
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        // Settings would be loaded from API here
+                    } catch (error) {
+                        console.error('Failed to load settings:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async loadApiKeys() {
+                    try {
+                        // Simulate API call to load API keys
+                        this.apiKeys = [
+                            {
+                                id: 1,
+                                name: 'Mobile App Key',
+                                key: 'sk_test_1234567890abcdef',
+                                createdAt: new Date('2024-01-15').toISOString()
+                            }
+                        ];
+                    } catch (error) {
+                        console.error('Failed to load API keys:', error);
+                    }
+                },
+
+                async saveSettings() {
+                    this.saving = true;
+                    try {
+                        // Simulate API call to save settings
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        this.settings.general.lastUpdated = new Date().toISOString();
+                        
+                        // Show success notification
+                        if (window.showNotification) {
+                            window.showNotification('Settings saved successfully', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Failed to save settings:', error);
+                        if (window.showNotification) {
+                            window.showNotification('Failed to save settings', 'error');
+                        }
+                    } finally {
+                        this.saving = false;
+                    }
+                },
+
+                async resetSettings() {
+                    if (confirm('Are you sure you want to reset all settings to defaults? This action cannot be undone.')) {
+                        try {
+                            // Reset to default values
+                            await this.loadSettings();
+                            if (window.showNotification) {
+                                window.showNotification('Settings reset to defaults', 'success');
+                            }
+                        } catch (error) {
+                            console.error('Failed to reset settings:', error);
+                        }
+                    }
+                },
+
+                async createBackup() {
+                    try {
+                        if (window.showNotification) {
+                            window.showNotification('Creating backup...', 'info');
+                        }
+                        // Simulate backup creation
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        window.showNotification('Backup created successfully', 'success');
+                    } catch (error) {
+                        console.error('Failed to create backup:', error);
+                        window.showNotification('Failed to create backup', 'error');
+                    }
+                },
+
+                async restoreBackup() {
+                    if (confirm('Are you sure you want to restore from backup? This will overwrite current data.')) {
+                        try {
+                            if (window.showNotification) {
+                                window.showNotification('Restoring from backup...', 'info');
+                            }
+                            // Simulate backup restoration
+                            await new Promise(resolve => setTimeout(resolve, 3000));
+                            window.showNotification('Backup restored successfully', 'success');
+                        } catch (error) {
+                            console.error('Failed to restore backup:', error);
+                            window.showNotification('Failed to restore backup', 'error');
+                        }
+                    }
+                },
+
+                async downloadBackup() {
+                    try {
+                        // Simulate file download
+                        window.showNotification('Downloading latest backup...', 'info');
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        window.showNotification('Backup downloaded successfully', 'success');
+                    } catch (error) {
+                        console.error('Failed to download backup:', error);
+                        window.showNotification('Failed to download backup', 'error');
+                    }
+                },
+
+                async changePassword() {
+                    try {
+                        // Validate passwords
+                        if (!this.passwordChange.current || !this.passwordChange.new || !this.passwordChange.confirm) {
+                            window.showNotification('Please fill in all password fields', 'error');
+                            return;
+                        }
+                        
+                        if (this.passwordChange.new !== this.passwordChange.confirm) {
+                            window.showNotification('New passwords do not match', 'error');
+                            return;
+                        }
+                        
+                        if (this.passwordChange.new.length < this.settings.security.minPasswordLength) {
+                            window.showNotification(`Password must be at least ${this.settings.security.minPasswordLength} characters`, 'error');
+                            return;
+                        }
+                        
+                        // Simulate password change API call
+                        window.showNotification('Changing password...', 'info');
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        
+                        // Clear password fields
+                        this.passwordChange = {
+                            current: '',
+                            new: '',
+                            confirm: ''
+                        };
+                        
+                        window.showNotification('Password changed successfully', 'success');
+                    } catch (error) {
+                        console.error('Failed to change password:', error);
+                        window.showNotification('Failed to change password', 'error');
+                    }
+                },
+
+                async generateApiKey() {
+                    try {
+                        const newKey = {
+                            id: Date.now(),
+                            name: 'API Key ' + (this.apiKeys.length + 1),
+                            key: 'sk_test_' + Math.random().toString(36).substr(2, 16),
+                            createdAt: new Date().toISOString()
+                        };
+                        this.apiKeys.push(newKey);
+                        window.showNotification(`API key generated successfully on ${this.formatDate(newKey.createdAt)}`, 'success');
+                    } catch (error) {
+                        console.error('Failed to generate API key:', error);
+                        window.showNotification('Failed to generate API key', 'error');
+                    }
+                },
+
+                async deleteApiKey(keyId) {
+                    if (confirm('Are you sure you want to delete this API key?')) {
+                        try {
+                            this.apiKeys = this.apiKeys.filter(key => key.id !== keyId);
+                            window.showNotification('API key deleted successfully', 'success');
+                        } catch (error) {
+                            console.error('Failed to delete API key:', error);
+                            window.showNotification('Failed to delete API key', 'error');
+                        }
+                    }
+                },
+
+                initializeSyncStatus() {
+                    // Initialize sync status similar to other pages
+                    this.syncStatus = {
+                        status: 'online',
+                        message: 'All systems operational',
+                        icon: 'fas fa-circle text-emerald-500'
+                    };
+                },
+
+                formatDate(dateString) {
+                    if (!dateString) return '—';
+                    return new Date(dateString).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
+            }
+        }
+    </script>
+
+    <script>
+        // Register Alpine.js component
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('settingsData', settingsData);
+        });
+    </script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,1065 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - Class Tests</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="../../public/api-config.js"></script>
+    <script src="../../shared-assets/js/shared-auth.js"></script>
+    <script src="../../shared-assets/js/shared-api-client.js"></script>
+    <script src="../../shared-assets/js/shared-realtime-sync.js"></script>
+    <script src="pupils-api.js" defer></script>
+    <script src="classes-api.js" defer></script>
+    <script src="class-tests-helpers.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../../shared-assets/js/shared-class-tests.js" defer></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page">
+    <div x-data="{ sidebarOpen: false, activeTab: 'manage-test-marks', chatOpen: false, mobileSearchOpen: false, mobileNotificationsOpen: false, mobileProfileOpen: false, mobileSearchQuery: '', tierLevel: 4 }" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-chart-pie"></i>
+                        </span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="general-settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-cog"></i>
+                        </span>
+                        <span class="flex-1">General Settings</span>
+                    </a>
+                    <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-chalkboard"></i>
+                        </span>
+                        <span class="flex-1">Classes</span>
+                    </a>
+                    <a href="pupils.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-user-graduate"></i>
+                        </span>
+                        <span class="flex-1">Pupils</span>
+                    </a>
+                    <a href="employees.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-users"></i>
+                        </span>
+                        <span class="flex-1">Employees</span>
+                    </a>
+                    <a href="accounts.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </span>
+                        <span class="flex-1">Accounts</span>
+                    </a>
+                    <a href="timetables.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-calendar-alt"></i>
+                        </span>
+                        <span class="flex-1">Timetables</span>
+                    </a>
+                    <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-user-check"></i>
+                        </span>
+                        <span class="flex-1">Attendance</span>
+                    </a>
+                    <a href="sms-gateway.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-sms"></i>
+                        </span>
+                        <span class="flex-1">SMS Gateway</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition" x-show="tierLevel >= 4">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-comments"></i>
+                        </span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                
+                    <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-file-alt"></i>
+                        </span>
+                        <span class="flex-1">Exams</span>
+                    </a>
+                    <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-clipboard-check"></i>
+                        </span>
+                        <span class="flex-1">Class Tests</span>
+                    </a>
+                    <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-chart-line"></i>
+                        </span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center gap-2 px-2">
+                        <a href="general-settings.html" class="flex-1 flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:bg-slate-50 transition text-sm">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-cog"></i>
+                            </span>
+                            <span class="flex-1">Settings</span>
+                        </a>
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div x-show="sidebarOpen" x-cloak class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    </div>
+
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-chart-pie"></i>
+                            </span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="general-settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-cog"></i>
+                            </span>
+                            <span class="flex-1">General Settings</span>
+                        </a>
+                        <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-chalkboard"></i>
+                            </span>
+                            <span class="flex-1">Classes</span>
+                        </a>
+                        <a href="pupils.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-user-graduate"></i>
+                            </span>
+                            <span class="flex-1">Pupils</span>
+                        </a>
+                        <a href="employees.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-users"></i>
+                            </span>
+                            <span class="flex-1">Employees</span>
+                        </a>
+                        <a href="accounts.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                            </span>
+                            <span class="flex-1">Accounts</span>
+                        </a>
+                        <a href="timetables.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-calendar-alt"></i>
+                            </span>
+                            <span class="flex-1">Timetables</span>
+                        </a>
+                        <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-user-check"></i>
+                            </span>
+                            <span class="flex-1">Attendance</span>
+                        </a>
+                        <a href="sms-gateway.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-sms"></i>
+                            </span>
+                            <span class="flex-1">SMS Gateway</span>
+                        </a>
+                        <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-file-alt"></i>
+                            </span>
+                            <span class="flex-1">Exams</span>
+                        </a>
+                        <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-clipboard-check"></i>
+                            </span>
+                            <span class="flex-1">Class Tests</span>
+                        </a>
+                        <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center">
+                                <i class="fas fa-chart-line"></i>
+                            </span>
+                            <span class="flex-1">Reports</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center gap-2 px-2">
+                            <a href="general-settings.html" class="flex-1 flex items-center gap-3 px-3 py-2 rounded-xl text-slate-400 hover:bg-slate-50 transition text-sm">
+                                <span class="w-6 flex justify-center">
+                                    <i class="fas fa-cog"></i>
+                                </span>
+                                <span class="flex-1">Settings</span>
+                            </a>
+                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center">
+                                    <i class="fas fa-right-from-bracket"></i>
+                                </span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3zl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100 pb-3">
+                        <div class="flex items-center justify-center w-full lg:w-auto lg:justify-start relative">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-white shadow-lg flex items-center justify-center text-slate-600 hover:bg-slate-50 transition" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="../assets/images/logo.png" alt="Shikola logo" class="h-12 w-auto rounded-2xl lg:hidden" data-school-logo>
+                            <div class="hidden sm:block lg:hidden">
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Class Tests</h1>
+                                <p class="text-xs sm:text-sm text-slate-400 mt-1">Enter test/quiz marks and view test performance for continuous assessment.</p>
+                            </div>
+                            <div class="hidden lg:block">
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Class Tests</h1>
+                                <p class="text-xs sm:text-sm text-slate-400 mt-1">Enter test/quiz marks and view test performance for continuous assessment.</p>
+                            </div>
+                            <div class="flex items-center gap-2 sm:hidden lg:absolute lg:right-4">
+                                <button type="button" class="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Search" @click="mobileSearchOpen = !mobileSearchOpen">
+                                    <i class="fas fa-search text-xs"></i>
+                                </button>
+                                <button type="button" class="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Notifications" @click="mobileNotificationsOpen = !mobileNotificationsOpen">
+                                    <i class="far fa-bell text-xs"></i>
+                                </button>
+                                <button type="button" class="h-8 w-8 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-xs" aria-label="Profile" @click="mobileProfileOpen = !mobileProfileOpen">
+                                    <i class="fas fa-user"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-3">
+                            <button type="button" class="inline-flex sm:hidden h-9 w-9 rounded-xl bg-slate-50 items-center justify-center text-slate-400 hover:text-slate-600" aria-label="Search tests">
+                                <i class="fas fa-search text-sm"></i>
+                            </button>
+                            <div class="hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-56">
+                                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                                <input type="text" placeholder="Search tests" class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1">
+                            </div>
+                            <button class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" type="button" aria-label="Notifications">
+                                <i class="far fa-bell"></i>
+                            </button>
+                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <div class="text-xs font-medium text-slate-700">Shikola</div>
+                                        <div class="text-[10px] text-slate-400">Admin</div>
+                                    </div>
+                                </button>
+                                <div
+                                    x-show="open"
+                                    x-cloak
+                                    class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
+                                    <a href="general-settings.html#account-settings" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
+                                        <span class="w-4 flex justify-center text-slate-400">
+                                            <i class="fas fa-user-cog"></i>
+                                        </span>
+                                        <span>Account Settings</span>
+                                    </a>
+                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
+                                        <span class="w-4 flex justify-center text-slate-400">
+                                            <i class="fas fa-id-badge"></i>
+                                        </span>
+                                        <span>Profile</span>
+                                    </a>
+                                    <div class="my-1 border-t border-slate-100"></div>
+                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                        <span class="w-4 flex justify-center">
+                                            <i class="fas fa-right-from-bracket"></i>
+                                        </span>
+                                        <span>Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile search / notifications / profile panels -->
+                    <div class="mt-3 space-y-2 sm:hidden">
+                        <!-- Mobile search bar -->
+                        <div x-show="mobileSearchOpen" x-cloak class="bg-slate-50 border border-slate-100 rounded-2xl px-3 py-2 flex items-center gap-2">
+                            <i class="fas fa-search text-slate-400 text-xs"></i>
+                            <input
+                                type="text"
+                                placeholder="Search tests..."
+                                class="bg-transparent text-xs text-slate-600 placeholder-slate-400 focus:outline-none flex-1"
+                                x-model="mobileSearchQuery">
+                            <button type="button" class="text-[11px] text-slate-400" @click="mobileSearchOpen = false">Close</button>
+                        </div>
+
+                        <!-- Mobile notifications panel -->
+                        <div x-show="mobileNotificationsOpen" x-cloak class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden text-xs">
+                            <div class="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+                                <span class="font-semibold text-slate-800">Notifications</span>
+                                <button type="button" class="text-[11px] text-slate-400" @click="mobileNotificationsOpen = false">Close</button>
+                            </div>
+                            <div class="max-h-60 overflow-y-auto">
+                                <template x-if="Array.isArray(window.shikolaNotificationLog) && window.shikolaNotificationLog.length">
+                                    <div>
+                                        <template x-for="ntf in window.shikolaNotificationLog" :key="ntf.id">
+                                            <div class="px-3 py-2 border-b border-slate-50 last:border-b-0">
+                                                <div class="text-slate-800" x-text="ntf.message || ntf.title"></div>
+                                                <div class="text-[10px] text-slate-400 mt-0.5" x-text="ntf.time"></div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <div class="px-3 py-4 text-[11px] text-slate-400 text-center" x-show="!window.shikolaNotificationLog || !window.shikolaNotificationLog.length">
+                                    No notifications yet.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mobile profile actions -->
+                        <div x-show="mobileProfileOpen" x-cloak class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden text-xs">
+                            <div class="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
+                                <span class="font-semibold text-slate-800">Account</span>
+                                <button type="button" class="text-[11px] text-slate-400" @click="mobileProfileOpen = false">Close</button>
+                            </div>
+                            <div class="py-1">
+                                <a href="profile.html" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50">
+                                    <span class="w-4 flex justify-center text-slate-400">
+                                        <i class="fas fa-id-badge"></i>
+                                    </span>
+                                    <span>Profile</span>
+                                </a>
+                                <button type="button" data-action="logout" class="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 text-red-500">
+                                    <span class="w-4 flex justify-center">
+                                        <i class="fas fa-right-from-bracket"></i>
+                                    </span>
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 text-xs sm:text-sm">
+                            <button type="button" @click="activeTab = 'manage-test-marks'" :class="activeTab === 'manage-test-marks' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200" title="Enter and update test/quiz marks (continuous assessment marks entry)">
+                                <span class="w-5 flex justify-center">
+                                    <i class="fas fa-pen"></i>
+                                </span>
+                                <span>Manage Test Marks</span>
+                            </button>
+                            <button type="button" @click="activeTab = 'test-result'" :class="activeTab === 'test-result' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200" title="View test performance and summarized class results">
+                                <span class="w-5 flex justify-center">
+                                    <i class="fas fa-chart-line"></i>
+                                </span>
+                                <span>Test Result</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex-1 space-y-6 text-sm">
+                        <section x-show="activeTab === 'manage-test-marks'" x-cloak x-data="{
+                            selectedClass: '',
+                            selectedSubject: '',
+                            selectedTest: '',
+                            selectedTerm: '',
+                            totalMarks: 20,
+                            classOptions: [],
+                            subjectOptions: [],
+                            termOptions: [],
+                            pupils: [],
+                            loading: false,
+                            error: null,
+                            async apiCall(endpoint, options = {}) {
+                                this.loading = true;
+                                this.error = null;
+                                try {
+                                    const base = window.SHIKOLA_API_BASE || '';
+                                    if (!base) return null;
+                                    const response = await fetch(`${base}${endpoint}`, {
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            ...(options.headers || {})
+                                        },
+                                        ...options
+                                    });
+                                    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                    return await response.json();
+                                } catch (e) {
+                                    console.error('API error:', e);
+                                    this.error = e.message || 'Failed to contact server';
+                                    throw e;
+                                } finally {
+                                    this.loading = false;
+                                }
+                            },
+                            async loadPupils() {
+                                this.error = null;
+                                this.pupils = [];
+                                if (!(this.selectedClass && this.selectedSubject && this.selectedTest && this.selectedTerm)) {
+                                    return;
+                                }
+
+                                let basePupils = [];
+                                try {
+                                    if (window.ShikolaPupilsApi && typeof window.ShikolaPupilsApi.listPupils === 'function') {
+                                        const all = await window.ShikolaPupilsApi.listPupils();
+                                        if (Array.isArray(all)) {
+                                            const targetClass = this.selectedClass;
+                                            basePupils = all.filter(function (p) {
+                                                const cls = p && (p.classGrade || p.classLabel || p.className);
+                                                return cls && String(cls) === String(targetClass);
+                                            });
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to load pupils list', e);
+                                    basePupils = [];
+                                }
+
+                                let existing = null;
+                                try {
+                                    if (window.ShikolaClassTestsStore && typeof window.ShikolaClassTestsStore.getTest === 'function') {
+                                        existing = window.ShikolaClassTestsStore.getTest({
+                                            className: this.selectedClass,
+                                            subject: this.selectedSubject,
+                                            test: this.selectedTest,
+                                            term: this.selectedTerm
+                                        });
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to load existing class test marks', e);
+                                }
+
+                                const marksById = {};
+                                if (existing && Array.isArray(existing.marks)) {
+                                    existing.marks.forEach(function (m) {
+                                        if (!m || !m.pupilId) return;
+                                        marksById[String(m.pupilId)] = m;
+                                    });
+                                }
+
+                                const rows = [];
+                                basePupils.forEach(function (p, idx) {
+                                    const id = p.pupilId || p.id || p.admissionNo || ('P' + (idx + 1));
+                                    const name = p.fullName || p.name || ('Student ' + (idx + 1));
+                                    const existingMark = marksById[id];
+                                    rows.push({
+                                        id: id,
+                                        name: name,
+                                        marks: existingMark && existingMark.marks != null ? existingMark.marks : null
+                                    });
+                                });
+
+                                if (existing && Array.isArray(existing.marks)) {
+                                    existing.marks.forEach(function (m) {
+                                        if (!m || !m.pupilId) return;
+                                        const id = String(m.pupilId);
+                                        if (rows.some(function (r) { return r.id === id; })) return;
+                                        rows.push({
+                                            id: id,
+                                            name: m.name || ('Student ' + (rows.length + 1)),
+                                            marks: m.marks != null ? m.marks : null
+                                        });
+                                    });
+                                }
+
+                                this.pupils = rows;
+                            },
+                            async saveMarks() {
+                                if (!(this.selectedClass && this.selectedSubject && this.selectedTest && this.selectedTerm)) {
+                                    return;
+                                }
+                                this.error = null;
+                                const payload = {
+                                    className: this.selectedClass,
+                                    subject: this.selectedSubject,
+                                    test: this.selectedTest,
+                                    term: this.selectedTerm,
+                                    totalMarks: this.totalMarks,
+                                    pupils: this.pupils
+                                };
+                                try {
+                                    if (window.ShikolaClassTestsStore && typeof window.ShikolaClassTestsStore.saveMarks === 'function') {
+                                        window.ShikolaClassTestsStore.saveMarks(payload);
+                                    }
+                                    try {
+                                        await this.apiCall('/api/admin/class-tests/marks', {
+                                            method: 'POST',
+                                            body: JSON.stringify(payload)
+                                        });
+                                    } catch (e) {
+                                        console.warn('Class test backend sync failed', e);
+                                    }
+                                    alert('Marks saved.');
+                                } catch (e) {
+                                    console.error('Failed to save marks locally', e);
+                                    alert('Failed to save marks locally. Please try again.');
+                                }
+                            },
+                            refreshClassOptions() {
+                                var defaults = ['Grade 1A', 'Grade 2A', 'Grade 3A'];
+                                var names = defaults.slice();
+                                try {
+                                    if (window.ShikolaClassesUi && typeof window.ShikolaClassesUi.getClassOptions === 'function') {
+                                        var fromStore = window.ShikolaClassesUi.getClassOptions(defaults);
+                                        if (Array.isArray(fromStore) && fromStore.length) {
+                                            names = fromStore;
+                                        }
+                                    }
+                                } catch (e) {}
+                                this.classOptions = names;
+                            },
+                            refreshSubjectOptions() {
+                                var helper = window.ShikolaClassTestsHelpers;
+                                var list = [];
+                                try {
+                                    if (helper && typeof helper.getSubjectOptions === 'function') {
+                                        list = helper.getSubjectOptions();
+                                    }
+                                } catch (e) {}
+                                if (!Array.isArray(list) || !list.length) {
+                                    if (helper && Array.isArray(helper.defaultSubjects)) {
+                                        list = helper.defaultSubjects.slice();
+                                    } else {
+                                        list = ['Mathematics', 'English', 'Science', 'Social Studies'];
+                                    }
+                                }
+                                this.subjectOptions = list;
+                            },
+                            refreshTermOptions() {
+                                var helper = window.ShikolaClassTestsHelpers;
+                                var terms = [];
+                                try {
+                                    if (helper && typeof helper.getTermOptions === 'function') {
+                                        terms = helper.getTermOptions();
+                                    }
+                                } catch (e) {}
+                                if (!Array.isArray(terms) || !terms.length) {
+                                    if (helper && typeof helper.buildDefaultTermOptions === 'function') {
+                                        terms = helper.buildDefaultTermOptions();
+                                    } else if (helper && Array.isArray(helper.defaultTermOptions)) {
+                                        terms = helper.defaultTermOptions.slice();
+                                    } else {
+                                        terms = [
+                                            { value: 'Term 1', label: 'Term 1' },
+                                            { value: 'Term 2', label: 'Term 2' },
+                                            { value: 'Term 3', label: 'Term 3' }
+                                        ];
+                                    }
+                                }
+                                this.termOptions = terms;
+                            },
+                            get testOptions() {
+                                return ['Test 1', 'Test 2', 'Test 3'];
+                            },
+                            init() {
+                                this.refreshClassOptions();
+                                this.refreshSubjectOptions();
+                                this.refreshTermOptions();
+                                var self = this;
+                                try {
+                                    window.addEventListener('shikola:classes-updated', function () {
+                                        self.refreshClassOptions();
+                                    });
+                                    window.addEventListener('shikola:subjects-updated', function () {
+                                        self.refreshSubjectOptions();
+                                    });
+                                    window.addEventListener('shikola:terms-updated', function () {
+                                        self.refreshTermOptions();
+                                    });
+                                    window.addEventListener('storage', function (event) {
+                                        if (event && event.key === 'shikola_fees_terms') {
+                                            self.refreshTermOptions();
+                                        }
+                                    });
+                                } catch (e) {}
+                            }
+                        }">
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Add / Update Test Marks</div>
+                                        <div class="text-xs text-slate-400 mt-1">Enter and update test/quiz marks for each pupil in the selected class and subject.</div>
+                                    </div>
+                                    <button type="button" class="px-3 py-1.5 rounded-xl bg-orange-500 text-white text-xs font-medium hover:bg-orange-600 flex items-center gap-2" @click="saveMarks" :disabled="loading">
+                                        <i class="fas fa-save text-[11px]"></i>
+                                        <span>Save marks</span>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 text-xs mb-4">
+                                    <div>
+                                        <label for="manage-class-select" class="block text-[11px] font-medium text-slate-600 mb-1">Class</label>
+                                        <select id="manage-class-select" x-model="selectedClass" @change="if (selectedClass && selectedSubject && selectedTest && selectedTerm) loadPupils()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select class</option>
+                                            <template x-for="cls in classOptions" :key="'ct-manage-' + cls">
+                                                <option x-text="cls"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="manage-subject-select" class="block text-[11px] font-medium text-slate-600 mb-1">Subject</label>
+                                        <select id="manage-subject-select" x-model="selectedSubject" @change="if (selectedClass && selectedSubject && selectedTest && selectedTerm) loadPupils()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select subject</option>
+                                            <template x-for="subject in subjectOptions" :key="'subject-manage-' + subject">
+                                                <option x-text="subject"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="manage-test-select" class="block text-[11px] font-medium text-slate-600 mb-1">Test</label>
+                                        <select id="manage-test-select" x-model="selectedTest" @change="if (selectedClass && selectedSubject && selectedTest && selectedTerm) loadPupils()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select test</option>
+                                            <template x-for="test in testOptions" :key="'manage-test-' + test">
+                                                <option x-text="test"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="manage-term-select" class="block text-[11px] font-medium text-slate-600 mb-1">Term</label>
+                                        <select id="manage-term-select" x-model="selectedTerm" @change="if (selectedClass && selectedSubject && selectedTest && selectedTerm) loadPupils()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select term</option>
+                                            <template x-for="term in termOptions" :key="'term-manage-' + term.value">
+                                                <option :value="term.value" x-text="term.label"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="total-marks-input" class="block text-[11px] font-medium text-slate-600 mb-1">Total Test Marks</label>
+                                        <input id="total-marks-input" type="number" min="1" x-model="totalMarks" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400" placeholder="e.g. 20">
+                                    </div>
+                                </div>
+                                <div class="mb-3 text-[11px] text-slate-400" x-show="!(selectedClass && selectedSubject && selectedTest && selectedTerm)" x-cloak>
+                                    Select class, subject, test and term to generate the marks spreadsheet.
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/60 overflow-hidden text-xs" x-show="selectedClass && selectedSubject && selectedTest && selectedTerm" x-cloak>
+                                    <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-50 text-[11px] font-medium text-slate-500">
+                                        <div class="col-span-3 md:col-span-3">ID</div>
+                                        <div class="col-span-5 md:col-span-5">Student Name</div>
+                                        <div class="col-span-4 md:col-span-4">Obtained Marks</div>
+                                    </div>
+                                    <template x-for="pupil in pupils" :key="pupil.id">
+                                        <div class="grid grid-cols-12 gap-2 px-4 py-2 items-center border-t border-slate-100 bg-white">
+                                            <div class="col-span-3 md:col-span-3 text-slate-500" x-text="pupil.id"></div>
+                                            <div class="col-span-5 md:col-span-5 text-slate-800" x-text="pupil.name"></div>
+                                            <div class="col-span-4 md:col-span-4">
+                                                <input type="number" min="0" :max="totalMarks" x-model="pupil.marks" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" :placeholder="'0 / ' + totalMarks.toString()">
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section x-show="activeTab === 'test-result'" x-cloak x-data="testResultPage()">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Test Result</div>
+                                        <div class="text-xs text-slate-400 mt-1">View test performance, class results and pass rates for selected tests.</div>
+                                    </div>
+                                    <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 flex items-center gap-2" @click="exportResults()">
+                                        <i class="fas fa-file-export text-[11px]"></i>
+                                        <span>Export</span>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 text-xs mb-4">
+                                    <div>
+                                        <label for="result-filter-mode" class="block text-[11px] font-medium text-slate-600 mb-1">Filter</label>
+                                        <select id="result-filter-mode" x-model="filterMode" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="class-wise">Class-wise</option>
+                                            <option value="class-subject">Class &amp; Subject</option>
+                                            <option value="student-subject">Student &amp; Subject</option>
+                                            <option value="date-range">Date Range</option>
+                                            <option value="performance">Performance Report</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="result-class-select" class="block text-[11px] font-medium text-slate-600 mb-1">Select Class<span class="text-red-500">*</span></label>
+                                        <select id="result-class-select" x-model="selectedClass" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select class</option>
+                                            <template x-for="cls in classOptions" :key="'ct-result-' + cls">
+                                                <option x-text="cls"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="result-subject-select" class="block text-[11px] font-medium text-slate-600 mb-1">Subject</label>
+                                        <select id="result-subject-select" x-model="selectedSubject" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All subjects</option>
+                                            <template x-for="subject in subjectOptions" :key="'subject-result-' + subject">
+                                                <option :value="subject" x-text="subject"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="result-test-select" class="block text-[11px] font-medium text-slate-600 mb-1">Test</label>
+                                        <select id="result-test-select" x-model="selectedTest" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All tests</option>
+                                            <template x-for="test in testOptions" :key="'result-test-' + test">
+                                                <option :value="test" x-text="test"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="result-term-select" class="block text-[11px] font-medium text-slate-600 mb-1">Term</label>
+                                        <select id="result-term-select" x-model="selectedTerm" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All terms</option>
+                                            <template x-for="term in termOptions" :key="'term-result-' + term.value">
+                                                <option :value="term.value" x-text="term.label"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end mt-4">
+                                    <button @click="loadResults()" class="px-3 py-1.5 rounded-xl bg-orange-500 text-white text-xs font-medium hover:bg-orange-600">Apply Filters</button>
+                                </div>
+                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs mb-4">
+                                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                                        <div class="text-[11px] text-slate-500 mb-1">Class Average</div>
+                                        <div class="flex items-baseline gap-2">
+                                            <div class="text-2xl font-semibold text-slate-800" x-text="summary && summary.average != null ? summary.average.toFixed(1) + '%' : '--'"></div>
+                                            <div class="text-[11px] text-emerald-500" x-text="summary && summary.totalCount ? (summary.totalCount + ' pupils') : 'No results yet'"></div>
+                                        </div>
+                                    </div>
+                                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                                        <div class="text-[11px] text-slate-500 mb-1">Highest Score</div>
+                                        <div class="text-2xl font-semibold text-slate-800" x-text="summary && summary.highest != null ? (summary.highest + ' / ' + (rows[0] && rows[0].totalMarks != null ? rows[0].totalMarks : '')) : '--'"></div>
+                                    </div>
+                                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                                        <div class="text-[11px] text-slate-500 mb-1">Pupils Passed</div>
+                                        <div class="flex items-baseline gap-2">
+                                            <div class="text-2xl font-semibold text-slate-800" x-text="summary ? summary.passCount : 0"></div>
+                                            <div class="text-[11px] text-slate-500" x-text="summary && summary.totalCount ? ('out of ' + summary.totalCount) : ''"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/60 overflow-hidden text-xs">
+                                    <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-50 text-[11px] font-medium text-slate-500">
+                                        <div class="col-span-4">Pupil</div>
+                                        <div class="hidden md:block md:col-span-2">Class</div>
+                                        <div class="col-span-3 md:col-span-2">Score</div>
+                                        <div class="col-span-3 md:col-span-2">Grade</div>
+                                        <div class="hidden md:block md:col-span-2 text-right">Status</div>
+                                    </div>
+                                    <template x-if="!rows.length">
+                                        <div class="px-4 py-3 text-[11px] text-slate-500 bg-white border-t border-slate-100">
+                                            No results loaded yet. Select filters to view test results.
+                                        </div>
+                                    </template>
+                                    <template x-for="row in rows" :key="row.pupilId || row.name">
+                                        <div class="grid grid-cols-12 gap-2 px-4 py-2 items-center border-t border-slate-100 bg-white">
+                                            <div class="col-span-4 text-slate-800" x-text="row.name"></div>
+                                            <div class="hidden md:block md:col-span-2 text-slate-500" x-text="row.className || selectedClass"></div>
+                                            <div class="col-span-3 md:col-span-2 text-slate-700" x-text="(row.marks != null && row.totalMarks != null) ? (row.marks + ' / ' + row.totalMarks) : '--'"></div>
+                                            <div class="col-span-3 md:col-span-2 text-slate-600 font-medium" x-text="gradeForRow(row)"></div>
+                                            <div class="hidden md:block md:col-span-2 text-right" :class="isPassRow(row) ? 'text-emerald-600' : 'text-rose-600'">
+                                                <span x-text="isPassRow(row) ? 'Passed' : 'Failed'"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div x-show="chatOpen" x-cloak x-transition
+            class="fixed bottom-24 right-4 sm:bottom-24 sm:right-8 z-50">
+            <div x-data="{
+                    targetType: 'school',
+                    selectedClass: '',
+                    targetName: '',
+                    classes: [],
+                    message: '',
+                    history: [],
+                    search: '',
+                    storageKey: 'shikola_chat_history_v1',
+                    init() {
+                        try {
+                            if (window.ShikolaClassesStore && typeof window.ShikolaClassesStore.listClassNames === 'function') {
+                                var names = window.ShikolaClassesStore.listClassNames() || [];
+                                this.classes = Array.isArray(names) ? names : [];
+                            }
+                        } catch (e) {
+                            this.classes = [];
+                        }
+                        this.loadHistory();
+                    },
+                    targetSummary() {
+                        if (this.targetType === 'school') return 'Whole school';
+                        if (this.targetType === 'class') return this.selectedClass ? ('Class: ' + this.selectedClass) : 'Select class';
+                        if (this.targetType === 'management') return 'Management team';
+                        if (this.targetType === 'employee') return this.targetName ? ('Employee: ' + this.targetName) : 'Specific employee';
+                        if (this.targetType === 'pupil') return this.targetName ? ('Pupil: ' + this.targetName) : 'Specific pupil';
+                        return 'Select recipient';
+                    },
+                    loadHistory() {
+                        var raw;
+                        try {
+                            raw = localStorage.getItem(this.storageKey);
+                        } catch (e) {
+                            raw = null;
+                        }
+                        if (!raw) {
+                            this.history = [];
+                            return;
+                        }
+                        try {
+                            var parsed = JSON.parse(raw);
+                            this.history = Array.isArray(parsed) ? parsed : [];
+                        } catch (e) {
+                            this.history = [];
+                        }
+                    },
+                    saveHistory() {
+                        try {
+                            localStorage.setItem(this.storageKey, JSON.stringify(this.history || []));
+                        } catch (e) {}
+                    },
+                    get filteredHistory() {
+                        var list = this.history || [];
+                        var q = (this.search || '').toLowerCase().trim();
+                        if (!q) return list.slice(-30);
+                        var out = [];
+                        for (var i = 0; i < list.length; i++) {
+                            var item = list[i];
+                            if (!item) continue;
+                            var text = (item.message || '').toLowerCase();
+                            var target = (item.targetSummary || '').toLowerCase();
+                            if (text.indexOf(q) !== -1 || target.indexOf(q) !== -1) {
+                                out.push(item);
+                            }
+                            if (out.length >= 30) break;
+                        }
+                        return out;
+                    },
+                    formatTime(createdAt) {
+                        if (!createdAt) return '';
+                        var d = new Date(createdAt);
+                        if (!(d instanceof Date) || isNaN(d)) return '';
+                        var now = new Date();
+                        var diffMs = now.getTime() - d.getTime();
+                        if (diffMs >= 0 && diffMs < 60 * 1000) {
+                            return 'Just now';
+                        }
+                        var h = d.getHours();
+                        var m = d.getMinutes();
+                        var hh = h < 10 ? '0' + h : '' + h;
+                        var mm = m < 10 ? '0' + m : '' + m;
+                        return hh + ':' + mm;
+                    },
+                    sendMessage() {
+                        var msg = (this.message || '').trim();
+                        if (!msg) return;
+                        var target = this.targetSummary();
+                        var now = new Date();
+                        var item = {
+                            id: 'CHAT-' + now.getTime().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+                            message: msg,
+                            targetSummary: target,
+                            createdAt: now.toISOString()
+                        };
+                        this.history.push(item);
+                        if (this.history.length > 200) {
+                            this.history = this.history.slice(-200);
+                        }
+                        this.saveHistory();
+                        this.message = '';
+                    },
+                    deleteForEveryone(id) {
+                        if (!id) return;
+                        this.history = (this.history || []).filter(function (m) { return !m || m.id !== id; });
+                        this.saveHistory();
+                    },
+                    deleteForSelf(id) {
+                        this.deleteForEveryone(id);
+                    },
+                    clearHistory() {
+                        this.history = [];
+                        this.saveHistory();
+                    }
+                }"
+                class="w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+                <div class="px-4 py-3 flex items-center justify-between bg-slate-900 text-white text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="h-6 w-6 rounded-full bg-gradient-to-tr from-cyan-400 to-sky-500 flex items-center justify-center">
+                            <i class="fas fa-comments text-[11px]"></i>
+                        </span>
+                        <span class="font-semibold">In-app chat</span>
+                    </div>
+                    <button type="button" class="text-slate-200 hover:text-white" aria-label="Close chat" @click="chatOpen = false">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+                <div class="p-3 space-y-2 text-[11px] text-slate-500 max-h-64 overflow-y-auto">
+                    <div class="space-y-2 mb-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="text-[10px] font-semibold text-slate-500 uppercase">Conversation</div>
+                            <div class="flex items-center gap-1 flex-1">
+                                <input type="text" x-model="search" placeholder="Search messages" class="flex-1 text-[10px] rounded-xl border border-slate-200 px-2 py-1 focus:outline-none focus:ring-1 focus:ring-cyan-400">
+                                <button type="button" class="text-[9px] px-2 py-1 rounded-full border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50" @click="clearHistory()">Clear</button>
+                            </div>
+                        </div>
+                        <div class="mt-1 max-h-32 overflow-y-auto border border-slate-100 rounded-xl bg-slate-50/60" x-show="filteredHistory.length" x-cloak>
+                            <template x-for="item in filteredHistory" :key="item.id">
+                                <div class="px-2 py-1.5 border-b border-slate-100 last:border-b-0 flex items-start gap-2">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="text-[10px] font-medium text-slate-600" x-text="item.targetSummary"></div>
+                                            <div class="text-[9px] text-slate-400" x-text="formatTime(item.createdAt)"></div>
+                                        </div>
+                                        <div class="text-[11px] text-slate-700" x-text="item.message"></div>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <button type="button" class="text-[9px] text-slate-400 hover:text-slate-600" @click="deleteForSelf(item.id)">Delete for me</button>
+                                        <button type="button" class="text-[9px] text-rose-400 hover:text-rose-600" @click="deleteForEveryone(item.id)">Delete for all</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="text-[10px] text-slate-400" x-show="!filteredHistory.length" x-cloak>No messages yet. Start a conversation below.</div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="text-[10px] font-semibold text-slate-500 uppercase">Send to</div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" class="px-2 py-1 rounded-full border text-[10px]" :class="targetType === 'school' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200'" @click="targetType = 'school'">Whole school</button>
+                            <button type="button" class="px-2 py-1 rounded-full border text-[10px]" :class="targetType === 'class' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200'" @click="targetType = 'class'">Whole class</button>
+                            <button type="button" class="px-2 py-1 rounded-full border text-[10px]" :class="targetType === 'management' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200'" @click="targetType = 'management'">Management</button>
+                            <button type="button" class="px-2 py-1 rounded-full border text-[10px]" :class="targetType === 'employee' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200'" @click="targetType = 'employee'">Employee</button>
+                            <button type="button" class="px-2 py-1 rounded-full border text-[10px] col-span-2" :class="targetType === 'pupil' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200'" @click="targetType = 'pupil'">Pupil</button>
+                        </div>
+                        <div class="space-y-2">
+                            <template x-if="targetType === 'class'">
+                                <div>
+                                    <label class="block text-[10px] font-medium text-slate-600 mb-1">Select class</label>
+                                    <select x-model="selectedClass" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-400">
+                                        <option value="">Choose class</option>
+                                        <template x-for="cls in classes" :key="cls">
+                                            <option x-text="cls" :value="cls"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </template>
+                            <template x-if="targetType === 'employee'">
+                                <div>
+                                    <label class="block text-[10px] font-medium text-slate-600 mb-1">Employee name or ID</label>
+                                    <input type="text" x-model="targetName" placeholder="Type employee name or staff ID" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-cyan-400">
+                                </div>
+                            </template>
+                            <template x-if="targetType === 'pupil'">
+                                <div>
+                                    <label class="block text-[10px] font-medium text-slate-600 mb-1">Pupil name or ID</label>
+                                    <input type="text" x-model="targetName" placeholder="Type pupil name or admission no." class="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-cyan-400">
+                                </div>
+                            </template>
+                        </div>
+                        <div class="text-[10px] text-slate-400">Target: <span class="font-medium text-slate-600" x-text="targetSummary()"></span></div>
+                    </div>
+                </div>
+                <div class="border-t border-slate-200 p-2 flex items-center gap-2">
+                    <input type="text" placeholder="Type a message..." x-model="message" class="flex-1 text-xs rounded-xl border border-slate-200 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-cyan-400">
+                    <button type="button" class="h-8 w-8 rounded-xl bg-gradient-to-tr from-cyan-400 to-sky-500 text-white flex items-center justify-center disabled:opacity-50" :disabled="!message" aria-label="Send message" @click="sendMessage()">
+                        <i class="fas fa-paper-plane text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <button type="button"
+            class="fixed bottom-6 right-4 sm:bottom-6 sm:right-8 h-12 w-12 rounded-full bg-gradient-to-tr from-cyan-400 to-sky-500 text-white shadow-lg flex items-center justify-center hover:shadow-xl"
+            aria-label="Open chat"
+            @click="chatOpen = true">
+            <i class="fas fa-comments text-xl"></i>
+        </button>
+    </div>
+
+    <!-- Real-time sync integration for school admin -->
+    <script>
+        // Real-time refresh functions for global sync
+        window.refreshClassTests = function() {
+            // Refresh class tests list for school admin
+            if (window.Alpine) {
+                // Trigger reload of any class test data
+                Alpine.store('classTests', function() {
+                    this.loadClassTests && this.loadClassTests();
+                });
+            }
+        };
+
+        window.refreshClassTestMarks = function() {
+            // Refresh class test marks for school admin
+            if (window.Alpine) {
+                // Find and refresh any results components
+                const resultsComponents = document.querySelectorAll('[x-data*="results"]');
+                resultsComponents.forEach(component => {
+                    if (component._x_dataStack && component._x_dataStack[0].loadResults) {
+                        component._x_dataStack[0].loadResults();
+                    }
+                });
+            }
+        };
+
+        // Initialize real-time sync when Alpine is ready
+        document.addEventListener('alpine:init', function() {
+            if (window.ShikolaRealtimeSync) {
+                window.ShikolaRealtimeSync.subscribe('classTests', function(data) {
+                    console.log('School admin: Class tests updated:', data);
+                    window.refreshClassTests();
+                });
+                
+                window.ShikolaRealtimeSync.subscribe('classTestMarks', function(data) {
+                    console.log('School admin: Class test marks updated:', data);
+                    window.refreshClassTestMarks();
+                });
+            }
+        });
+    </script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

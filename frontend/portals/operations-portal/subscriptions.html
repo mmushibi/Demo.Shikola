@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Restrict to tablet and desktop only */
+        @media (max-width: 768px) {
+            body {
+                display: none !important;
+            }
+            body::after {
+                content: "This portal is only available on tablet and desktop devices. Please use a larger screen to access the Operations Portal.";
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                text-align: center;
+                font-family: system-ui, -apple-system, sans-serif;
+                font-size: 18px;
+                color: #374151;
+                background: #f9fafb;
+                padding: 20px;
+            }
+        }
+        
+        /* Ensure minimum width for tablet landscape */
+        @media (max-width: 1024px) and (orientation: portrait) {
+            body {
+                min-width: 768px;
+                overflow-x: auto;
+            }
+        }
+    </style>
+    <title>Subscriptions - Operations Portal</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/config/config.js"></script>
+    <script src="/shared-assets/js/shared-api-client.js"></script>
+    <script src="/shared-assets/js/shared-unified-api.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/shared-auth.js" defer></script>
+    <script src="/shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-assets/css/styles.css">
+    <style>
+        body.operations-page {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+        }
+
+        /* Ocean Blue Theme */
+        .ocean-blue-primary { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+        .ocean-blue-secondary { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .ocean-blue-accent { background: linear-gradient(135deg, #0284c7, #0369a1); }
+        
+        /* Ocean Green Theme */
+        .ocean-green-primary { background: linear-gradient(135deg, #10b981, #059669); }
+        .ocean-green-secondary { background: linear-gradient(135deg, #34d399, #10b981); }
+        .ocean-green-accent { background: linear-gradient(135deg, #059669, #047857); }
+        
+        /* Orange Accent */
+        .orange-accent { background: linear-gradient(135deg, #fb923c, #f97316); }
+        .orange-secondary { background: linear-gradient(135deg, #fdba74, #fb923c); }
+
+        .nav-active {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+        }
+
+        .nav-item:hover {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(2, 132, 199, 0.1));
+        }
+
+        .ocean-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(14, 165, 233, 0.1);
+        }
+
+        .ocean-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.15);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+    </style>
+</head>
+<body class="operations-page">
+    <div x-data="{
+        sidebarOpen: false,
+        subscriptions: [],
+        invoices: [],
+        revenueTrends: [],
+        loading: false,
+        showCreateInvoiceModal: false,
+        showExtendGraceModal: false,
+        showDiscountModal: false,
+        filters: {
+            status: '',
+            tier: '',
+            dateRange: ''
+        },
+        selectedSchool: null,
+        newInvoice: {
+            schoolId: '',
+            billingPeriod: '',
+            amount: 0,
+            dueDate: ''
+        },
+        graceExtension: {
+            schoolId: '',
+            days: 7,
+            reason: ''
+        },
+        discountCode: {
+            code: '',
+            percentage: 10,
+            maxUses: 100,
+            expiresAt: ''
+        },
+        async init() {
+            await this.loadData();
+        },
+        async loadData() {
+            this.loading = true;
+            try {
+                const [subscriptionsResponse, invoicesResponse, revenueResponse] = await Promise.all([
+                    window.operationsAPI.getBillingOverview(),
+                    window.operationsAPI.getInvoices(this.filters),
+                    window.operationsAPI.getRevenueTrends('monthly')
+                ]);
+                
+                if (subscriptionsResponse.success) {
+                    this.subscriptions = subscriptionsResponse.data;
+                }
+                if (invoicesResponse.success) {
+                    this.invoices = invoicesResponse.data;
+                }
+                if (revenueResponse.success) {
+                    this.revenueTrends = revenueResponse.data;
+                }
+            } catch (error) {
+                console.error('Failed to load subscriptions data:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async createInvoice() {
+            try {
+                const response = await window.operationsAPI.createInvoice(this.newInvoice);
+                if (response.success) {
+                    this.showCreateInvoiceModal = false;
+                    this.newInvoice = { schoolId: '', billingPeriod: '', amount: 0, dueDate: '' };
+                    await this.loadData();
+                }
+            } catch (error) {
+                console.error('Failed to create invoice:', error);
+            }
+        },
+        async extendGracePeriod() {
+            try {
+                const response = await window.operationsAPI.updateSubscriptionStatus(this.graceExtension.schoolId, {
+                    status: 'grace',
+                    gracePeriodDays: this.graceExtension.days
+                });
+                if (response.success) {
+                    this.showExtendGraceModal = false;
+                    this.graceExtension = { schoolId: '', days: 7, reason: '' };
+                    await this.loadData();
+                }
+            } catch (error) {
+                console.error('Failed to extend grace period:', error);
+            }
+        },
+        getStatusColor(status) {
+            switch (status) {
+                case 'active': return 'text-green-600 bg-green-50';
+                case 'expired': return 'text-red-600 bg-red-50';
+                case 'grace': return 'text-orange-600 bg-orange-50';
+                case 'trial': return 'text-blue-600 bg-blue-50';
+                default: return 'text-gray-600 bg-gray-50';
+            }
+        },
+        getTierColor(tier) {
+            switch (tier) {
+                case 'basic': return 'text-gray-600 bg-gray-50';
+                case 'standard': return 'text-blue-600 bg-blue-50';
+                case 'premium': return 'text-purple-600 bg-purple-50';
+                case 'enterprise': return 'text-orange-600 bg-orange-50';
+                default: return 'text-gray-600 bg-gray-50';
+            }
+        },
+        formatCurrency(amount) {
+            return new Intl.NumberFormat('en-ZM', {
+                style: 'currency',
+                currency: 'ZMW'
+            }).format(amount);
+        },
+        formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+    }" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <!-- Sidebar Navigation -->
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="nav-menu space-y-1 text-sm">
+                    <a href="dashboard.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-chart-line"></i>
+                        </span>
+                        <span class="flex-1">Dashboard</span>
+                    </a>
+                    <a href="schools-management.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-school"></i>
+                        </span>
+                        <span class="flex-1">Schools Management</span>
+                    </a>
+                    <a href="subscriptions.html" class="nav-active flex items-center gap-3 px-4 py-3 rounded-xl text-white shadow-md">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-credit-card"></i>
+                        </span>
+                        <span class="font-medium flex-1">Subscriptions</span>
+                    </a>
+                    <a href="user-management.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-users-cog"></i>
+                        </span>
+                        <span class="flex-1">User Management</span>
+                    </a>
+                    <a href="tickets-support.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-ticket-alt"></i>
+                        </span>
+                        <span class="flex-1">Tickets & Support</span>
+                    </a>
+                    <a href="system-monitoring.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-server"></i>
+                        </span>
+                        <span class="flex-1">System Monitoring</span>
+                    </a>
+                    <a href="reports.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-file-alt"></i>
+                        </span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                    <a href="profile.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-user-circle"></i>
+                        </span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <!-- Header -->
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                        <div>
+                            <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Subscriptions & Billing</h1>
+                            <p class="text-sm text-slate-500 mt-1">Manage school subscriptions, invoices, and revenue</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button @click="showCreateInvoiceModal = true" class="ocean-blue-primary text-white px-4 py-2 rounded-xl font-medium hover:ocean-blue-accent transition">
+                                <i class="fas fa-plus mr-2"></i>Create Invoice
+                            </button>
+                            <button @click="showExtendGraceModal = true" class="orange-accent text-white px-4 py-2 rounded-xl font-medium hover:orange-secondary transition">
+                                <i class="fas fa-clock mr-2"></i>Extend Grace
+                            </button>
+                            <button @click="showDiscountModal = true" class="ocean-green-primary text-white px-4 py-2 rounded-xl font-medium hover:ocean-green-accent transition">
+                                <i class="fas fa-tag mr-2"></i>Discount Code
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="flex flex-wrap gap-4 mb-6">
+                        <label class="sr-only" for="statusFilter">Filter by status</label>
+                        <select x-model="filters.status" @change="loadData()" id="statusFilter" title="Filter by subscription status" class="px-4 py-2 rounded-xl border border-slate-200 text-sm">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="expired">Expired</option>
+                            <option value="grace">Grace Period</option>
+                            <option value="trial">Trial</option>
+                        </select>
+                        <label class="sr-only" for="tierFilter">Filter by tier</label>
+                        <select x-model="filters.tier" @change="loadData()" id="tierFilter" title="Filter by subscription tier" class="px-4 py-2 rounded-xl border border-slate-200 text-sm">
+                            <option value="">All Tiers</option>
+                            <option value="basic">Basic</option>
+                            <option value="standard">Standard</option>
+                            <option value="premium">Premium</option>
+                            <option value="enterprise">Enterprise</option>
+                        </select>
+                        <label class="sr-only" for="dateFilter">Filter by date</label>
+                        <input type="date" x-model="filters.dateRange" @change="loadData()" id="dateFilter" title="Filter by date range" class="px-4 py-2 rounded-xl border border-slate-200 text-sm">
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-1 overflow-y-auto">
+                        <!-- Revenue Overview -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            <div class="ocean-card bg-white rounded-2xl p-6 shadow-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="ocean-blue-primary w-12 h-12 rounded-xl flex items-center justify-center text-white">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                                        +12.5%
+                                    </span>
+                                </div>
+                                <h3 class="text-2xl font-bold text-slate-800" x-text="formatCurrency(revenueTrends.totalRevenue || 0)"></h3>
+                                <p class="text-sm text-slate-500 mt-1">Monthly Revenue</p>
+                            </div>
+
+                            <div class="ocean-card bg-white rounded-2xl p-6 shadow-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="ocean-green-primary w-12 h-12 rounded-xl flex items-center justify-center text-white">
+                                        <i class="fas fa-school"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                                        Active
+                                    </span>
+                                </div>
+                                <h3 class="text-2xl font-bold text-slate-800" x-text="subscriptions.filter(s => s.status === 'active').length"></h3>
+                                <p class="text-sm text-slate-500 mt-1">Active Schools</p>
+                            </div>
+
+                            <div class="ocean-card bg-white rounded-2xl p-6 shadow-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="orange-accent w-12 h-12 rounded-xl flex items-center justify-center text-white">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
+                                        Action
+                                    </span>
+                                </div>
+                                <h3 class="text-2xl font-bold text-slate-800" x-text="subscriptions.filter(s => s.status === 'grace').length"></h3>
+                                <p class="text-sm text-slate-500 mt-1">Grace Period</p>
+                            </div>
+
+                            <div class="ocean-card bg-white rounded-2xl p-6 shadow-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="ocean-blue-secondary w-12 h-12 rounded-xl flex items-center justify-center text-white">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                                        Pending
+                                    </span>
+                                </div>
+                                <h3 class="text-2xl font-bold text-slate-800" x-text="invoices.filter(i => i.status === 'unpaid').length"></h3>
+                                <p class="text-sm text-slate-500 mt-1">Unpaid Invoices</p>
+                            </div>
+                        </div>
+
+                        <!-- Subscriptions Table -->
+                        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">School Subscriptions</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="border-b border-slate-200">
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">School</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Tier</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Status</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Monthly Fee</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Next Billing</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="subscription in subscriptions" :key="subscription.id">
+                                            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                                <td class="py-3 px-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 rounded-full ocean-blue-primary flex items-center justify-center text-white text-xs">
+                                                            <span x-text="subscription.schoolName.charAt(0)"></span>
+                                                        </div>
+                                                        <div>
+                                                            <p class="text-sm font-medium text-slate-800" x-text="subscription.schoolName"></p>
+                                                            <p class="text-xs text-slate-500" x-text="subscription.contactEmail"></p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs font-medium" 
+                                                          :class="getTierColor(subscription.tier)"
+                                                          x-text="subscription.tier.toUpperCase()"></span>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs font-medium" 
+                                                          :class="getStatusColor(subscription.status)"
+                                                          x-text="subscription.status.toUpperCase()"></span>
+                                                </td>
+                                                <td class="py-3 px-4 text-sm text-slate-800" x-text="formatCurrency(subscription.monthlyFee)"></td>
+                                                <td class="py-3 px-4 text-sm text-slate-600" x-text="formatDate(subscription.nextBilling)"></td>
+                                                <td class="py-3 px-4">
+                                                    <div class="flex gap-2">
+                                                        <button @click="selectedSchool = subscription; showExtendGraceModal = true" 
+                                                                class="text-orange-600 hover:text-orange-800 text-sm">
+                                                            <i class="fas fa-clock"></i>
+                                                        </button>
+                                                        <button class="text-blue-600 hover:text-blue-800 text-sm">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="text-slate-600 hover:text-slate-800 text-sm">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Recent Invoices -->
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Recent Invoices</h3>
+                            <div class="space-y-3">
+                                <template x-for="invoice in invoices.slice(0, 10)" :key="invoice.id">
+                                    <div class="flex items-center justify-between p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-10 h-10 rounded-full ocean-blue-primary flex items-center justify-center text-white text-sm">
+                                                <i class="fas fa-file-invoice"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-slate-800" x-text="invoice.invoiceNumber"></p>
+                                                <p class="text-xs text-slate-500" x-text="invoice.schoolName"></p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm font-medium text-slate-800" x-text="formatCurrency(invoice.amount)"></p>
+                                            <p class="text-xs text-slate-500" x-text="formatDate(invoice.dueDate)"></p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Create Invoice Modal -->
+        <div x-show="showCreateInvoiceModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4">Create Invoice</h3>
+                <form @submit.prevent="createInvoice()">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="invoiceSchool">School</label>
+                            <select x-model="newInvoice.schoolId" required
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                    id="invoiceSchool" title="Select school for invoice">
+                                <option value="">Select School</option>
+                                <template x-for="school in subscriptions" :key="school.id">
+                                    <option :value="school.id" x-text="school.schoolName"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="billingPeriod">Billing Period</label>
+                            <input type="text" x-model="newInvoice.billingPeriod" required
+                                   placeholder="e.g., April 2026"
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="billingPeriod" title="Enter billing period">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="invoiceAmount">Amount (ZMW)</label>
+                            <input type="number" x-model="newInvoice.amount" required
+                                   step="0.01" min="0"
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="invoiceAmount" placeholder="Enter amount">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="dueDate">Due Date</label>
+                            <input type="date" x-model="newInvoice.dueDate" required
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="dueDate" title="Select due date">
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 ocean-blue-primary text-white py-2 rounded-lg font-medium hover:ocean-blue-accent transition">
+                            Create Invoice
+                        </button>
+                        <button type="button" @click="showCreateInvoiceModal = false" 
+                                class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg font-medium hover:bg-slate-200 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Extend Grace Period Modal -->
+        <div x-show="showExtendGraceModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4">Extend Grace Period</h3>
+                <form @submit.prevent="extendGracePeriod()">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="graceSchool">School</label>
+                            <select x-model="graceExtension.schoolId" required
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                    id="graceSchool" title="Select school for grace extension">
+                                <option value="">Select School</option>
+                                <template x-for="school in subscriptions" :key="school.id">
+                                    <option :value="school.id" x-text="school.schoolName"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="extensionDays">Extension Days</label>
+                            <input type="number" x-model="graceExtension.days" required
+                                   min="1" max="30"
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="extensionDays" placeholder="Enter extension days">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="graceReason">Reason</label>
+                            <textarea x-model="graceExtension.reason" required
+                                      rows="3"
+                                      placeholder="Enter reason for grace extension"
+                                      id="graceReason" title="Enter reason for grace extension"
+                                      class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 orange-accent text-white py-2 rounded-lg font-medium hover:orange-secondary transition">
+                            Extend Grace Period
+                        </button>
+                        <button type="button" @click="showExtendGraceModal = false" 
+                                class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg font-medium hover:bg-slate-200 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Discount Code Modal -->
+        <div x-show="showDiscountModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4">Create Discount Code</h3>
+                <form>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="discountCode">Code</label>
+                            <input type="text" x-model="discountCode.code" required
+                                   placeholder="e.g., SAVE20"
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="discountCode" title="Enter discount code">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="discountPercentage">Percentage (%)</label>
+                            <input type="number" x-model="discountCode.percentage" required
+                                   min="1" max="100"
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="discountPercentage" placeholder="Enter discount percentage">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="maxUses">Max Uses</label>
+                            <input type="number" x-model="discountCode.maxUses" required
+                                   min="1"
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="maxUses" placeholder="Enter maximum uses">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="expiresAt">Expires At</label>
+                            <input type="date" x-model="discountCode.expiresAt" required
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="expiresAt" title="Select expiration date">
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 ocean-green-primary text-white py-2 rounded-lg font-medium hover:ocean-green-accent transition">
+                            Create Code
+                        </button>
+                        <button type="button" @click="showDiscountModal = false" 
+                                class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg font-medium hover:bg-slate-200 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

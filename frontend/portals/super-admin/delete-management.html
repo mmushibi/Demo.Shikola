@@ -1,0 +1,413 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Management - Shikola</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    
+    <!-- Core Scripts -->
+    <script src="/config/config.js"></script>
+    <script src="/shared-assets/js/shared-auth.js"></script>
+    <script src="/shared-assets/js/shared-api-client.js"></script>
+    <script src="/shared-assets/js/shared-realtime-sync.js"></script>
+    <script src="super-admin-offline-manager.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="/shared-assets/js/shared-notifications.js" defer></script>
+    <script src="/shared-assets/js/shared-export-print.js" defer></script>
+    <script src="/shared-assets/js/shared-chart-interactions.js" defer></script>
+    
+    <!-- Icons -->
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+    <div class="flex-1 flex gap-8 w-full">
+        <aside class="flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+            <div class="flex items-center gap-3 mb-10">
+                <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-15 rounded-2xl object-cover">
+            <div>
+                <div class="text-sm text-slate-400">Console</div>
+            </div>
+            </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Console</span>
+                    </a>
+                    
+                    <a href="schools.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-school"></i></span>
+                        <span class="flex-1">Schools</span>
+                    </a>
+                    
+                    <a href="users-and-roles.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-users"></i></span>
+                        <span class="flex-1">Users & Roles</span>
+                    </a>
+                    
+                    <a href="create-user.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-plus"></i></span>
+                        <span class="flex-1">Create Users</span>
+                    </a>
+                    
+                    <a href="global-user-search.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-search"></i></span>
+                        <span class="flex-1">Global Search</span>
+                    </a>
+                    
+                    <a href="payments-coupons.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-ticket-alt"></i></span>
+                        <span class="flex-1">Payments & Coupons</span>
+                    </a>
+                    
+                    <a href="subscriptions.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-layer-group"></i></span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    
+                    <a href="plans.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">Plans & Events</span>
+                    </a>
+                    
+                    <a href="activity-log.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="flex-1">Activity Log</span>
+                    </a>
+                    
+                    <a href="system-health.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-heartbeat"></i></span>
+                        <span class="flex-1">System Health</span>
+                    </a>
+                    
+                    <a href="settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-gear"></i></span>
+                        <span class="flex-1">Settings</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center mt-6 px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium w-full justify-center">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+
+        </aside>
+
+        <main class="flex-1 w-full px-6 py-6 pl-72" x-data="{
+            activeTab: 'users',
+            selectedUsers: [],
+            selectedSchools: [],
+            selectedBranches: [],
+            
+            selectAllUsers() {
+                // Implementation would select all users
+                console.log('Select all users');
+            },
+            
+            selectAllSchools() {
+                // Implementation would select all schools
+                console.log('Select all schools');
+            },
+            
+            selectAllBranches() {
+                // Implementation would select all branches
+                console.log('Select all branches');
+            },
+            
+            openDeleteModal(type, items) {
+                if (items.length === 0) return;
+                if (confirm(`Are you sure you want to delete ${items.length} ${type}?`)) {
+                    // Implementation would delete items
+                    console.log(`Delete ${items.length} ${type}`);
+                }
+            },
+            
+            getSelectedItems(type) {
+                switch(type) {
+                    case 'users': return this.selectedUsers;
+                    case 'schools': return this.selectedSchools;
+                    case 'branches': return this.selectedBranches;
+                    default: return [];
+                }
+            }
+        }">
+            
+                    <!-- Header -->
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl lg:text-3xl font-semibold text-slate-800">Delete Management</h1>
+                            <p class="text-sm text-slate-400 mt-1">Manage deletion of users, schools, and branches</p>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="mt-6 border-b border-slate-200">
+                        <nav class="flex space-x-8">
+                            <button @click="activeTab = 'users'" 
+                                    :class="activeTab === 'users' ? 'border-red-500 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                                    class="py-2 px-1 border-b-2 font-medium text-sm transition">
+                                Users
+                            </button>
+                            <button @click="activeTab = 'schools'" 
+                                    :class="activeTab === 'schools' ? 'border-red-500 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                                    class="py-2 px-1 border-b-2 font-medium text-sm transition">
+                                Schools
+                            </button>
+                            <button @click="activeTab = 'branches'" 
+                                    :class="activeTab === 'branches' ? 'border-red-500 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                                    class="py-2 px-1 border-b-2 font-medium text-sm transition">
+                                Branches
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- Users Tab -->
+                    <div x-show="activeTab === 'users'" class="mt-6 flex-1 flex flex-col">
+                        <!-- Search and Actions -->
+                        <div class="flex items-center justify-between gap-4 mb-4">
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="relative flex-1 max-w-md">
+                                    <input type="text" 
+                                           x-model="userSearch"
+                                           @input="loadUsers()"
+                                           placeholder="Search users..." 
+                                           class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                                    <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button @click="selectAllUsers()" 
+                                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition">
+                                    <i class="fas fa-check-square mr-2"></i>
+                                    Select All
+                                </button>
+                                <button @click="openDeleteModal('users', getSelectedItems('users'))"
+                                        :disabled="selectedUsers.length === 0"
+                                        class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition">
+                                    <i class="fas fa-trash mr-2"></i>
+                                    Delete Selected (<span x-text="selectedUsers.length"></span>)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Users Table -->
+                        <div class="flex-1 overflow-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                            <input type="checkbox" 
+                                                   @change="selectAllUsers()"
+                                                   :checked="selectedUsers.length === users.length && users.length > 0"
+                                                   class="rounded border-slate-300 text-red-500 focus:ring-red-500">
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">School</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-slate-200">
+                                    <template x-for="user in users" :key="user.id">
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="px-4 py-3">
+                                                <input type="checkbox" 
+                                                       :checked="selectedUsers.includes(user.id)"
+                                                       @change="selectedUsers.includes(user.id) 
+                                                           ? selectedUsers = selectedUsers.filter(id => id !== user.id)
+                                                           : selectedUsers.push(user.id)"
+                                                       class="rounded border-slate-300 text-red-500 focus:ring-red-500">
+                                            </td>
+                                            <td class="px-4 py-3 text-sm font-medium text-slate-900" x-text="user.name"></td>
+                                            <td class="px-4 py-3 text-sm text-slate-500" x-text="user.email"></td>
+                                            <td class="px-4 py-3 text-sm text-slate-500" x-text="user.role"></td>
+                                            <td class="px-4 py-3 text-sm text-slate-500" x-text="user.schoolName || '—'"></td>
+                                            <td class="px-4 py-3 text-sm text-slate-500" x-text="formatDate(user.createdAt)"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Schools Tab -->
+                    <div x-show="activeTab === 'schools'" class="mt-6 flex-1 flex flex-col">
+                        <!-- Search and Actions -->
+                        <div class="flex items-center justify-between gap-4 mb-4">
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="relative flex-1 max-w-md">
+                                    <input type="text" 
+                                           x-model="schoolSearch"
+                                           @input="loadSchools()"
+                                           placeholder="Search schools..." 
+                                           class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                                    <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button @click="selectAllSchools()" 
+                                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition">
+                                    <i class="fas fa-check-square mr-2"></i>
+                                    Select All
+                                </button>
+                                <button @click="openDeleteModal('schools', getSelectedItems('schools'))"
+                                        :disabled="selectedSchools.length === 0"
+                                        class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition">
+                                    <i class="fas fa-trash mr-2"></i>
+                                    Delete Selected (<span x-text="selectedSchools.length"></span>)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Schools Table -->
+                        <div class="flex-1 overflow-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                            <input type="checkbox" 
+                                                   @change="selectAllSchools()"
+                                                   :checked="selectedSchools.length === schools.length && schools.length > 0"
+                                                   class="rounded border-slate-300 text-red-500 focus:ring-red-500">
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">School Name</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Subscription</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-slate-200">
+                                    <template x-for="school in schools" :key="school.id">
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="px-4 py-3">
+                                                <input type="checkbox" 
+                                                       :checked="selectedSchools.includes(school.id)"
+                                                       @change="selectedSchools.includes(school.id) 
+                                                           ? selectedSchools = selectedSchools.filter(id => id !== school.id)
+                                                           : selectedSchools.push(school.id)"
+                                                       class="rounded border-slate-300 text-red-500 focus:ring-red-500">
+                                            </td>
+                                            <td class="px-4 py-3 text-sm font-medium text-slate-900" x-text="school.name"></td>
+                                            <td class="px-4 py-3 text-sm text-slate-500" x-text="school.email"></td>
+                                            <td class="px-4 py-3 text-sm">
+                                                <span :class="{
+                                                    'bg-green-100 text-green-800': school.status === 'active',
+                                                    'bg-yellow-100 text-yellow-800': school.status === 'trial',
+                                                    'bg-red-100 text-red-800': school.status === 'inactive'
+                                                }" class="px-2 py-1 text-xs rounded-full" x-text="school.status"></span>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-slate-500" x-text="school.subscriptionPlan || '—'"></td>
+                                            <td class="px-4 py-3 text-sm text-slate-500" x-text="formatDate(school.createdAt)"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Branches Tab -->
+                    <div x-show="activeTab === 'branches'" class="mt-6 flex-1 flex flex-col">
+                        <!-- Search and Actions -->
+                        <div class="flex items-center justify-between gap-4 mb-4">
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="relative flex-1 max-w-md">
+                                    <input type="text" 
+                                           x-model="branchSearch"
+                                           @input="loadBranches()"
+                                           placeholder="Search branches..." 
+                                           class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                                    <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button @click="selectAllBranches()" 
+                                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition">
+                                    <i class="fas fa-check-square mr-2"></i>
+                                    Select All
+                                </button>
+                                <button @click="openDeleteModal('branches', getSelectedItems('branches'))"
+                                        :disabled="selectedBranches.length === 0"
+                                        class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition">
+                                    <i class="fas fa-trash mr-2"></i>
+                                    Delete Selected (<span x-text="selectedBranches.length"></span>)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Branches Table -->
+                        <div class="flex-1 overflow-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                            <input type="checkbox" 
+                                                   @change="selectAllBranches()"
+                                                   :checked="selectedBranches.length === branches.length && branches.length > 0"
+                                                   class="rounded border-slate-300 text-red-500 focus:ring-red-500">
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Branch Name</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">School</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-slate-200">
+                                    <template x-for="branch in branches" :key="branch.id">
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="px-4 py-3">
+                                                <input type="checkbox" 
+                                                       :checked="selectedBranches.includes(branch.id)"
+                                                       @change="selectedBranches.includes(branch.id) 
+                                                           ? selectedBranchs = selectedBranchs.filter(id => id !== branch.id)
+                                                           : selectedBranchs.push(branch.id)"
+                                                       class="rounded border-slate-300 text-red-500 focus:ring-red-500">
+                                            </td>
+                                            <td class="px-4 py-3 text-sm font-medium text-slate-900" x-text="branch.name"></td>
+                                            <td class="px-4 py-3 text-sm text-slate-500" x-text="branch.schoolName || '—'"></td>
+                                            <td class="px-4 py-3 text-sm text-slate-500" x-text="branch.location || '—'"></td>
+                                            <td class="px-4 py-3 text-sm">
+                                                <span :class="{
+                                                    'bg-green-100 text-green-800': branch.status === 'active',
+                                                    'bg-red-100 text-red-800': branch.status === 'inactive'
+                                                }" class="px-2 py-1 text-xs rounded-full" x-text="branch.status"></span>
+                                            </td>
+                                            <td class="px-4 py-3 text-sm text-slate-500" x-text="formatDate(branch.createdAt)"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+        </main>
+    </body>
+</html>

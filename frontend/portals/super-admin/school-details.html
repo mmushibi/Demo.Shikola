@@ -1,0 +1,310 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Details - Shikola</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    
+    <!-- Core Scripts -->
+    <script src="/config/config.js"></script>
+    <script src="/shared-assets/js/shared-auth.js"></script>
+    <script src="/shared-assets/js/shared-api-client.js"></script>
+    <script src="/shared-assets/js/shared-realtime-sync.js"></script>
+    <script src="super-admin-offline-manager.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="/shared-assets/js/shared-notifications.js" defer></script>
+    <script src="/shared-assets/js/shared-export-print.js" defer></script>
+    <script src="/shared-assets/js/shared-chart-interactions.js" defer></script>
+    
+    <!-- Icons -->
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+    <div class="flex-1 flex gap-8 w-full">
+        <aside class="flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+            <div class="flex items-center gap-3 mb-10">
+                <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-15 rounded-2xl object-cover">
+            <div>
+                        <div class="text-xs text-slate-400">Console</div>
+                    </div>
+            </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Console</span>
+                    </a>
+                    
+                    <a href="schools.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-school"></i></span>
+                        <span class="flex-1">Schools</span>
+                    </a>
+                    
+                    <a href="users-and-roles.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-users"></i></span>
+                        <span class="flex-1">Users & Roles</span>
+                    </a>
+                    
+                    <a href="create-user.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-plus"></i></span>
+                        <span class="flex-1">Create Users</span>
+                    </a>
+                    
+                    <a href="global-user-search.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-search"></i></span>
+                        <span class="flex-1">Global Search</span>
+                    </a>
+                    
+                    <a href="payments-coupons.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-ticket-alt"></i></span>
+                        <span class="flex-1">Payments & Coupons</span>
+                    </a>
+                    
+                    <a href="subscriptions.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-layer-group"></i></span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    
+                    <a href="plans.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">Plans & Events</span>
+                    </a>
+                    
+                    <a href="activity-log.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="flex-1">Activity Log</span>
+                    </a>
+                    
+                    <a href="system-health.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-heartbeat"></i></span>
+                        <span class="flex-1">System Health</span>
+                    </a>
+                    
+                    <a href="settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-gear"></i></span>
+                        <span class="flex-1">Settings</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center mt-6 px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium w-full justify-center">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+
+        </aside>
+
+        <main class="flex-1 w-full px-6 py-6 pl-72" x-data="Object.assign(authData(), {
+            loading: false,
+            error: '',
+            school: null,
+            
+            init() {
+                this.loadSchool();
+            },
+            
+            async loadSchool() {
+                this.loading = true;
+                this.error = '';
+                // Implementation would load school data
+                this.loading = false;
+            },
+            
+            goBack() {
+                window.history.back();
+            },
+            
+            editSchool() {
+                // Implementation would open edit modal
+                console.log('Edit school');
+            },
+            
+            deleteSchool() {
+                if (confirm('Are you sure you want to delete this school?')) {
+                    // Implementation would delete school
+                    console.log('Delete school');
+                }
+            }
+        })">
+           <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl lg:text-3xl font-semibold text-slate-800">School details</h1>
+                            <p class="text-xs text-slate-400 mt-1" x-text="school?.schoolName ? school.schoolName : 'Loading…'"></p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600" @click="goBack()">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                <span>Back</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6" x-show="loading" x-cloak>
+                        <div class="py-8 text-center text-slate-400 text-xs">Loading school details...</div>
+                    </div>
+
+                    <div class="mt-6" x-show="error" x-cloak>
+                        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4 text-rose-700 text-xs" x-text="error"></div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 xl:grid-cols-[1.6fr,1fr] gap-6 flex-1" x-show="!loading && !error" x-cloak>
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="text-xs font-semibold text-slate-800">Profile</div>
+                                        <div class="text-xs text-slate-400 mt-1">Core school information</div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                                        <div class="text-xs uppercase tracking-wide text-slate-400">Email</div>
+                                        <div class="mt-1 text-slate-700" x-text="school?.email || '—'"></div>
+                                    </div>
+                                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                                        <div class="text-xs uppercase tracking-wide text-slate-400">Phone</div>
+                                        <div class="mt-1 text-slate-700" x-text="school?.phone || '—'"></div>
+                                    </div>
+                                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4 sm:col-span-2">
+                                        <div class="text-xs uppercase tracking-wide text-slate-400">Address</div>
+                                        <div class="mt-1 text-slate-700" x-text="school?.address || '—'"></div>
+                                    </div>
+                                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                                        <div class="text-xs uppercase tracking-wide text-slate-400">Website</div>
+                                        <div class="mt-1 text-slate-700" x-text="school?.website || '—'"></div>
+                                    </div>
+                                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                                        <div class="text-xs uppercase tracking-wide text-slate-400">Onboarding</div>
+                                        <div class="mt-1 text-slate-700" x-text="school?.onboardingStatus || '—'"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs">
+                                <div class="text-xs font-semibold text-slate-800">Users</div>
+                                <div class="text-xs text-slate-400 mt-1">All staff/users belonging to this school.</div>
+
+                                <div class="mt-4" x-show="usersLoading" x-cloak>
+                                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-4 text-slate-600 text-xs">Loading users...</div>
+                                </div>
+
+                                <div class="mt-4" x-show="usersError" x-cloak>
+                                    <div class="rounded-xl bg-rose-50 border border-rose-100 p-4 text-rose-700 text-xs" x-text="usersError"></div>
+                                </div>
+
+                                <div class="mt-4 overflow-x-auto" x-show="!usersLoading && !usersError" x-cloak>
+                                    <table class="min-w-full text-xs">
+                                        <thead>
+                                            <tr class="text-left text-slate-400">
+                                                <th class="pb-2 pr-4 font-medium">User</th>
+                                                <th class="pb-2 pr-4 font-medium">Role</th>
+                                                <th class="pb-2 pr-4 font-medium">Status</th>
+                                                <th class="pb-2 pr-4 font-medium">Last login</th>
+                                                <th class="pb-2 font-medium">Source</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 text-slate-700">
+                                            <tr x-show="users.length === 0">
+                                                <td colspan="5" class="py-4 text-center text-slate-400">No users found for this school.</td>
+                                            </tr>
+
+                                            <template x-for="u in users" :key="u.source + ':' + u.id">
+                                                <tr>
+                                                    <td class="py-2 pr-4">
+                                                        <div class="font-medium text-slate-800" x-text="u.fullName || u.email || 'User'"></div>
+                                                        <div class="text-xs text-slate-400" x-text="u.email || ''"></div>
+                                                    </td>
+                                                    <td class="py-2 pr-4 text-xs" x-text="formatRole(u.role)"></td>
+                                                    <td class="py-2 pr-4">
+                                                        <span class="px-2 py-1 rounded-full text-xs"
+                                                              :class="u.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'"
+                                                              x-text="u.isActive ? 'Active' : 'Inactive'"></span>
+                                                    </td>
+                                                    <td class="py-2 pr-4 text-xs text-slate-600" x-text="formatDateTime(u.lastLogin) || '—'"></td>
+                                                    <td class="py-2 text-xs text-slate-500" x-text="u.source === 'school_admin_accounts' ? 'School admin' : 'Accounts'"></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs">
+                                <div class="text-xs font-semibold text-slate-800">Subscription</div>
+                                <div class="text-xs text-slate-400 mt-1">Plan, trial window, and status</div>
+
+                                <div class="mt-4 space-y-3">
+                                    <div class="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+                                        <div>
+                                            <div class="text-xs text-slate-400">Tier</div>
+                                            <div class="text-xs font-semibold text-slate-800" x-text="school?.subscriptionPlan || '—'"></div>
+                                        </div>
+                                        <span class="px-2 py-1 rounded-full text-xs" :class="(school?.subscriptionStatus || '').toLowerCase() === 'trial' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'" x-text="school?.subscriptionStatus || '—'"></span>
+                                    </div>
+
+                                    <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+                                        <div class="text-xs text-slate-400">Trial window</div>
+                                        <div class="text-xs text-slate-700 mt-1" x-text="formatRange(school?.subscriptionStartDate, school?.subscriptionEndDate)"></div>
+                                    </div>
+
+                                    <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+                                        <div class="text-xs text-slate-400">Status</div>
+                                        <div class="text-xs text-slate-700 mt-1" x-text="school?.status || '—'"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs">
+                                <div class="text-xs font-semibold text-slate-800">Actions</div>
+                                <div class="text-xs text-slate-400 mt-1">Manage school settings, subscription, and perform administrative actions.</div>
+                                
+                                <div class="mt-4 space-y-2">
+                                    <button type="button" class="w-full px-4 py-2 rounded-xl bg-blue-500 text-white text-xs font-semibold flex items-center justify-center gap-2" @click="editSchool()">
+                                        <i class="fas fa-edit"></i>
+                                        <span>Edit School</span>
+                                    </button>
+                                    
+                                    <button type="button" class="w-full px-4 py-2 rounded-xl bg-rose-500 text-white text-sm font-semibold flex items-center justify-center gap-2" @click="deleteSchool()">
+                                        <i class="fas fa-trash"></i>
+                                        <span>Delete School</span>
+                                    </button>
+                                    
+                                    <a href="schools.html" class="block w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-slate-600 text-sm font-semibold text-center">
+                                        <i class="fas fa-arrow-left"></i>
+                                        <span>Back to Schools</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        </main>
+    </body>
+</html>

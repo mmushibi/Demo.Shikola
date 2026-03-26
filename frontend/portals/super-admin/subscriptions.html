@@ -1,0 +1,955 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - Subscriptions</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script>
+    function getInitials(name) {
+        return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
+    
+    // Desktop-only enforcement
+    function enforceDesktopOnly() {
+        if (window.innerWidth < 1024) {
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-slate-900">
+                    <div class="text-center p-8">
+                        <i class="fas fa-desktop text-6xl text-slate-400 mb-4"></i>
+                        <h1 class="text-2xl font-semibold text-white mb-2">Desktop Required</h1>
+                        <p class="text-slate-400 mb-6">The Super Admin Console requires a desktop browser (1024px or larger).</p>
+                        <p class="text-slate-500 text-sm">Please switch to a desktop device to access this console.</p>
+                    </div>
+                </div>
+            `;
+            return false;
+        }
+        return true;
+    }
+    
+    // Check on load and resize
+    window.addEventListener('load', enforceDesktopOnly);
+    window.addEventListener('resize', () => {
+        if (!enforceDesktopOnly()) {
+            location.reload();
+        }
+    });
+    </script>
+
+    <script src="/config/config.js"></script>
+    <script src="/shared-assets/js/shared-auth.js"></script>
+    <script src="/shared-assets/js/shared-api-client.js"></script>
+    <script src="super-admin-offline-manager.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="/shared-assets/js/shared-export-print.js" defer></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page super-admin-page">
+    <div x-data="Object.assign(authData(), {
+        sidebarOpen: false,
+        pageTitle: 'Subscriptions',
+        pageSubtitle: 'Plans, billing windows and overrides',
+
+        loading: false,
+        error: null,
+
+        tiers: [],
+        subscriptions: [],
+        pendingRequests: [],
+        paymentReceipts: [],
+        receiptsLoading: false,
+        receiptsError: null,
+        receiptModalOpen: false,
+        selectedReceipt: null,
+
+        tierFilter: 'all',
+        statusFilter: 'all',
+        searchQuery: '',
+
+        couponModalOpen: false,
+        couponForm: {
+            code: '',
+            name: '',
+            discountType: 'percentage',
+            discountValue: '',
+            maxUses: '',
+            validUntil: ''
+        },
+        couponError: null,
+        couponSubmitting: false,
+
+        async initPage() {
+            await this.loadAll();
+        },
+
+        async loadAll() {
+            if (!window.ShikolaAPI) {
+                this.error = 'API client not available';
+                return;
+            }
+            this.loading = true;
+            this.error = null;
+            try {
+                const tiersRes = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/subscription/tiers');
+                if (!tiersRes.success && (tiersRes.status === 401 || tiersRes.status === 403)) {
+                    window.location.href = '../frontend/public/signin.html';
+                    return;
+                }
+                this.tiers = (tiersRes.success && tiersRes.data && Array.isArray(tiersRes.data.tiers)) ? tiersRes.data.tiers : [];
+
+                const subsRes = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/subscriptions', { excludeDemo: true });
+                if (!subsRes.success && (subsRes.status === 401 || subsRes.status === 403)) {
+                    window.location.href = '../frontend/public/signin.html';
+                    return;
+                }
+                this.subscriptions = (subsRes.success && Array.isArray(subsRes.data)) ? subsRes.data : [];
+
+                const reqRes = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/subscription/tier-change-requests', { status: 'pending', changeType: 'upgrade', limit: 50, offset: 0 });
+                if (!reqRes.success && (reqRes.status === 401 || reqRes.status === 403)) {
+                    window.location.href = '../frontend/public/signin.html';
+                    return;
+                }
+                this.pendingRequests = (reqRes.success && reqRes.data && Array.isArray(reqRes.data.data)) ? reqRes.data.data : [];
+
+                await this.loadReceipts();
+            } catch (err) {
+                this.error = (err && err.message) ? err.message : 'Failed to load subscription data';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async loadReceipts() {
+            this.receiptsLoading = true;
+            this.receiptsError = null;
+            try {
+                if (!window.ShikolaAPI) return;
+                const res = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/subscription/payment-receipts', { limit: 50, offset: 0 });
+                if (!res.success) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '../frontend/public/signin.html';
+                        return;
+                    }
+                    this.receiptsError = res.error || 'Failed to load receipts';
+                    this.paymentReceipts = [];
+                    return;
+                }
+                this.paymentReceipts = (res.data && Array.isArray(res.data.data)) ? res.data.data : [];
+            } catch (err) {
+                this.receiptsError = (err && err.message) ? err.message : 'Failed to load receipts';
+                this.paymentReceipts = [];
+            } finally {
+                this.receiptsLoading = false;
+            }
+        },
+
+        async openReceiptModal(receiptRow) {
+            if (!receiptRow || !receiptRow.id || !window.ShikolaAPI) return;
+            this.receiptModalOpen = true;
+            this.selectedReceipt = null;
+            try {
+                const res = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/subscription/payment-receipts/' + encodeURIComponent(receiptRow.id));
+                if (res.success) {
+                    this.selectedReceipt = res.data;
+                } else {
+                    this.selectedReceipt = { error: res.error || 'Failed to load receipt' };
+                }
+            } catch (err) {
+                this.selectedReceipt = { error: (err && err.message) ? err.message : 'Failed to load receipt' };
+            }
+        },
+
+        closeReceiptModal() {
+            this.receiptModalOpen = false;
+            this.selectedReceipt = null;
+        },
+
+        exportReceiptsCsv() {
+            if (window.shikolaExportPrint && typeof window.shikolaExportPrint.exportToCSV === 'function') {
+                // Extract table data
+                const table = document.querySelector('#superadmin-subscription-receipts-table');
+                if (!table) return;
+                
+                const headers = [];
+                const rows = [];
+                
+                // Get headers
+                const headerCells = table.querySelectorAll('thead th');
+                headerCells.forEach(cell => {
+                    headers.push(cell.textContent.trim());
+                });
+                
+                // Get data rows
+                const dataCells = table.querySelectorAll('tbody tr');
+                dataCells.forEach(row => {
+                    const rowData = [];
+                    const cells = row.querySelectorAll('td');
+                    cells.forEach(cell => {
+                        rowData.push(cell.textContent.trim());
+                    });
+                    if (rowData.length > 0) {
+                        rows.push(rowData);
+                    }
+                });
+                
+                window.shikolaExportPrint.exportToCSV(rows, 'subscription-payment-receipts.csv', headers);
+            }
+        },
+        printReceipts() {
+            if (window.shikolaExportPrint && typeof window.shikolaExportPrint.printElement === 'function') {
+                window.shikolaExportPrint.printElement('superadmin-subscription-receipts-section');
+                return;
+            }
+            window.print();
+        },
+
+        getTierMeta(planName) {
+            const key = String(planName || '').toLowerCase();
+            return (this.tiers || []).find(t => String(t.name || '').toLowerCase() === key) || null;
+        },
+
+        formatDateRange(start, end) {
+            const s = this.formatDate(start);
+            const e = this.formatDate(end);
+            if (!s && !e) return '—';
+            return `${s || '—'} → ${e || '—'}`;
+        },
+
+        formatDate(value) {
+            if (!value) return '';
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return '';
+            return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+        },
+
+        tierBadge(planName) {
+            const key = String(planName || '').toLowerCase();
+            if (key === 'trial') return 'bg-amber-50 text-amber-700';
+            if (key === 'growth') return 'bg-sky-50 text-sky-600';
+            if (key === 'pro') return 'bg-emerald-50 text-emerald-600';
+            if (key === 'ultimate') return 'bg-violet-50 text-violet-600';
+            return 'bg-slate-50 text-slate-600';
+        },
+
+        statusBadge(status) {
+            const s = String(status || '').toLowerCase();
+            if (s === 'active') return 'bg-emerald-50 text-emerald-600';
+            if (s === 'trial') return 'bg-amber-50 text-amber-600';
+            if (s === 'expired' || s === 'cancelled' || s === 'cancelled') return 'bg-rose-50 text-rose-600';
+            return 'bg-slate-50 text-slate-600';
+        },
+
+        filteredSubscriptions() {
+            const q = String(this.searchQuery || '').trim().toLowerCase();
+            const tier = String(this.tierFilter || 'all').toLowerCase();
+            const billing = String(this.statusFilter || 'all').toLowerCase();
+            return (this.subscriptions || []).filter((s) => {
+                if (tier !== 'all' && String(s.planName || '').toLowerCase() !== tier) return false;
+                if (billing !== 'all' && String(s.status || '').toLowerCase() !== billing) return false;
+                if (!q) return true;
+                return String(s.schoolName || '').toLowerCase().includes(q) || String(s.schoolId || '').toLowerCase().includes(q);
+            });
+        },
+
+        openCouponModal() {
+            this.couponModalOpen = true;
+            this.couponError = null;
+            this.couponSubmitting = false;
+            this.couponForm = {
+                code: '',
+                name: '',
+                discountType: 'percentage',
+                discountValue: '',
+                maxUses: '',
+                validUntil: ''
+            };
+        },
+
+        closeCouponModal() {
+            this.couponModalOpen = false;
+            this.couponError = null;
+            this.couponSubmitting = false;
+        },
+
+        async submitCoupon() {
+            if (!window.ShikolaAPI) return;
+            this.couponSubmitting = true;
+            this.couponError = null;
+            try {
+                const code = String(this.couponForm.code || '').trim().toUpperCase();
+                const name = String(this.couponForm.name || '').trim();
+                const discountType = String(this.couponForm.discountType || '').trim();
+                const discountValue = Number(this.couponForm.discountValue);
+                const maxUsesRaw = String(this.couponForm.maxUses || '').trim();
+                const maxUses = maxUsesRaw ? Number(maxUsesRaw) : null;
+                const validUntilRaw = String(this.couponForm.validUntil || '').trim();
+                const validUntil = validUntilRaw ? validUntilRaw : null;
+
+                if (!code) {
+                    this.couponError = 'Coupon code is required';
+                    return;
+                }
+                if (!name) {
+                    this.couponError = 'Coupon name is required';
+                    return;
+                }
+                if (!Number.isFinite(discountValue) || discountValue <= 0) {
+                    this.couponError = 'Coupon value must be greater than 0';
+                    return;
+                }
+                if (String(discountType).toLowerCase() === 'percentage' && discountValue > 100) {
+                    this.couponError = 'Percentage discount cannot exceed 100';
+                    return;
+                }
+                if (maxUses != null && (!Number.isFinite(maxUses) || maxUses < 1)) {
+                    this.couponError = 'Max uses must be at least 1';
+                    return;
+                }
+
+                const payload = {
+                    code,
+                    name,
+                    discountType,
+                    discountValue,
+                    maxUses,
+                    validUntil,
+                };
+                const res = await window.ShikolaAPI.post('/api/frontend/portals/super-admin/coupons', payload);
+                if (!res.success && (res.status === 401 || res.status === 403)) {
+                    window.location.href = '../frontend/public/signin.html';
+                    return;
+                }
+                if (!res.success) {
+                    this.couponError = res.error || 'Failed to create coupon';
+                    return;
+                }
+                if (window.shikolaButtons && typeof window.shikolaButtons.showNotification === 'function') {
+                    window.shikolaButtons.showNotification('Coupon created', 'success');
+                }
+                this.closeCouponModal();
+            } catch (err) {
+                this.couponError = (err && err.message) ? err.message : 'Failed to create coupon';
+            } finally {
+                this.couponSubmitting = false;
+            }
+        },
+
+        async approveRequest(req) {
+            if (!req || !req.id || !window.ShikolaAPI) return;
+            const res = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/subscription/tier-change-requests/${req.id}/approve`, { decisionNotes: '' });
+            if (res.success) {
+                if (window.shikolaButtons && typeof window.shikolaButtons.showNotification === 'function') {
+                    window.shikolaButtons.showNotification('Upgrade approved', 'success');
+                }
+                await this.loadAll();
+            } else {
+                if (window.shikolaButtons && typeof window.shikolaButtons.showNotification === 'function') {
+                    window.shikolaButtons.showNotification(res.error || 'Failed to approve upgrade', 'error');
+                }
+            }
+        },
+
+        async declineRequest(req) {
+            if (!req || !req.id || !window.ShikolaAPI) return;
+            const res = await window.ShikolaAPI.post(`/api/frontend/portals/super-admin/subscription/tier-change-requests/${req.id}/decline`, { decisionNotes: '' });
+            if (res.success) {
+                if (window.shikolaButtons && typeof window.shikolaButtons.showNotification === 'function') {
+                    window.shikolaButtons.showNotification('Upgrade declined', 'success');
+                }
+                await this.loadAll();
+            } else {
+                if (window.shikolaButtons && typeof window.shikolaButtons.showNotification === 'function') {
+                    window.shikolaButtons.showNotification(res.error || 'Failed to decline upgrade', 'error');
+                }
+            }
+        },
+
+        exportPendingRequestsCsv() {
+            if (window.shikolaExportPrint && typeof window.shikolaExportPrint.exportToCSV === 'function') {
+                // Extract table data
+                const table = document.querySelector('#superadmin-pending-requests-table');
+                if (!table) return;
+                
+                const headers = [];
+                const rows = [];
+                
+                // Get headers
+                const headerCells = table.querySelectorAll('thead th');
+                headerCells.forEach(cell => {
+                    headers.push(cell.textContent.trim());
+                });
+                
+                // Get data rows
+                const dataCells = table.querySelectorAll('tbody tr');
+                dataCells.forEach(row => {
+                    const rowData = [];
+                    const cells = row.querySelectorAll('td');
+                    cells.forEach(cell => {
+                        rowData.push(cell.textContent.trim());
+                    });
+                    if (rowData.length > 0) {
+                        rows.push(rowData);
+                    }
+                });
+                
+                window.shikolaExportPrint.exportToCSV(rows, 'pending-upgrade-requests.csv', headers);
+            }
+        },
+        printPendingRequests() {
+            if (window.shikolaExportPrint && typeof window.shikolaExportPrint.printElement === 'function') {
+                window.shikolaExportPrint.printElement('superadmin-pending-requests-section');
+                return;
+            }
+            window.print();
+        },
+        exportSubscriptionsCsv() {
+            if (window.shikolaExportPrint && typeof window.shikolaExportPrint.exportToCSV === 'function') {
+                // Extract table data
+                const table = document.querySelector('#superadmin-subscriptions-table');
+                if (!table) return;
+                
+                const headers = [];
+                const rows = [];
+                
+                // Get headers
+                const headerCells = table.querySelectorAll('thead th');
+                headerCells.forEach(cell => {
+                    headers.push(cell.textContent.trim());
+                });
+                
+                // Get data rows
+                const dataCells = table.querySelectorAll('tbody tr');
+                dataCells.forEach(row => {
+                    const rowData = [];
+                    const cells = row.querySelectorAll('td');
+                    cells.forEach(cell => {
+                        rowData.push(cell.textContent.trim());
+                    });
+                    if (rowData.length > 0) {
+                        rows.push(rowData);
+                    }
+                });
+                
+                window.shikolaExportPrint.exportToCSV(rows, 'subscriptions.csv', headers);
+            }
+        },
+        printSubscriptions() {
+            if (window.shikolaExportPrint && typeof window.shikolaExportPrint.printElement === 'function') {
+                window.shikolaExportPrint.printElement('superadmin-subscriptions-section');
+                return;
+            }
+            window.print();
+        }
+    })" x-init="initPage()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-8 w-full">
+            <aside class="flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex items-center gap-3 mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-15 rounded-2xl object-cover">
+                  <div>
+                        <div class="text-sm text-slate-400">Console</div>
+                    </div> 
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Console</span>
+                    </a>
+                    
+                    <a href="schools.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-school"></i></span>
+                        <span class="flex-1">Schools</span>
+                    </a>
+                    
+                    <a href="users-and-roles.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-users"></i></span>
+                        <span class="flex-1">Users & Roles</span>
+                    </a>
+                    
+                    <a href="create-user.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-plus"></i></span>
+                        <span class="flex-1">Create Users</span>
+                    </a>
+                    
+                    <a href="global-user-search.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-search"></i></span>
+                        <span class="flex-1">Global Search</span>
+                    </a>
+                    
+                    <a href="payments-coupons.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-ticket-alt"></i></span>
+                        <span class="flex-1">Payments & Coupons</span>
+                    </a>
+                    
+                    <a href="subscriptions.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 text-orange-600 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-layer-group"></i></span>
+                        <span class="font-medium flex-1">Subscriptions</span>
+                    </a>
+                    
+                    <a href="plans.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">Plans & Events</span>
+                    </a>
+                    
+                    <a href="activity-log.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="flex-1">Activity Log</span>
+                    </a>
+                    
+                    <a href="system-health.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-heartbeat"></i></span>
+                        <span class="flex-1">System Health</span>
+                    </a>
+                    
+                    <a href="settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-gear"></i></span>
+                        <span class="flex-1">Settings</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center mt-6 px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium w-full justify-center">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="flex-1 w-full px-6 py-6 pl-72">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl lg:text-3xl font-semibold text-slate-800">Subscriptions & Limits</h1>
+                        <p class="text-sm text-slate-400 mt-1">Control plan tiers, billing windows and temporary overrides</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-sm text-slate-600" @click="document.getElementById('tier-config')?.scrollIntoView({ behavior: 'smooth', block: 'start' })">
+                            <i class="fas fa-table-list text-slate-400"></i>
+                            <span>Manage Tiers</span>
+                        </button>
+                        <button type="button" class="px-3 py-2 rounded-xl bg-orange-500 text-white text-sm font-semibold flex items-center gap-2" @click="openCouponModal()">
+                                <i class="fas fa-plus"></i>
+                                <span>Create Coupon</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <div id="superadmin-subscription-receipts-section" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Subscription payment receipts</div>
+                                    <div class="text-xs text-slate-400 mt-1">Copies of receipts created when schools submit subscription upgrade payments</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs text-slate-600" @click="exportReceiptsCsv()">
+                                        <i class="fas fa-file-csv text-slate-400"></i>
+                                        <span>Export CSV</span>
+                                    </button>
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs text-slate-600" @click="printReceipts()">
+                                        <i class="fas fa-print text-slate-400"></i>
+                                        <span>Print</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4 text-sm text-rose-700" x-show="receiptsError" x-text="receiptsError"></div>
+
+                            <div class="mt-3 overflow-x-auto text-xs">
+                                <table id="superadmin-subscription-receipts-table" class="min-w-full">
+                                    <thead>
+                                        <tr class="text-left text-slate-400">
+                                            <th class="pb-2 pr-4 font-medium">Receipt</th>
+                                            <th class="pb-2 pr-4 font-medium">School</th>
+                                            <th class="pb-2 pr-4 font-medium">Plan</th>
+                                            <th class="pb-2 pr-4 font-medium">Payment</th>
+                                            <th class="pb-2 pr-4 font-medium">Created</th>
+                                            <th class="pb-2 font-medium text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                                        <tr x-show="receiptsLoading">
+                                            <td class="py-4 text-center text-slate-400" colspan="6">Loading receipts...</td>
+                                        </tr>
+                                        <template x-for="r in (paymentReceipts || [])" :key="r.id">
+                                            <tr>
+                                                <td class="py-2 pr-4">
+                                                    <div class="font-medium text-slate-800" x-text="r.receiptNumber || '—'"></div>
+                                                    <div class="text-xs text-slate-400" x-text="'Req: ' + (r.requestId ? String(r.requestId).slice(0, 8) : '—')"></div>
+                                                </td>
+                                                <td class="py-2 pr-4">
+                                                    <div class="font-medium text-slate-800" x-text="r.schoolName || '—'"></div>
+                                                    <div class="text-xs text-slate-400" x-text="r.schoolEmail || ''"></div>
+                                                </td>
+                                                <td class="py-2 pr-4 text-xs" x-text="(r.requestedPlan || '—')"></td>
+                                                <td class="py-2 pr-4 text-xs">
+                                                    <div x-text="r.paymentMethod || '—'"></div>
+                                                    <div class="text-slate-400" x-text="r.paymentReference || ''"></div>
+                                                </td>
+                                                <td class="py-2 pr-4 text-xs" x-text="formatDate(r.createdAt) || '—'"></td>
+                                                <td class="py-2 text-right">
+                                                    <button type="button" class="px-2 py-1 rounded-lg bg-slate-50 text-xs text-slate-600 border border-slate-200" @click="openReceiptModal(r)">View</button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <tr x-show="!receiptsLoading && !receiptsError && (!paymentReceipts || paymentReceipts.length === 0)">
+                                            <td class="py-3 text-slate-400" colspan="6">No receipts found.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 rounded-2xl bg-rose-50 border border-rose-100 p-4 text-sm text-rose-700" x-show="error" x-text="error"></div>
+
+                    <div class="mt-4 rounded-2xl bg-slate-50 border border-slate-100 p-4 text-sm text-slate-500" x-show="loading">Loading subscription data…</div>
+
+                    <div class="mt-6" x-show="!loading && pendingRequests && pendingRequests.length">
+                        <div id="superadmin-pending-requests-section" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Pending upgrade requests</div>
+                                    <div class="text-xs text-slate-400 mt-1">Approve or reject subscription upgrades requested by schools</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs text-slate-600" @click="exportPendingRequestsCsv()">
+                                        <i class="fas fa-file-csv text-slate-400"></i>
+                                        <span>Export CSV</span>
+                                    </button>
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs text-slate-600" @click="printPendingRequests()">
+                                        <i class="fas fa-print text-slate-400"></i>
+                                        <span>Print</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto text-xs">
+                                <table id="superadmin-pending-requests-table" class="min-w-full">
+                                    <thead>
+                                        <tr class="text-left text-slate-400">
+                                            <th class="pb-2 pr-4 font-medium">School</th>
+                                            <th class="pb-2 pr-4 font-medium">From</th>
+                                            <th class="pb-2 pr-4 font-medium">To</th>
+                                            <th class="pb-2 pr-4 font-medium">Payment</th>
+                                            <th class="pb-2 pr-4 font-medium">Requested</th>
+                                            <th class="pb-2 font-medium text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                                        <template x-for="req in pendingRequests" :key="req.id">
+                                            <tr>
+                                                <td class="py-2 pr-4">
+                                                    <div class="font-medium text-slate-800" x-text="req.schoolName || '—'"></div>
+                                                    <div class="text-xs text-slate-400" x-text="req.schoolEmail || ('School ID: ' + req.schoolId)"></div>
+                                                </td>
+                                                <td class="py-2 pr-4" x-text="req.currentPlan || '—'"></td>
+                                                <td class="py-2 pr-4" x-text="req.requestedPlan || '—'"></td>
+                                                <td class="py-2 pr-4 text-xs">
+                                                    <div x-text="req.paymentMethod || '—'"></div>
+                                                    <div class="text-slate-400" x-text="req.paymentReference || ''"></div>
+                                                </td>
+                                                <td class="py-2 pr-4" x-text="formatDate(req.createdAt) || '—'"></td>
+                                                <td class="py-2 text-right">
+                                                    <div class="inline-flex items-center gap-1">
+                                                        <button type="button" class="px-2 py-1 rounded-lg bg-rose-50 text-xs text-rose-700 border border-rose-200" @click="declineRequest(req)">Decline</button>
+                                                        <button type="button" class="px-2 py-1 rounded-lg bg-emerald-50 text-xs text-emerald-700 border border-emerald-200" @click="approveRequest(req)">Approve</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-xs uppercase tracking-wide text-slate-400">Monthly recurring revenue</div>
+                                <i class="fas fa-coins text-slate-300"></i>
+                            </div>
+                            <div class="text-2xl font-semibold text-slate-800"></div>
+                            <div class="text-xs text-emerald-600 mt-1"></div>
+                        </div>
+                        <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-xs uppercase tracking-wide text-emerald-600">Active subscriptions</div>
+                                <i class="fas fa-layer-group text-emerald-400"></i>
+                            </div>
+                            <div class="text-2xl font-semibold text-slate-800"></div>
+                            <div class="text-xs text-emerald-600 mt-1">Across all tiers</div>
+                        </div>
+                        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-xs uppercase tracking-wide text-rose-600">Churn & at risk</div>
+                                <i class="fas fa-arrow-trend-down text-rose-400"></i>
+                            </div>
+                            <div class="text-2xl font-semibold text-slate-800"></div>
+                            <div class="text-xs text-rose-600 mt-1"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 xl:grid-cols-[2.1fr,1.1fr] gap-6 flex-1">
+                        <div id="superadmin-subscriptions-section" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">School subscriptions</div>
+                                    <div class="text-xs text-slate-400 mt-1">Per-school plan, renewal and usage information</div>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 text-xs">
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs text-slate-600" @click="exportSubscriptionsCsv()">
+                                        <i class="fas fa-file-csv text-slate-400"></i>
+                                        <span>Export CSV</span>
+                                    </button>
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs text-slate-600" @click="printSubscriptions()">
+                                        <i class="fas fa-print text-slate-400"></i>
+                                        <span>Print</span>
+                                    </button>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 text-xs">
+                                    <select aria-label="Filter by subscription tier" title="Filter by subscription tier" class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 bg-white" x-model="tierFilter">
+                                        <option value="all">All tiers</option>
+                                        <template x-for="t in tiers" :key="t.name">
+                                            <option :value="String(t.name || '').toLowerCase()" x-text="t.displayName || t.name"></option>
+                                        </template>
+                                    </select>
+                                    <select aria-label="Filter by billing status" title="Filter by billing status" class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 bg-white" x-model="statusFilter">
+                                        <option value="all">All billing statuses</option>
+                                        <option>Active</option>
+                                        <option>Trial</option>
+                                        <option>Expired</option>
+                                        <option>Cancelled</option>
+                                    </select>
+                                    <div class="flex items-center bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 w-full sm:w-56">
+                                        <i class="fas fa-search text-slate-400 text-xs mr-2"></i>
+                                        <input type="text" placeholder="Search school or school ID" class="bg-transparent text-xs text-slate-600 placeholder-slate-400 focus:outline-none flex-1" x-model="searchQuery">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 overflow-x-auto text-xs flex-1">
+                                <table id="superadmin-subscriptions-table" class="min-w-full">
+                                    <thead>
+                                        <tr class="text-left text-slate-400">
+                                            <th class="pb-2 pr-4 font-medium">School</th>
+                                            <th class="pb-2 pr-4 font-medium">Tier</th>
+                                            <th class="pb-2 pr-4 font-medium">Usage</th>
+                                            <th class="pb-2 pr-4 font-medium">Billing window</th>
+                                            <th class="pb-2 pr-4 font-medium">Status</th>
+                                            <th class="pb-2 font-medium text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                                        <tr x-show="loading">
+                                            <td class="py-4 text-center text-slate-400" colspan="6">Loading subscriptions...</td>
+                                        </tr>
+                                        <tr x-show="!loading && error">
+                                            <td class="py-4 text-center text-rose-600" colspan="6" x-text="error"></td>
+                                        </tr>
+
+                                        <template x-for="sub in filteredSubscriptions()" :key="sub.id">
+                                            <tr>
+                                                <td class="py-2 pr-4">
+                                                    <div class="font-medium text-slate-800" x-text="sub.schoolName || '—'"></div>
+                                                    <div class="text-xs text-slate-400" x-text="'School ID: ' + (sub.schoolId || sub.id)"></div>
+                                                </td>
+                                                <td class="py-2 pr-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs" :class="tierBadge(sub.planName)" x-text="(getTierMeta(sub.planName) && getTierMeta(sub.planName).displayName) ? getTierMeta(sub.planName).displayName : (sub.planName || '—')"></span>
+                                                </td>
+                                                <td class="py-2 pr-4 text-xs">
+                                                    Pupils <span x-text="sub.pupilEstimate || 0"></span> / <span x-text="(getTierMeta(sub.planName) && getTierMeta(sub.planName).maxPupils) ? getTierMeta(sub.planName).maxPupils : '—'"></span><br>
+                                                    Teachers <span>—</span> / <span x-text="(getTierMeta(sub.planName) && getTierMeta(sub.planName).maxTeachers) ? getTierMeta(sub.planName).maxTeachers : '—'"></span>
+                                                </td>
+                                                <td class="py-2 pr-4 text-xs">
+                                                    <div x-text="formatDateRange(sub.startDate, sub.endDate)"></div>
+                                                    <div class="text-slate-500" x-text="sub.status || '—'"></div>
+                                                </td>
+                                                <td class="py-2 pr-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs" :class="statusBadge(sub.status)" x-text="sub.status || '—'"></span>
+                                                </td>
+                                                <td class="py-2 text-right">
+                                                    <div class="inline-flex items-center gap-1">
+                                                        <a class="px-2 py-1 rounded-lg bg-slate-50 text-xs text-slate-600 border border-slate-200" :href="'school-details.html?id=' + (sub.schoolId || sub.id)">View</a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+
+                                        <tr x-show="!loading && filteredSubscriptions().length === 0">
+                                            <td class="py-3 text-slate-400" colspan="6">No subscriptions found.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div id="tier-config" aria-label="Tier configuration" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Tier configuration</div>
+                                        <div class="text-xs text-slate-400 mt-1">Growth, Professional, Ultimate mapped to <code>subscription_tiers</code></div>
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <template x-for="tier in tiers" :key="tier.name">
+                                        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50">
+                                            <div>
+                                                <div class="font-medium text-slate-800" x-text="tier.displayName || tier.name"></div>
+                                                <div class="text-xs text-slate-500">
+                                                    <span x-text="(tier.maxPupils || 0) ? (tier.maxPupils + ' pupils') : 'Unlimited pupils'"></span> •
+                                                    <span x-text="(tier.maxTeachers || 0) ? (tier.maxTeachers + ' teachers') : 'Unlimited teachers'"></span> •
+                                                    <span x-text="(tier.currency || 'ZMW') + ' ' + (tier.monthlyPrice || 0)"></span>
+                                                </div>
+                                            </div>
+                                            <span class="text-xs text-slate-400">API-managed</span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Overrides & grace periods</div>
+                                        <div class="text-xs text-slate-400 mt-1">Temporary limit changes for specific schools</div>
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-3 text-xs text-slate-500">
+                                        No overrides configured.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-show="couponModalOpen" x-cloak>
+        <div class="absolute inset-0 bg-slate-900/50" @click="closeCouponModal()"></div>
+        <div class="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-start justify-between gap-4">
+                <div>
+                    <div class="text-sm font-semibold text-slate-800">Create Coupon</div>
+                    <div class="text-xs text-slate-400 mt-1">Saved to the database (discount_codes)</div>
+                </div>
+                <button type="button" class="h-9 w-9 rounded-xl bg-slate-50 border border-slate-100 text-slate-500 hover:text-slate-700" aria-label="Close" title="Close" @click="closeCouponModal()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <div class="px-6 py-5">
+                <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4 text-sm text-rose-700" x-show="couponError" x-text="couponError"></div>
+
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <label class="text-xs text-slate-500">Code</label>
+                        <input type="text" class="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700" placeholder="WELCOME10" x-model="couponForm.code">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Name</label>
+                        <input type="text" class="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700" placeholder="Welcome discount" x-model="couponForm.name">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Type</label>
+                        <select class="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700" aria-label="Discount type" x-model="couponForm.discountType">
+                            <option value="percentage">Percentage</option>
+                            <option value="fixed_amount">Fixed amount</option>
+                            <option value="free_months">Free months</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Value</label>
+                        <input type="number" step="0.01" class="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700" placeholder="10" x-model="couponForm.discountValue">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Max uses (optional)</label>
+                        <input type="number" class="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700" placeholder="100" x-model="couponForm.maxUses">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Valid until (optional)</label>
+                        <input type="date" class="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700" aria-label="Valid until" x-model="couponForm.validUntil">
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-5 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button type="button" class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-700" @click="closeCouponModal()" :disabled="couponSubmitting">Cancel</button>
+                <button type="button" class="px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-semibold" @click="submitCoupon()" :disabled="couponSubmitting">
+                    <span x-text="couponSubmitting ? 'Creating…' : 'Create'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4" x-show="receiptModalOpen" x-cloak>
+        <div class="absolute inset-0 bg-slate-900/50" @click="closeReceiptModal()"></div>
+        <div class="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-start justify-between gap-4">
+                <div>
+                    <div class="text-sm font-semibold text-slate-800">Subscription receipt</div>
+                    <div class="text-xs text-slate-400 mt-1" x-text="selectedReceipt && selectedReceipt.receiptNumber ? selectedReceipt.receiptNumber : ''"></div>
+                </div>
+                <button type="button" class="h-9 w-9 rounded-xl bg-slate-50 border border-slate-100 text-slate-500 hover:text-slate-700" aria-label="Close" title="Close" @click="closeReceiptModal()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <div class="px-6 py-5">
+                <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4 text-sm text-rose-700" x-show="selectedReceipt && selectedReceipt.error" x-text="selectedReceipt && selectedReceipt.error"></div>
+                <div id="superadmin-receipt-print" class="rounded-2xl border border-slate-100 p-4 text-sm" x-show="selectedReceipt && !selectedReceipt.error" x-cloak>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-xs text-slate-400">School</div>
+                            <div class="text-sm font-semibold text-slate-800" x-text="selectedReceipt.schoolName || '—'"></div>
+                            <div class="text-xs text-slate-500" x-text="selectedReceipt.schoolEmail || ''"></div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-slate-400">Created</div>
+                            <div class="text-sm font-semibold text-slate-800" x-text="formatDate(selectedReceipt.createdAt) || '—'"></div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400">Requested plan</div>
+                            <div class="text-sm font-semibold text-slate-800" x-text="selectedReceipt.requestedPlan || '—'"></div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400">Payment reference</div>
+                            <div class="text-sm font-semibold text-slate-800" x-text="selectedReceipt.paymentReference || '—'"></div>
+                        </div>
+                    </div>
+                    <div class="mt-4 rounded-xl bg-slate-50 border border-slate-100 p-3 text-xs" x-show="selectedReceipt && selectedReceipt.data && selectedReceipt.data.verifyUrl" x-cloak>
+                        <div class="font-semibold text-slate-700">Verification URL</div>
+                        <div class="mt-1 break-all text-slate-600" x-text="selectedReceipt.data.verifyUrl"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-5 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button type="button" class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-700" @click="window.ShikolaExportPrint && window.ShikolaExportPrint.printSection ? window.ShikolaExportPrint.printSection('#superadmin-receipt-print') : window.print()">Print</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

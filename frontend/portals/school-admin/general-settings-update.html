@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Settings - Shikola</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Load unified API client and RBAC middleware -->
+    <script src="/shared/unified-api-client.js"></script>
+    <script src="/shared/rbac-middleware.js"></script>
+    <script src="/shared/cross-portal-sync.js"></script>
+    <script src="/shared-ecz-grading.js"></script>
+    <script src="/shared-ecz-customization-helper.js"></script>
+<script src="/shared-assets/js/portal-auth-guard.js" defer></script>
+</head>
+<body class="bg-gray-50" x-data="generalSettings()">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-semibold text-gray-900">General Settings</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500" x-text="user?.name || 'Loading...'"></span>
+                    <button @click="logout()" class="text-gray-500 hover:text-gray-700" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="sr-only">Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <template x-for="tab in tabs" :key="tab.id">
+                    <button
+                        @click="activeTab = tab.id"
+                        :class="{
+                            'border-indigo-500 text-indigo-600': activeTab === tab.id,
+                            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== tab.id
+                        }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2"
+                    >
+                        <i :class="tab.icon"></i>
+                        <span x-text="tab.name"></span>
+                    </button>
+                </template>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="space-y-6">
+            <!-- ECZ Grading Tab -->
+            <div x-show="activeTab === 'grading'" x-transition>
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                            <i class="fas fa-graduation-cap mr-2"></i>
+                            ECZ Grading Configuration
+                        </h3>
+                        
+                        <!-- ECZ Overview -->
+                        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 class="font-medium text-blue-900 mb-2">ECZ Grading System Status</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="text-sm">
+                                    <span class="font-medium">System:</span>
+                                    <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded">ECZ 1-9 Scale</span>
+                                </div>
+                                <div class="text-sm">
+                                    <span class="font-medium">Status:</span>
+                                    <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded">Active</span>
+                                </div>
+                                <div class="text-sm">
+                                    <span class="font-medium">Customization:</span>
+                                    <span class="ml-2 px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Enabled</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ECZ Grading Sub-tabs -->
+                        <div class="border-b border-gray-200 mb-4">
+                            <nav class="-mb-px flex space-x-6">
+                                <button
+                                    @click="gradingTab = 'overview'"
+                                    :class="{
+                                        'border-indigo-500 text-indigo-600': gradingTab === 'overview',
+                                        'border-transparent text-gray-500 hover:text-gray-700': gradingTab !== 'overview'
+                                    }"
+                                    class="py-2 px-1 border-b-2 font-medium text-sm"
+                                >
+                                    Overview
+                                </button>
+                                <button
+                                    @click="gradingTab = 'scales'"
+                                    :class="{
+                                        'border-indigo-500 text-indigo-600': gradingTab === 'scales',
+                                        'border-transparent text-gray-500 hover:text-gray-700': gradingTab !== 'scales'
+                                    }"
+                                    class="py-2 px-1 border-b-2 font-medium text-sm"
+                                >
+                                    Grading Scales
+                                </button>
+                                <button
+                                    @click="gradingTab = 'custom'"
+                                    :class="{
+                                        'border-indigo-500 text-indigo-600': gradingTab === 'custom',
+                                        'border-transparent text-gray-500 hover:text-gray-700': gradingTab !== 'custom'
+                                    }"
+                                    class="py-2 px-1 border-b-2 font-medium text-sm"
+                                >
+                                    Custom Scales
+                                </button>
+                                <button
+                                    @click="gradingTab = 'settings'"
+                                    :class="{
+                                        'border-indigo-500 text-indigo-600': gradingTab === 'settings',
+                                        'border-transparent text-gray-500 hover:text-gray-700': gradingTab !== 'settings'
+                                    }"
+                                    class="py-2 px-1 border-b-2 font-medium text-sm"
+                                >
+                                    Settings
+                                </button>
+                            </nav>
+                        </div>
+
+                        <!-- Overview Content -->
+                        <div x-show="gradingTab === 'overview'" x-transition>
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900 mb-3">Primary School Scale</h4>
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <div class="space-y-2">
+                                                <template x-for="grade in primaryScale" :key="grade.grade">
+                                                    <div class="flex justify-between text-sm">
+                                                        <span class="font-medium" x-text="`Grade ${grade.grade}`"></span>
+                                                        <span x-text="`${grade.min}% - ${grade.max}%`"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900 mb-3">Secondary School Scale</h4>
+                                        <div class="bg-gray-50 rounded-lg p-4">
+                                            <div class="space-y-2">
+                                                <template x-for="grade in secondaryScale" :key="grade.grade">
+                                                    <div class="flex justify-between text-sm">
+                                                        <span class="font-medium" x-text="`Grade ${grade.grade}`"></span>
+                                                        <span x-text="`${grade.min}% - ${grade.max}%`"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Scales Content -->
+                        <div x-show="gradingTab === 'custom'" x-transition>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="font-medium text-gray-900">Custom Grading Scales</h4>
+                                    <button
+                                        @click="showCreateScaleModal = true"
+                                        class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 text-sm"
+                                    >
+                                        <i class="fas fa-plus mr-2"></i>Create Custom Scale
+                                    </button>
+                                </div>
+
+                                <!-- Custom Scales List -->
+                                <div class="space-y-3">
+                                    <template x-for="scale in customScales" :key="scale.id">
+                                        <div class="border border-gray-200 rounded-lg p-4">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <h5 class="font-medium text-gray-900" x-text="scale.name"></h5>
+                                                    <p class="text-sm text-gray-500" x-text="scale.description"></p>
+                                                    <div class="mt-2 flex items-center space-x-4 text-sm">
+                                                        <span class="text-gray-500">
+                                                            <i class="fas fa-layer-group mr-1"></i>
+                                                            <span x-text="`${scale.grades.length} grades`"></span>
+                                                        </span>
+                                                        <span class="text-gray-500">
+                                                            <i class="fas fa-check-circle mr-1"></i>
+                                                            <span x-text="scale.eczCompliant ? 'ECZ Compliant' : 'Custom'"></span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex space-x-2">
+                                                    <button
+                                                        @click="editScale(scale)"
+                                                        class="text-indigo-600 hover:text-indigo-900"
+                                                    >
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button
+                                                        @click="deleteScale(scale.id)"
+                                                        class="text-red-600 hover:text-red-900"
+                                                    >
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Settings Content -->
+                        <div x-show="gradingTab === 'settings'" x-transition>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Enable ECZ Grading</h4>
+                                        <p class="text-sm text-gray-500">Use ECZ 1-9 point scale as default grading system</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" x-model="eczEnabled" class="sr-only peer" aria-label="Enable ECZ Grading">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Auto-calculate Divisions</h4>
+                                        <p class="text-sm text-gray-500">Automatically calculate divisions based on average points</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" x-model="autoCalculateDivisions" class="sr-only peer" aria-label="Auto-calculate Divisions">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+
+                                <div class="pt-4">
+                                    <button
+                                        @click="saveGradingSettings()"
+                                        class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                                    >
+                                        Save Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Integration Tab -->
+            <div x-show="activeTab === 'integration'" x-transition>
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                            <i class="fas fa-plug mr-2"></i>
+                            System Integration
+                        </h3>
+
+                        <div class="space-y-6">
+                            <!-- API Status -->
+                            <div>
+                                <h4 class="font-medium text-gray-900 mb-3">API Integration Status</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium">Unified API Client</span>
+                                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Connected</span>
+                                        </div>
+                                    </div>
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium">Real-time Sync</span>
+                                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Active</span>
+                                        </div>
+                                    </div>
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium">RBAC System</span>
+                                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Enabled</span>
+                                        </div>
+                                    </div>
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium">Cross-Portal Sync</span>
+                                            <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Running</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sync Status -->
+                            <div>
+                                <h4 class="font-medium text-gray-900 mb-3">Sync Status</h4>
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <div class="space-y-2">
+                                        <template x-for="(status, channel) in syncStatus" :key="channel">
+                                            <div class="flex justify-between text-sm">
+                                                <span class="font-medium capitalize" x-text="channel"></span>
+                                                <span x-text="status"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex space-x-4">
+                                <button
+                                    @click="performFullSync()"
+                                    class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+                                >
+                                    <i class="fas fa-sync mr-2"></i>Full Sync
+                                </button>
+                                <button
+                                    @click="clearCache()"
+                                    class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+                                >
+                                    <i class="fas fa-trash mr-2"></i>Clear Cache
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div x-show="notification.show" 
+         x-transition:enter="transform ease-out duration-300 transition"
+         x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+         x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+        <div class="p-4">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i :class="notification.type === 'success' ? 'fas fa-check-circle text-green-400' : 'fas fa-exclamation-circle text-red-400'"></i>
+                </div>
+                <div class="ml-3 w-0 flex-1 pt-0.5">
+                    <p class="text-sm font-medium text-gray-900" x-text="notification.message"></p>
+                </div>
+                <div class="ml-4 flex-shrink-0 flex">
+                    <button @click="notification.show = false" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <span class="sr-only">Close</span>
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generalSettings() {
+            return {
+                activeTab: 'grading',
+                gradingTab: 'overview',
+                user: null,
+                loading: false,
+                notification: {
+                    show: false,
+                    message: '',
+                    type: 'success'
+                },
+                eczEnabled: true,
+                autoCalculateDivisions: true,
+                primaryScale: [
+                    { grade: 1, min: 85, max: 100, description: 'Distinction' },
+                    { grade: 2, min: 75, max: 84, description: 'Distinction' },
+                    { grade: 3, min: 65, max: 74, description: 'Very Good' },
+                    { grade: 4, min: 55, max: 64, description: 'Very Good' },
+                    { grade: 5, min: 45, max: 54, description: 'Credit' },
+                    { grade: 6, min: 35, max: 44, description: 'Credit' },
+                    { grade: 7, min: 25, max: 34, description: 'Pass' },
+                    { grade: 8, min: 0, max: 24, description: 'Fail' }
+                ],
+                secondaryScale: [
+                    { grade: 1, min: 85, max: 100, description: 'Distinction' },
+                    { grade: 2, min: 75, max: 84, description: 'Distinction' },
+                    { grade: 3, min: 65, max: 74, description: 'Very Good' },
+                    { grade: 4, min: 55, max: 64, description: 'Very Good' },
+                    { grade: 5, min: 45, max: 54, description: 'Credit' },
+                    { grade: 6, min: 35, max: 44, description: 'Credit' },
+                    { grade: 7, min: 25, max: 34, description: 'Pass' },
+                    { grade: 8, min: 15, max: 24, description: 'Pass' },
+                    { grade: 9, min: 0, max: 14, description: 'Fail' }
+                ],
+                customScales: [],
+                showCreateScaleModal: false,
+                syncStatus: {},
+                tabs: [
+                    { id: 'grading', name: 'ECZ Grading', icon: 'fas fa-graduation-cap' },
+                    { id: 'integration', name: 'System Integration', icon: 'fas fa-plug' }
+                ],
+
+                async init() {
+                    await this.loadUser();
+                    await this.loadSettings();
+                    await this.loadSyncStatus();
+                    this.setupEventListeners();
+                },
+
+                async loadUser() {
+                    try {
+                        if (window.ShikolaAPI) {
+                            this.user = await window.ShikolaAPI.auth.getCurrentUser();
+                        }
+                    } catch (error) {
+                        console.error('Failed to load user:', error);
+                    }
+                },
+
+                async loadSettings() {
+                    try {
+                        // Load ECZ grading settings
+                        if (window.ECZGradingSystem) {
+                            this.eczEnabled = true;
+                            this.autoCalculateDivisions = true;
+                        }
+
+                        // Load custom scales
+                        if (window.ShikolaAPI) {
+                            const response = await window.ShikolaAPI.request('/api/grading/custom-scales');
+                            if (response.success) {
+                                this.customScales = response.data;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Failed to load settings:', error);
+                    }
+                },
+
+                async loadSyncStatus() {
+                    try {
+                        if (window.ShikolaSync) {
+                            this.syncStatus = window.ShikolaSync.getStatus();
+                        }
+                    } catch (error) {
+                        console.error('Failed to load sync status:', error);
+                    }
+                },
+
+                setupEventListeners() {
+                    // Listen for sync updates
+                    window.addEventListener('shikola:sync-updated', () => {
+                        this.loadSyncStatus();
+                    });
+
+                    // Listen for grading updates
+                    window.addEventListener('shikola:grading-updated', () => {
+                        this.loadSettings();
+                    });
+                },
+
+                async saveGradingSettings() {
+                    this.loading = true;
+                    try {
+                        const settings = {
+                            eczEnabled: this.eczEnabled,
+                            autoCalculateDivisions: this.autoCalculateDivisions
+                        };
+
+                        if (window.ShikolaAPI) {
+                            const response = await window.ShikolaAPI.request('/api/grading/settings', {
+                                method: 'PUT',
+                                body: settings
+                            });
+
+                            if (response.success) {
+                                this.showNotification('Settings saved successfully', 'success');
+                                
+                                // Trigger sync across portals
+                                if (window.ShikolaSync) {
+                                    window.ShikolaSync.broadcastDataChange('grading', 'updated', settings);
+                                }
+                            } else {
+                                throw new Error(response.error || 'Failed to save settings');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Failed to save settings:', error);
+                        this.showNotification('Failed to save settings', 'error');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async performFullSync() {
+                    try {
+                        if (window.ShikolaSync) {
+                            await window.ShikolaSync.performFullSync();
+                            this.showNotification('Full sync completed', 'success');
+                            await this.loadSyncStatus();
+                        }
+                    } catch (error) {
+                        console.error('Failed to perform full sync:', error);
+                        this.showNotification('Failed to perform sync', 'error');
+                    }
+                },
+
+                async clearCache() {
+                    try {
+                        if (window.ShikolaAPI && window.ShikolaAPI.cache) {
+                            window.ShikolaAPI.cache.clear();
+                            this.showNotification('Cache cleared successfully', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Failed to clear cache:', error);
+                        this.showNotification('Failed to clear cache', 'error');
+                    }
+                },
+
+                showNotification(message, type = 'success') {
+                    this.notification = {
+                        show: true,
+                        message,
+                        type
+                    };
+
+                    setTimeout(() => {
+                        this.notification.show = false;
+                    }, 5000);
+                },
+
+                async logout() {
+                    try {
+                        if (window.ShikolaAPI) {
+                            await window.ShikolaAPI.auth.logout();
+                        }
+                        window.location.href = '/login.html';
+                    } catch (error) {
+                        console.error('Logout failed:', error);
+                        window.location.href = '/login.html';
+                    }
+                }
+            }
+        }
+    </script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

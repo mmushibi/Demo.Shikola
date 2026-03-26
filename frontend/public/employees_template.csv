@@ -1,0 +1,4 @@
+employee_number,first_name,last_name,email,phone,department,position,role,hire_date,employment_type,status,address,emergency_contact,emergency_phone,qualifications,subjects,classes
+STF-001,John,mushibi,john.mushibi@school.com,+260123456789,Teaching,Mathematics Teacher,teacher,2023-01-15,Full-time,Active,Kasama,John Mother,+260987654321,BSc Mathematics,Mathematics,Grade 8A,Grade 9B
+STF-002,Jane,chanda,jane.chanda@school.com,+260234567890,Administration,Accountant,accountant,2022-03-20,Full-time,Active,Lusaka,Jane Father,+260876543210,BCom Accounting,Accounting,
+STF-003,Michael,chanda,michael.chanda@school.com,+260345678901,Teaching,Science Teacher,senior_teacher,2020-09-01,Full-time,Active,Ndola,Michael Wife,+260765432109,MSc Physics,Physics,Chemistry,Grade 7A,Grade 10B

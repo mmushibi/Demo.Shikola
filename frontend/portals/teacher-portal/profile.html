@@ -1,0 +1,993 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - Teacher Profile</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../config.js"></script>
+    <script src="../../shared-assets/js/shared-api-client.js"></script>
+    <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../shared-assets/js/shared-realtime-sync.js" defer></script>
+    <script src="../../shared-assets/js/shared-universal-notifications.js" defer></script>
+    <script src="../../shared-assets/js/shared-messages.js" defer></script>
+    <script src="../../shared-assets/js/button-functions.js" defer></script>
+    <script src="../../shared-assets/js/shared-admin-notifications.js" defer></script>
+    <script src="teacher-dashboard.js" defer></script>
+    <script src="teacher-api.js" defer></script>
+    <script src="../../fix-accessibility.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page">
+    <div
+        x-data="Object.assign({}, (typeof authData === 'function' ? authData() : {}), (typeof teacherDashboardData === 'function' ? teacherDashboardData() : {}), {
+            sidebarOpen: false,
+            chatOpen: false,
+            activeTab: localStorage.getItem('teacherProfileActiveTab') || 'overview',
+            themeMode: window.ShikolaTheme ? window.ShikolaTheme.getPreferredTheme() : 'system',
+
+            profileDetails: {
+                fullName: '',
+                role: '',
+                email: '',
+                phone: ''
+            },
+            editingDetails: false,
+            async setTheme(mode) {
+                this.themeMode = mode;
+                if (window.ShikolaTheme) {
+                    window.ShikolaTheme.setTheme(mode);
+                }
+
+                try {
+                    if (window.ShikolaAPI && typeof window.ShikolaAPI.patch === 'function') {
+                        await window.ShikolaAPI.patch('/api/profile/me', { themePreference: mode });
+                    }
+                } catch (_err) {
+                }
+            },
+            async loadProfileDetails() {
+                if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.getProfile === 'function') {
+                    try {
+                        const resp = await window.ShikolaTeacherApi.getProfile();
+                        if (resp && resp.success && resp.data) {
+                            const me = resp.data || {};
+                            this.profileDetails.fullName = me.first_name && me.last_name ? `${me.first_name} ${me.last_name}` : (me.fullName || this.profileDetails.fullName || '');
+                            this.profileDetails.role = me.role || (this.profileDetails.role || '');
+                            this.profileDetails.email = me.email || (this.profileDetails.email || '');
+                            this.profileDetails.phone = me.phone || me.phone_number || (this.profileDetails.phone || '');
+
+                            if (this.user) {
+                                this.user.name = this.profileDetails.fullName;
+                                this.user.email = this.profileDetails.email;
+                                this.user.role = this.profileDetails.role;
+                                this.user.phone = this.profileDetails.phone;
+                            }
+
+                            // Load classes and subjects for overview
+                            if (me.current_classes) {
+                                this.myClasses = me.current_classes;
+                                this.myClassesCount = me.current_classes.length || 0;
+                                this.studentsThisTerm = me.current_classes.reduce((sum, cls) => sum + (cls.pupil_count || 0), 0);
+                            }
+                            
+                            if (me.subjects) {
+                                this.mySubjects = me.subjects;
+                                this.mySubjectsCount = me.subjects.length || 0;
+                            }
+                        }
+                    } catch (_err) {
+                        console.error('Failed to load profile details:', _err);
+                    }
+                    return;
+                }
+
+                console.error('ShikolaTeacherApi not available');
+            },
+            async saveProfileDetails() {
+                if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.updateProfile === 'function') {
+                    try {
+                        const payload = {
+                            fullName: this.profileDetails.fullName,
+                            phone: this.profileDetails.phone
+                        };
+                        const resp = await window.ShikolaTeacherApi.updateProfile(payload);
+                        if (resp && resp.success && resp.data) {
+                            const me = resp.data || {};
+                            this.profileDetails.fullName = me.fullName || me.first_name && me.last_name ? `${me.first_name} ${me.last_name}` : this.profileDetails.fullName;
+                            this.profileDetails.phone = me.phone || me.phone_number || this.profileDetails.phone;
+                            if (this.user) {
+                                this.user.name = this.profileDetails.fullName;
+                                this.user.phone = this.profileDetails.phone;
+                            }
+                        }
+                    } catch (_err) {
+                        console.error('Failed to save profile details:', _err);
+                    } finally {
+                        this.editingDetails = false;
+                        this.loadProfileDetails();
+                    }
+                    return;
+                }
+
+                console.error('ShikolaTeacherApi not available');
+                this.editingDetails = false;
+            },
+            cancelEditDetails() {
+                this.editingDetails = false;
+                this.loadProfileDetails();
+            },
+
+            signatureUrl: null,
+            signatureUpdatedAt: null,
+            signatureFile: null,
+            signaturePreviewUrl: '',
+            signatureLoading: false,
+            signatureError: '',
+            signatureMessage: '',
+
+            passwordData: {
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            },
+            passwordLoading: false,
+            passwordMessage: '',
+            passwordError: '',
+
+            effectiveSignaturePreviewUrl() {
+                return this.signaturePreviewUrl || this.signatureUrl || '';
+            },
+            onSignatureFileChange(evt) {
+                this.signatureMessage = '';
+                this.signatureError = '';
+                const file = evt && evt.target && evt.target.files ? evt.target.files[0] : null;
+                this.signatureFile = file || null;
+                if (!file) {
+                    this.clearSignatureSelection();
+                    return;
+                }
+                try {
+                    if (this.signaturePreviewUrl) {
+                        URL.revokeObjectURL(this.signaturePreviewUrl);
+                    }
+                } catch (_e) {}
+                try {
+                    this.signaturePreviewUrl = URL.createObjectURL(file);
+                } catch (_e) {
+                    this.signaturePreviewUrl = '';
+                }
+            },
+            clearSignatureSelection() {
+                try {
+                    if (this.signaturePreviewUrl) {
+                        URL.revokeObjectURL(this.signaturePreviewUrl);
+                    }
+                } catch (_e) {}
+                this.signaturePreviewUrl = '';
+                this.signatureFile = null;
+                try {
+                    const input = document.getElementById('teacher-signature-file');
+                    if (input) input.value = '';
+                } catch (_e) {}
+            },
+            async loadSignature() {
+                if (this.signatureLoading) return;
+                this.signatureError = '';
+                this.signatureMessage = '';
+                
+                if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.getSignature === 'function') {
+                    this.signatureLoading = true;
+                    try {
+                        const response = await window.ShikolaTeacherApi.getSignature();
+                        if (response && response.success && response.data) {
+                            const base = (window.SHIKOLA_API_BASE || '/api');
+                            const raw = response.data.signatureUrl || null;
+                            if (raw && typeof raw === 'string') {
+                                this.signatureUrl = raw.startsWith('http://') || raw.startsWith('https://')
+                                    ? raw
+                                    : (raw.startsWith('/') ? (base + raw) : (base + '/' + raw.replace(/^\/+/, '')));
+                            } else {
+                                this.signatureUrl = null;
+                            }
+                            this.signatureUpdatedAt = response.data.updatedAt || null;
+                        }
+                    } catch (_err) {
+                        console.error('Failed to load signature:', _err);
+                    } finally {
+                        this.signatureLoading = false;
+                    }
+                    return;
+                }
+
+                console.error('ShikolaTeacherApi not available');
+            },
+            async uploadSignature() {
+                this.signatureError = '';
+                this.signatureMessage = '';
+                
+                if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.uploadSignature === 'function') {
+                    if (!this.signatureFile) {
+                        this.signatureError = 'Please choose a signature image first.';
+                        return;
+                    }
+                    if (this.signatureLoading) return;
+                    this.signatureLoading = true;
+                    try {
+                        const response = await window.ShikolaTeacherApi.uploadSignature(this.signatureFile);
+                        if (!response || !response.success) {
+                            this.signatureError = (response && response.error) ? response.error : 'Failed to upload signature.';
+                            return;
+                        }
+                        const data = response.data || {};
+                        const base = (window.SHIKOLA_API_BASE || '/api');
+                        const raw = data.signatureUrl || this.signatureUrl;
+                        if (raw && typeof raw === 'string') {
+                            this.signatureUrl = raw.startsWith('http://') || raw.startsWith('https://')
+                                ? raw
+                                : (raw.startsWith('/') ? (base + raw) : (base + '/' + raw.replace(/^\/+/, '')));
+                        }
+                        this.signatureUpdatedAt = new Date().toISOString();
+                        this.signatureMessage = 'Signature uploaded successfully.';
+                        this.clearSignatureSelection();
+                    } catch (_err) {
+                        this.signatureError = 'Failed to upload signature.';
+                    } finally {
+                        this.signatureLoading = false;
+                    }
+                    return;
+                }
+
+                console.error('ShikolaTeacherApi not available');
+            },
+            async deleteSignature() {
+                this.signatureError = '';
+                this.signatureMessage = '';
+                
+                if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.deleteSignature === 'function') {
+                    if (this.signatureLoading) return;
+                    this.signatureLoading = true;
+                    try {
+                        const response = await window.ShikolaTeacherApi.deleteSignature();
+                        if (!response || !response.success) {
+                            this.signatureError = (response && response.error) ? response.error : 'Failed to delete signature.';
+                            return;
+                        }
+                        this.signatureUrl = null;
+                        this.signatureUpdatedAt = null;
+                        this.signatureMessage = 'Signature removed.';
+                        this.clearSignatureSelection();
+                    } catch (_err) {
+                        this.signatureError = 'Failed to delete signature.';
+                    } finally {
+                        this.signatureLoading = false;
+                    }
+                    return;
+                }
+
+                console.error('ShikolaTeacherApi not available');
+            },
+            async changePassword() {
+                this.passwordError = '';
+                this.passwordMessage = '';
+                
+                if (!this.passwordData.currentPassword || !this.passwordData.newPassword || !this.passwordData.confirmPassword) {
+                    this.passwordError = 'All password fields are required.';
+                    return;
+                }
+                
+                if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
+                    this.passwordError = 'New password and confirm password do not match.';
+                    return;
+                }
+                
+                if (this.passwordData.newPassword.length < 8) {
+                    this.passwordError = 'New password must be at least 8 characters long.';
+                    return;
+                }
+                
+                if (this.passwordLoading) return;
+                this.passwordLoading = true;
+                
+                try {
+                    if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.changePassword === 'function') {
+                        const response = await window.ShikolaTeacherApi.changePassword(this.passwordData);
+                        if (!response || !response.success) {
+                            this.passwordError = (response && response.error) ? response.error : 'Failed to change password.';
+                            return;
+                        }
+                        this.passwordMessage = 'Password changed successfully.';
+                        // Clear password fields
+                        this.passwordData = {
+                            currentPassword: '',
+                            newPassword: '',
+                            confirmPassword: ''
+                        };
+                    } else {
+                        this.passwordError = 'Password change functionality not available.';
+                    }
+                } catch (_err) {
+                    this.passwordError = 'Failed to change password.';
+                } finally {
+                    this.passwordLoading = false;
+                }
+            }
+        })"
+        x-init="typeof initDashboard === 'function' ? initDashboard() : null; typeof loadSignature === 'function' ? loadSignature() : null; typeof loadProfileDetails === 'function' ? loadProfileDetails() : null"
+        class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                        <span class="flex-1">Attendance</span>
+                    </a>
+                    <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">My Timetable</span>
+                    </a>
+                    <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                        <span class="flex-1">Classes</span>
+                    </a>
+                    <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                        <span class="flex-1">Exams</span>
+                    </a>
+                    <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                        <span class="flex-1">Class Tests</span>
+                    </a>
+                    <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div x-show="sidebarOpen" x-cloak x-transition:enter="transition ease-in-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in-out duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    </div>
+
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                            <span class="flex-1">Attendance</span>
+                        </a>
+                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                            <span class="flex-1">My Timetable</span>
+                        </a>
+                        <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                            <span class="flex-1">Classes</span>
+                        </a>
+                        <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                            <span class="flex-1">Exams</span>
+                        </a>
+                        <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                            <span class="flex-1">Class Tests</span>
+                        </a>
+                        <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                            <span class="flex-1">Reports</span>
+                        </a>
+                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                            <span class="flex-1">Messaging</span>
+                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                            <span class="flex-1">Profile</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center justify-center px-2">
+                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-10 w-auto rounded-2xl lg:hidden ml-16 pl-9" x-show="!sidebarOpen">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Teacher Profile</h1>
+                                <p class="text-xs sm:text-sm text-slate-400 mt-1 hidden sm:block">View your details, teaching load, and basic security settings.</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-3">
+                            <div
+                                x-data="{
+                                    query: '',
+                                    focus: false,
+                                    suggestions: ['Profile Settings', 'Account Info', 'Security', 'Preferences'],
+                                    get filtered() {
+                                        if (!this.query) return this.suggestions;
+                                        const q = this.query.toLowerCase();
+                                        return this.suggestions.filter(s => s.toLowerCase().includes(q));
+                                    }
+                                }"
+                                class="relative hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-56"
+                                @click.outside="focus = false">
+                                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search"
+                                    class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1"
+                                    x-model="query"
+                                    @focus="focus = true"
+                                    @input="focus = true">
+                                <div
+                                    x-show="focus && filtered.length"
+                                    x-cloak
+                                    class="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-20">
+                                    <template x-for="suggestion in filtered" :key="suggestion">
+                                        <button
+                                            type="button"
+                                            class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2"
+                                            @mousedown.prevent="query = suggestion">
+                                            <i class="fas fa-search text-[10px] text-slate-400"></i>
+                                            <span x-text="suggestion"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="relative" x-data="window.ShikolaAdminNotifications ? window.ShikolaAdminNotifications.dropdown({ links: { pupilCreated: 'classes.html#students', employeeCreated: '', feesPaymentRecorded: '', attendanceUpdated: 'attendance.html' } }) : { open: false, notifications: [], unreadCount() { return 0; }, loadServerNotifications() {}, markAllRead() {} }" @click.outside="open = false">
+                                <button type="button" class="relative h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" @click="open = !open; if (open) { loadServerNotifications(); }" aria-label="Notifications">
+                                    <i class="far fa-bell"></i>
+                                    <span x-show="unreadCount() > 0" x-cloak class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center" x-text="unreadCount()"></span>
+                                </button>
+                                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-80 rounded-xl bg-white shadow-lg border border-slate-100 z-30 overflow-hidden">
+                                    <div class="p-4 border-b border-slate-100">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="text-sm font-semibold text-slate-800">Notifications</div>
+                                            <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                                                <button type="button" class="hover:text-slate-600" @click="markAllRead()">Mark all read</button>
+                                                <button type="button" class="hover:text-slate-600" @click="clearAll()">Clear</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="max-h-96 overflow-y-auto">
+                                        <template x-for="notification in notifications" :key="notification.id">
+                                            <div class="p-4 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 cursor-pointer" @click="handleClick(notification)">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <div class="text-sm break-words" :class="notification.read ? 'font-normal text-slate-700' : 'font-semibold text-slate-800'" x-text="notification.title"></div>
+                                                        <div class="text-xs text-slate-600 mt-1 break-words max-h-10 overflow-hidden" x-text="notification.message"></div>
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-400 mt-0.5" x-text="notification.time"></div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <div class="p-4 text-[11px] text-slate-400 text-center" x-show="!notifications.length" x-cloak>
+                                            No notifications yet.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <div class="text-xs font-medium text-slate-700">Shikola</div>
+                                        <div class="text-[10px] text-slate-400">Teacher</div>
+                                    </div>
+                                </button>
+                                <div
+                                    x-show="open"
+                                    x-cloak
+                                    class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
+                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
+                                        <span class="w-4 flex justify-center text-slate-400"><i class="fas fa-id-badge"></i></span>
+                                        <span>Profile</span>
+                                    </a>
+                                    <div class="my-1 border-t border-slate-100"></div>
+                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                        <span class="w-4 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                                        <span>Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 text-xs">
+                        <div class="flex items-center gap-3">
+                            <div class="h-14 w-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-sky-500 text-white flex items-center justify-center text-xl font-semibold">
+                                <span x-text="(typeof getInitials === 'function' && user && user.name) ? getInitials(user.name) : 'TT'">TT</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-semibold text-slate-800" x-text="user && user.name ? user.name : 'Teacher'">Teacher</div>
+                                <div class="text-[11px] text-slate-500" x-text="user && user.email ? user.email : ''">teacher@example.com</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                <span class="text-[11px] font-medium">Active</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 text-slate-600 border border-slate-100 text-[11px]">
+                                <i class="fas fa-calendar-alt text-[10px]"></i>
+                                <span x-text="(auth && typeof auth.getSession === 'function' && auth.getSession() && auth.getSession().loginTime) ? ('Joined ' + new Date(auth.getSession().loginTime).getFullYear()) : 'Joined'">Joined</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex flex-wrap gap-2 text-[11px]">
+                        <button type="button" @click="activeTab = 'overview'; localStorage.setItem('teacherProfileActiveTab', 'overview')" :class="activeTab === 'overview' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-xl border border-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-user"></i>
+                            <span>Overview</span>
+                        </button>
+                        <button type="button" @click="activeTab = 'details'; localStorage.setItem('teacherProfileActiveTab', 'details')" :class="activeTab === 'details' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-xl border border-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-id-card"></i>
+                            <span>Details</span>
+                        </button>
+                        <button type="button" @click="activeTab = 'security'; localStorage.setItem('teacherProfileActiveTab', 'security')" :class="activeTab === 'security' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-xl border border-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-lock"></i>
+                            <span>Security</span>
+                        </button>
+                        <button type="button" @click="activeTab = 'signature'; localStorage.setItem('teacherProfileActiveTab', 'signature')" :class="activeTab === 'signature' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-xl border border-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-signature"></i>
+                            <span>Signature</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-6 space-y-6 text-xs">
+                        <section x-show="activeTab === 'overview'" x-cloak>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                                <div class="lg:col-span-2 space-y-5">
+                                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div>
+                                                <div class="text-sm font-semibold text-slate-800">Teaching overview</div>
+                                                <div class="text-xs text-slate-400 mt-1">Snapshot of your classes and load this term.</div>
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                                            <a href="classes.html" class="p-3 rounded-2xl bg-indigo-50 block hover:bg-indigo-100 transition-colors">
+                                                <div class="text-[11px] uppercase tracking-wide text-indigo-500">Classes</div>
+                                                <div class="mt-1 text-lg font-semibold text-slate-800" x-text="myClassesCount || 0">0</div>
+                                                <div class="mt-1 text-[11px] text-slate-500">Active this term</div>
+                                            </a>
+                                            <a href="classes.html#students" class="p-3 rounded-2xl bg-emerald-50 block hover:bg-emerald-100 transition-colors">
+                                                <div class="text-[11px] uppercase tracking-wide text-emerald-500">Students</div>
+                                                <div class="mt-1 text-lg font-semibold text-slate-800" x-text="studentsThisTerm || 0">0</div>
+                                                <div class="mt-1 text-[11px] text-slate-500">Across all classes</div>
+                                            </a>
+                                            <a href="class-tests.html" class="p-3 rounded-2xl bg-orange-50 block hover:bg-orange-100 transition-colors">
+                                                <div class="text-[11px] uppercase tracking-wide text-orange-500">Assessments</div>
+                                                <div class="mt-1 text-lg font-semibold text-slate-800" x-text="assessmentsToMark || 0">0</div>
+                                                <div class="mt-1 text-[11px] text-slate-500">To review this week</div>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div>
+                                                <div class="text-sm font-semibold text-slate-800">Current classes</div>
+                                                <div class="text-xs text-slate-400 mt-1">Classes linked to your teacher profile.</div>
+                                            </div>
+                                            <a href="classes.html" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-900 text-white text-[11px] hover:bg-slate-800">
+                                                <i class="fas fa-chalkboard text-[10px]"></i>
+                                                <span>Open My Classes</span>
+                                            </a>
+                                        </div>
+                                        <div class="space-y-1.5" x-data="{}">
+                                            <template x-if="Array.isArray(myClasses) && myClasses.length">
+                                                <div class="divide-y divide-slate-100 rounded-xl border border-slate-100 bg-slate-50/60">
+                                                    <template x-for="cls in myClasses" :key="cls.id || cls.name">
+                                                        <a href="classes.html" class="flex items-center justify-between px-3 py-2 hover:bg-white/80 transition-colors">
+                                                            <div>
+                                                                <div class="font-medium text-slate-800 text-xs" x-text="cls && cls.name ? cls.name : 'Class'"></div>
+                                                                <div class="text-[11px] text-slate-500" x-text="(cls && cls.level ? cls.level : 'Level not set') + (cls && cls.room ? ' · Room ' + cls.room : '')"></div>
+                                                            </div>
+                                                            <div class="text-[10px] text-slate-400" x-text="cls && cls.classTeacher ? cls.classTeacher : ''"></div>
+                                                        </a>
+                                                    </template>
+                                                </div>
+                                            </template>
+                                            <template x-if="!Array.isArray(myClasses) || !myClasses.length">
+                                                <div class="px-3 py-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 text-[11px] text-slate-500 flex items-center justify-between">
+                                                    <span>No classes are linked to your profile yet.</span>
+                                                    <a href="classes.html" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 text-white hover:bg-slate-800">
+                                                        <i class="fas fa-chalkboard text-[10px]"></i>
+                                                        <span>Open My Classes</span>
+                                                    </a>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-5">
+                                    <div class="bg-slate-900 text-slate-50 rounded-2xl shadow-sm p-5 text-xs space-y-3">
+                                        <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-200">Account summary</div>
+                                        <div class="space-y-1.5">
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-slate-300">Role</span>
+                                                <span class="font-medium text-white">Teacher</span>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-slate-300">Status</span>
+                                                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 text-emerald-200 px-2 py-0.5 text-[10px]">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                                                    <span>Active</span>
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <span class="text-slate-300">Member since</span>
+                                                <span class="font-medium text-white">2026</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs space-y-3">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div>
+                                                <div class="text-[11px] font-semibold text-slate-800">My subjects</div>
+                                                <p class="text-[11px] text-slate-500 mt-0.5">Subjects you are currently assigned to teach.</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-lg font-semibold text-slate-800" x-text="mySubjectsCount || 0">0</div>
+                                                <div class="text-[11px] text-slate-400">active</div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2" x-show="Array.isArray(mySubjects) && mySubjects.length" x-cloak>
+                                            <div class="border border-slate-100 rounded-xl bg-slate-50/60 max-h-32 overflow-y-auto">
+                                                <ul class="divide-y divide-slate-100">
+                                                    <template x-for="subject in mySubjects" :key="subject">
+                                                        <li class="px-3 py-2 flex items-center justify-between text-[11px] text-slate-700">
+                                                            <span x-text="subject"></span>
+                                                        </li>
+                                                    </template>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 px-3 py-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 text-[11px] text-slate-500" x-show="!Array.isArray(mySubjects) || !mySubjects.length" x-cloak>
+                                            Subject assignments will appear here once configured for your classes.
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs space-y-3">
+                                        <div class="text-[11px] font-semibold text-slate-800">Theme</div>
+                                        <p class="text-[11px] text-slate-500">Choose how Shikola looks on this device.</p>
+                                        <div class="flex flex-wrap gap-2 mt-1">
+                                            <button type="button" @click="setTheme('light')"
+                                                :class="themeMode === 'light' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+                                                class="px-3 py-1.5 rounded-xl border border-slate-200 text-[11px] flex items-center gap-1.5">
+                                                <i class="fas fa-sun text-[10px]"></i>
+                                                <span>Light</span>
+                                            </button>
+                                            <button type="button" @click="setTheme('dark')"
+                                                :class="themeMode === 'dark' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+                                                class="px-3 py-1.5 rounded-xl border border-slate-200 text-[11px] flex items-center gap-1.5">
+                                                <i class="fas fa-moon text-[10px]"></i>
+                                                <span>Dark</span>
+                                            </button>
+                                            <button type="button" @click="setTheme('system')"
+                                                :class="themeMode === 'system' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+                                                class="px-3 py-1.5 rounded-xl border border-slate-200 text-[11px] flex items-center gap-1.5">
+                                                <i class="fas fa-desktop text-[10px]"></i>
+                                                <span>System default</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section x-show="activeTab === 'details'" x-cloak>
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs space-y-4">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Personal details</div>
+                                        <div class="text-xs text-slate-400 mt-1">Static placeholders that back-end can later populate.</div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <template x-if="!editingDetails">
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-medium hover:bg-slate-800 flex items-center gap-1.5" @click="editingDetails = true">
+                                                <i class="fas fa-pen text-[10px]"></i>
+                                                <span>Edit</span>
+                                            </button>
+                                        </template>
+                                        <template x-if="editingDetails">
+                                            <div class="flex items-center gap-2">
+                                                <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-medium hover:bg-slate-800" @click="saveProfileDetails()">Save</button>
+                                                <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] text-slate-600 hover:bg-slate-50" @click="cancelEditDetails()">Cancel</button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="teacher-profile-full-name" class="block text-[11px] font-medium text-slate-600 mb-1">Full name</label>
+                                        <input
+                                            id="teacher-profile-full-name"
+                                            type="text"
+                                            title="Full name"
+                                            aria-label="Full name"
+                                            x-model="profileDetails.fullName"
+                                            :readonly="!editingDetails"
+                                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400"
+                                            :class="editingDetails ? 'bg-white' : 'bg-slate-50'">
+                                    </div>
+                                    <div>
+                                        <label for="teacher-profile-role" class="block text-[11px] font-medium text-slate-600 mb-1">Role</label>
+                                        <input
+                                            id="teacher-profile-role"
+                                            type="text"
+                                            title="Role"
+                                            aria-label="Role"
+                                            x-model="profileDetails.role"
+                                            readonly
+                                            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none"
+                                            readonly>
+                                    </div>
+                                    <div>
+                                        <label for="teacher-profile-email" class="block text-[11px] font-medium text-slate-600 mb-1">Email address</label>
+                                        <input
+                                            id="teacher-profile-email"
+                                            type="email"
+                                            title="Email address"
+                                            aria-label="Email address"
+                                            x-model="profileDetails.email"
+                                            readonly
+                                            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none"
+                                            readonly>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Phone</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Not set"
+                                            x-model="profileDetails.phone"
+                                            :readonly="!editingDetails"
+                                            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400"
+                                            :class="editingDetails ? 'bg-white' : 'bg-slate-50'">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Main subjects</label>
+                                        <input
+                                            type="text"
+                                            value=""
+                                            placeholder="Not configured"
+                                            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none"
+                                            readonly>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Homeroom class</label>
+                                        <input
+                                            type="text"
+                                            value=""
+                                            placeholder="Not configured"
+                                            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none"
+                                            readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section x-show="activeTab === 'security'" x-cloak>
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs space-y-5">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Security</div>
+                                        <div class="text-xs text-slate-400 mt-1">Manage your password and account security.</div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Change password</label>
+                                            <input type="password" x-model="passwordData.currentPassword" placeholder="Current password" class="w-full mb-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none">
+                                            <input type="password" x-model="passwordData.newPassword" placeholder="New password" class="w-full mb-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none">
+                                            <input type="password" x-model="passwordData.confirmPassword" placeholder="Confirm new password" class="w-full mb-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none">
+                                            <div class="mt-3 flex justify-end">
+                                                <button type="button" @click="changePassword()" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-medium hover:bg-slate-800" :disabled="passwordLoading" :class="passwordLoading ? 'opacity-60 cursor-not-allowed' : ''">Change password</button>
+                                            </div>
+                                            <div class="space-y-1">
+                                                <div class="text-[11px] text-emerald-600" x-text="passwordMessage" x-show="passwordMessage" x-cloak></div>
+                                                <div class="text-[11px] text-rose-500" x-text="passwordError" x-show="passwordError" x-cloak></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+                                            <div class="text-[11px] font-semibold text-slate-800 mb-1">Two-factor authentication (2FA)</div>
+                                            <p class="text-[11px] text-slate-600 mb-2">Placeholder for future 2FA integration, shared across roles.</p>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] text-slate-700 hover:bg-slate-50">Manage 2FA options</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section x-show="activeTab === 'signature'" x-cloak>
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs space-y-4">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Signature</div>
+                                        <div class="text-xs text-slate-400 mt-1">Upload your signature for printed documents.</div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] text-slate-600 hover:bg-slate-50" @click="loadSignature()" :disabled="signatureLoading">Refresh</button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-[11px] font-medium hover:bg-rose-700" @click="deleteSignature()" x-show="signatureUrl" x-cloak :disabled="signatureLoading">Remove</button>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                                    <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
+                                        <div class="text-[11px] font-semibold text-slate-800">Preview</div>
+                                        <div class="w-full aspect-[3/2] rounded-xl border border-dashed border-slate-200 bg-white flex items-center justify-center overflow-hidden">
+                                            <template x-if="effectiveSignaturePreviewUrl()">
+                                                <img :src="effectiveSignaturePreviewUrl()" alt="Signature preview" class="max-h-full max-w-full object-contain">
+                                            </template>
+                                            <div class="text-[11px] text-slate-400" x-show="!effectiveSignaturePreviewUrl()" x-cloak>No signature uploaded</div>
+                                        </div>
+                                        <div class="text-[11px] text-slate-400" x-show="signatureUpdatedAt" x-cloak x-text="signatureUpdatedAt ? ('Last updated: ' + new Date(signatureUpdatedAt).toLocaleString()) : ''"></div>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label for="teacher-signature-file" class="block text-[11px] font-medium text-slate-600 mb-1">Upload new signature</label>
+                                            <input id="teacher-signature-file" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:outline-none" @change="onSignatureFileChange($event)">
+                                            <div class="mt-1 text-[11px] text-slate-400">PNG/JPG/WebP up to 2MB.</div>
+                                        </div>
+
+                                        <div class="flex flex-wrap gap-2">
+                                            <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-[11px] font-medium hover:bg-slate-800" @click="uploadSignature()" :disabled="!signatureFile || signatureLoading" :class="(!signatureFile || signatureLoading) ? 'opacity-60 cursor-not-allowed' : ''">Upload</button>
+                                            <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-[11px] text-slate-600 hover:bg-slate-50" @click="clearSignatureSelection()" x-show="signatureFile" x-cloak :disabled="signatureLoading">Clear selection</button>
+                                        </div>
+
+                                        <div class="space-y-1">
+                                            <div class="text-[11px] text-rose-500" x-text="signatureError" x-show="signatureError" x-cloak></div>
+                                            <div class="text-[11px] text-emerald-600" x-text="signatureMessage" x-show="signatureMessage" x-cloak></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="custom-cursor"></div>
+    <script src="../../shared-assets/js/script.js"></script>
+    <script>
+        // Load teacher profile from API
+        document.addEventListener('alpine:initialized', async function() {
+            const containers = document.querySelectorAll('[x-data]');
+
+            if (window.ShikolaAPI && typeof window.ShikolaAPI.get === 'function') {
+                try {
+                    const resp = await window.ShikolaAPI.get('/api/profile/me');
+                    const body = resp && resp.data ? resp.data : null;
+                    if (resp && resp.success && body && body.success && body.data) {
+                        const me = body.data || {};
+                        containers.forEach(el => {
+                            if (el.__x && el.__x.$data) {
+                                const data = el.__x.$data;
+                                if (data.user) {
+                                    data.user.name = me.fullName || data.user.name;
+                                    data.user.email = me.email || data.user.email;
+                                    data.user.phone = me.phone || data.user.phone;
+                                    data.user.role = me.role || data.user.role;
+                                }
+                                if (data.profileDetails) {
+                                    data.profileDetails.fullName = me.fullName || data.profileDetails.fullName;
+                                    data.profileDetails.role = me.role || data.profileDetails.role;
+                                    data.profileDetails.email = me.email || data.profileDetails.email;
+                                    data.profileDetails.phone = me.phone || data.profileDetails.phone;
+                                }
+                                if (me.themePreference && data.themeMode !== undefined) {
+                                    data.themeMode = me.themePreference;
+                                    if (window.ShikolaTheme) {
+                                        window.ShikolaTheme.setTheme(me.themePreference);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Failed to load persisted profile from API:', e);
+                }
+            }
+
+            if (!window.ShikolaTeacherApi) return;
+            
+            try {
+                const profile = await window.ShikolaTeacherApi.getProfile();
+                if (profile) {
+                    // Update the user object if available
+                    containers.forEach(el => {
+                        if (el.__x && el.__x.$data) {
+                            const data = el.__x.$data;
+                            if (data.user) {
+                                data.user.department = profile.department || data.user.department;
+                            }
+                            // Store profile data
+                            data.teacherProfile = profile;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Failed to load teacher profile from API:', e);
+            }
+        });
+    </script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

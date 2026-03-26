@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Restrict to tablet and desktop only */
+        @media (max-width: 768px) {
+            body {
+                display: none !important;
+            }
+            body::after {
+                content: "This portal is only available on tablet and desktop devices. Please use a larger screen to access the Operations Portal.";
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                text-align: center;
+                font-family: system-ui, -apple-system, sans-serif;
+                font-size: 18px;
+                color: #374151;
+                background: #f9fafb;
+                padding: 20px;
+            }
+        }
+        
+        /* Ensure minimum width for tablet landscape */
+        @media (max-width: 1024px) and (orientation: portrait) {
+            body {
+                min-width: 768px;
+                overflow-x: auto;
+            }
+        }
+    </style>
+    <title>Profile - Operations Portal</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/config/config.js"></script>
+    <script src="/shared-assets/js/shared-api-client.js"></script>
+    <script src="operations-api.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/shared-auth.js" defer></script>
+    <script src="/shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-assets/css/styles.css">
+    <style>
+        body.operations-page {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+        }
+
+        /* Ocean Blue Theme */
+        .ocean-blue-primary { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+        .ocean-blue-secondary { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .ocean-blue-accent { background: linear-gradient(135deg, #0284c7, #0369a1); }
+        
+        /* Ocean Green Theme */
+        .ocean-green-primary { background: linear-gradient(135deg, #10b981, #059669); }
+        .ocean-green-secondary { background: linear-gradient(135deg, #34d399, #10b981); }
+        .ocean-green-accent { background: linear-gradient(135deg, #059669, #047857); }
+        
+        /* Orange Accent */
+        .orange-accent { background: linear-gradient(135deg, #fb923c, #f97316); }
+        .orange-secondary { background: linear-gradient(135deg, #fdba74, #fb923c); }
+
+        .nav-active {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+        }
+
+        .nav-item:hover {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(2, 132, 199, 0.1));
+        }
+
+        .ocean-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(14, 165, 233, 0.1);
+        }
+
+        .ocean-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.15);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+    </style>
+</head>
+<body class="operations-page">
+    <div x-data="{
+        sidebarOpen: false,
+        userProfile: {
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
+            role: '',
+            department: '',
+            lastLogin: '',
+            createdAt: ''
+        },
+        passwordForm: {
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+        },
+        loading: false,
+        showPasswordModal: false,
+        showEditModal: false,
+        async init() {
+            await this.loadProfile();
+        },
+        async loadProfile() {
+            this.loading = true;
+            try {
+                const response = await window.operationsAPI.getCurrentUser();
+                if (response.success) {
+                    this.userProfile = { ...this.userProfile, ...response.data };
+                }
+            } catch (error) {
+                console.error('Failed to load profile:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async updateProfile() {
+            try {
+                const response = await window.operationsAPI.updateCurrentUser(this.userProfile);
+                if (response.success) {
+                    this.showEditModal = false;
+                    this.showNotification('Profile updated successfully!', 'success');
+                    await this.loadProfile();
+                }
+            } catch (error) {
+                console.error('Failed to update profile:', error);
+                    document.body.removeChild(errorDiv);
+                }, 3000);
+            }
+        },
+        async changePassword() {
+            if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                errorDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>Passwords do not match';
+                document.body.appendChild(errorDiv);
+                
+                setTimeout(() => {
+                    document.body.removeChild(errorDiv);
+                }, 3000);
+                return;
+            }
+            
+            try {
+                const response = await window.operationsAPI.changePassword({
+                    currentPassword: this.passwordForm.currentPassword,
+                    newPassword: this.passwordForm.newPassword
+                });
+                
+                if (response.success) {
+                    this.showPasswordModal = false;
+                    this.passwordForm = {
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: ''
+                    };
+                    
+                    // Show success message
+                    const successDiv = document.createElement('div');
+                    successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                    successDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Password changed successfully';
+                    document.body.appendChild(successDiv);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(successDiv);
+                    }, 3000);
+                } else {
+                    throw new Error(response.message || 'Failed to change password');
+                }
+            } catch (error) {
+                console.error('Failed to change password:', error);
+                
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                errorDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${error.message || 'Failed to change password. Please try again.'}`;
+                document.body.appendChild(errorDiv);
+                
+                setTimeout(() => {
+                    document.body.removeChild(errorDiv);
+                }, 3000);
+            }
+        },
+        getRoleColor(role) {
+            switch (role) {
+                case 'super_admin': return 'text-purple-600 bg-purple-50';
+                case 'operations': return 'text-blue-600 bg-blue-50';
+                case 'school_admin': return 'text-green-600 bg-green-50';
+                case 'head_teacher': return 'text-orange-600 bg-orange-50';
+                case 'teacher': return 'text-cyan-600 bg-cyan-50';
+                case 'accountant': return 'text-yellow-600 bg-yellow-50';
+                case 'parent': return 'text-pink-600 bg-pink-50';
+                case 'pupil': return 'text-gray-600 bg-gray-50';
+                default: return 'text-gray-600 bg-gray-50';
+            }
+        },
+        getRoleLabel(role) {
+            const labels = {
+                'super_admin': 'Super Admin',
+                'operations': 'Operations',
+                'school_admin': 'School Admin',
+                'head_teacher': 'Head Teacher',
+                'deputy_head': 'Deputy Head',
+                'teacher': 'Teacher',
+                'accountant': 'Accountant',
+                'parent': 'Parent',
+                'pupil': 'Pupil'
+            };
+            return labels[role] || role;
+        }
+    }" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <!-- Sidebar Navigation -->
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="nav-menu space-y-1 text-sm">
+                    <a href="dashboard.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-chart-line"></i>
+                        </span>
+                        <span class="flex-1">Dashboard</span>
+                    </a>
+                    <a href="schools-management.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-school"></i>
+                        </span>
+                        <span class="flex-1">Schools Management</span>
+                    </a>
+                    <a href="subscriptions.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-credit-card"></i>
+                        </span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    <a href="user-management.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-users-cog"></i>
+                        </span>
+                        <span class="flex-1">User Management</span>
+                    </a>
+                    <a href="tickets-support.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-ticket-alt"></i>
+                        </span>
+                        <span class="flex-1">Tickets & Support</span>
+                    </a>
+                    <a href="system-monitoring.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-server"></i>
+                        </span>
+                        <span class="flex-1">System Monitoring</span>
+                    </a>
+                    <a href="reports.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-file-alt"></i>
+                        </span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                    <a href="profile.html" class="nav-active flex items-center gap-3 px-4 py-3 rounded-xl text-white shadow-md">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-user-circle"></i>
+                        </span>
+                        <span class="font-medium flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <!-- Header -->
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                        <div>
+                            <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Profile</h1>
+                            <p class="text-sm text-slate-500 mt-1">Manage your account settings and preferences</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button @click="showEditModal = true" class="ocean-blue-primary text-white px-4 py-2 rounded-xl font-medium hover:ocean-blue-accent transition">
+                                <i class="fas fa-edit mr-2"></i>Edit Profile
+                            </button>
+                            <button @click="showPasswordModal = true" class="orange-accent text-white px-4 py-2 rounded-xl font-medium hover:orange-secondary transition">
+                                <i class="fas fa-key mr-2"></i>Change Password
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Profile Content -->
+                    <div class="flex-1 overflow-y-auto">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Profile Card -->
+                            <div class="lg:col-span-1">
+                                <div class="ocean-card bg-white rounded-2xl shadow-lg p-6 text-center">
+                                    <div class="w-24 h-24 mx-auto mb-4 rounded-full ocean-blue-primary flex items-center justify-center text-white text-3xl font-bold">
+                                        <span x-text="userProfile.firstName.charAt(0).toUpperCase() + userProfile.lastName.charAt(0).toUpperCase()"></span>
+                                    </div>
+                                    <h2 class="text-xl font-semibold text-slate-800 mb-2" x-text="userProfile.firstName + ' ' + userProfile.lastName"></h2>
+                                    <span class="inline-block px-3 py-1 rounded-full text-sm font-medium mb-4" 
+                                          :class="getRoleColor(userProfile.role)"
+                                          x-text="getRoleLabel(userProfile.role)"></span>
+                                    <div class="text-left space-y-3">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-envelope text-slate-400 w-5"></i>
+                                            <span class="text-sm text-slate-600" x-text="userProfile.email"></span>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-phone text-slate-400 w-5"></i>
+                                            <span class="text-sm text-slate-600" x-text="userProfile.phone || 'No phone'"></span>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-building text-slate-400 w-5"></i>
+                                            <span class="text-sm text-slate-600" x-text="userProfile.department || 'Operations'"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Information Cards -->
+                            <div class="lg:col-span-2 space-y-6">
+                                <!-- Account Statistics -->
+                                <div class="ocean-card bg-white rounded-2xl shadow-lg p-6">
+                                    <h3 class="text-lg font-semibold text-slate-800 mb-4">Account Information</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="p-4 bg-slate-50 rounded-xl">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <i class="fas fa-calendar-plus text-ocean-blue-500"></i>
+                                                <span class="text-sm font-medium text-slate-700">Account Created</span>
+                                            </div>
+                                            <p class="text-lg font-semibold text-slate-800" x-text="new Date(userProfile.createdAt).toLocaleDateString()"></p>
+                                        </div>
+                                        <div class="p-4 bg-slate-50 rounded-xl">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <i class="fas fa-sign-in-alt text-green-500"></i>
+                                                <span class="text-sm font-medium text-slate-700">Last Login</span>
+                                            </div>
+                                            <p class="text-lg font-semibold text-slate-800" x-text="userProfile.lastLogin ? new Date(userProfile.lastLogin).toLocaleDateString() : 'Never'"></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Recent Activity -->
+                                <div class="ocean-card bg-white rounded-2xl shadow-lg p-6">
+                                    <h3 class="text-lg font-semibold text-slate-800 mb-4">Recent Activity</h3>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+                                            <div class="w-8 h-8 rounded-full ocean-blue-primary flex items-center justify-center text-white text-xs">
+                                                <i class="fas fa-sign-in-alt"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-slate-800">Logged into Operations Portal</p>
+                                                <p class="text-xs text-slate-500">Today at 9:30 AM</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+                                            <div class="w-8 h-8 rounded-full ocean-green-primary flex items-center justify-center text-white text-xs">
+                                                <i class="fas fa-school"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-slate-800">Managed school settings</p>
+                                                <p class="text-xs text-slate-500">Yesterday at 2:15 PM</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
+                                            <div class="w-8 h-8 rounded-full orange-accent flex items-center justify-center text-white text-xs">
+                                                <i class="fas fa-user-plus"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-slate-800">Created new user account</p>
+                                                <p class="text-xs text-slate-500">2 days ago at 11:45 AM</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Security Settings -->
+                                <div class="ocean-card bg-white rounded-2xl shadow-lg p-6">
+                                    <h3 class="text-lg font-semibold text-slate-800 mb-4">Security Settings</h3>
+                                    <div class="space-y-4">
+                                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                                            <div class="flex items-center gap-3">
+                                                <i class="fas fa-shield-alt text-green-500"></i>
+                                                <div>
+                                                    <p class="text-sm font-medium text-slate-800">Two-Factor Authentication</p>
+                                                    <p class="text-xs text-slate-500">Add an extra layer of security</p>
+                                                </div>
+                                            </div>
+                                            <button class="text-ocean-blue-600 hover:text-ocean-blue-800 text-sm font-medium">
+                                                Enable
+                                            </button>
+                                        </div>
+                                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                                            <div class="flex items-center gap-3">
+                                                <i class="fas fa-bell text-orange-500"></i>
+                                                <div>
+                                                    <p class="text-sm font-medium text-slate-800">Login Notifications</p>
+                                                    <p class="text-xs text-slate-500">Get notified of new login attempts</p>
+                                                </div>
+                                            </div>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <span class="sr-only">Login Notifications</span>
+                                                <input type="checkbox" class="sr-only peer" checked title="Login Notifications">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-ocean-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ocean-blue-600"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Edit Profile Modal -->
+        <div x-show="showEditModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4">Edit Profile</h3>
+                <form @submit.prevent="updateProfile()">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1" for="firstName">First Name</label>
+                                <input type="text" x-model="userProfile.firstName" required
+                                       class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                       id="firstName" placeholder="Enter your first name">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1" for="lastName">Last Name</label>
+                                <input type="text" x-model="userProfile.lastName" required
+                                       class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                       id="lastName" placeholder="Enter your last name">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="email">Email</label>
+                            <input type="email" x-model="userProfile.email" required
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="email" placeholder="Enter your email address">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="phone">Phone</label>
+                            <input type="tel" x-model="userProfile.phone"
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="phone" placeholder="Enter your phone number">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="department">Department</label>
+                            <input type="text" x-model="userProfile.department" 
+                                   :readonly="userProfile.role !== 'super_admin'"
+                                   :class="userProfile.role !== 'super_admin' ? 'bg-gray-100 cursor-not-allowed' : ''"
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="department" placeholder="Enter your department">
+                            <p x-show="userProfile.role !== 'super_admin'" class="text-xs text-gray-500 mt-1">Only Super Admin can change department</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 ocean-blue-primary text-white py-2 rounded-lg font-medium hover:ocean-blue-accent transition">
+                            Update Profile
+                        </button>
+                        <button type="button" @click="showEditModal = false" 
+                                class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg font-medium hover:bg-slate-200 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div x-show="showPasswordModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4">Change Password</h3>
+                <form @submit.prevent="changePassword()">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="currentPassword">Current Password</label>
+                            <input type="password" x-model="passwordForm.currentPassword" required
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="currentPassword" placeholder="Enter current password">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="newPassword">New Password</label>
+                            <input type="password" x-model="passwordForm.newPassword" required
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="newPassword" placeholder="Enter new password">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="confirmPassword">Confirm New Password</label>
+                            <input type="password" x-model="passwordForm.confirmPassword" required
+                                   class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                   id="confirmPassword" placeholder="Confirm new password">
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 orange-accent text-white py-2 rounded-lg font-medium hover:orange-secondary transition">
+                            Change Password
+                        </button>
+                        <button type="button" @click="showPasswordModal = false" 
+                                class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg font-medium hover:bg-slate-200 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

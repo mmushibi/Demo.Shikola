@@ -1,0 +1,1763 @@
+/*
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+*/
+(function () {
+  var currentCollectInvoiceId = null;
+
+function hasAdminFeesApi() {
+  return !!(window.ShikolaAPI && window.ShikolaAPI.adminFees);
+}
+
+function titleCase(text) {
+  var s = String(text || '').trim();
+  if (!s) return '';
+  return s
+    .split(/[-_\s]+/g)
+    .filter(Boolean)
+    .map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); })
+    .join(' ');
+}
+
+  function mapInvoiceStatus(status) {
+    var s = String(status || '').toLowerCase();
+    if (s === 'paid') return 'paid';
+    if (s.indexOf('partial') !== -1) return 'partially_paid';
+    return 'unpaid';
+  }
+
+  function normalizeInvoiceRow(row) {
+    if (!row) return null;
+    var items = Array.isArray(row.items) ? row.items : [];
+    return {
+      id: row.id,
+      invoiceNumber: row.invoiceNumber || row.invoice_number,
+      pupilId: row.pupilId || row.pupil_id,
+      pupilName: row.pupilName || row.pupil_name,
+      classLabel: row.className || row.classLabel || row.class_name,
+      period: row.billingPeriod || row.period || row.billing_period,
+      dueDate: row.dueDate || row.due_date,
+      items: items,
+      totalAmount: normalizeAmount(row.totalAmount != null ? row.totalAmount : row.total_amount),
+      totalPaid: normalizeAmount(row.paidAmount != null ? row.paidAmount : row.paid_amount),
+      status: mapInvoiceStatus(row.status),
+      createdAt: row.createdAt || row.created_at
+    };
+  }
+
+  function normalizePaymentRow(row) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      invoiceId: row.invoiceId || row.invoice_id,
+      invoiceNumber: row.invoiceNumber || row.invoice_number,
+      pupilId: row.pupilId || row.pupil_id,
+      pupilName: row.pupilName || row.pupil_name,
+      classLabel: row.className || row.classLabel || row.class_name,
+      amountPaid: normalizeAmount(row.amountPaid != null ? row.amountPaid : row.amount_paid),
+      paymentDate: row.paymentDate || row.payment_date,
+      paymentMethod: titleCase(row.paymentMethod || row.payment_method),
+      reference: row.transactionId || row.reference || row.transaction_id || '',
+      period: row.billingPeriod || row.period || row.billing_period,
+      items: Array.isArray(row.items) ? row.items : [],
+      createdAt: row.createdAt || row.created_at,
+      bankId: row.bankId != null ? String(row.bankId) : (row.bank_id != null ? String(row.bank_id) : null),
+      qrPayload: row.qrPayload || row.qr_payload,
+      receiptNumber: row.receiptNumber || row.receipt_number
+    };
+  }
+
+  function loadRemoteFeesData() {
+    if (!hasAdminFeesApi()) {
+      remoteFees.loaded = false;
+      remoteFees.loading = false;
+      remoteFees.invoices = null;
+      remoteFees.payments = null;
+      return Promise.resolve(false);
+    }
+    if (remoteFees.loading) return remoteFees.loading;
+
+    remoteFees.loading = new Promise(function (resolve) {
+      var limit = 500;
+      Promise.all([
+        window.ShikolaAPI.adminFees.listInvoices({ limit: limit, offset: 0 }),
+        window.ShikolaAPI.adminFees.listPayments({ limit: limit, offset: 0 })
+      ]).then(function (results) {
+        var invRes = results[0];
+        var payRes = results[1];
+
+        if (!invRes || !invRes.success || !payRes || !payRes.success) {
+          remoteFees.loaded = false;
+          remoteFees.invoices = null;
+          remoteFees.payments = null;
+          resolve(false);
+          return;
+        }
+
+        var invoices = (invRes.data && invRes.data.data) ? invRes.data.data : (Array.isArray(invRes.data) ? invRes.data : []);
+        var payments = (payRes.data && payRes.data.data) ? payRes.data.data : (Array.isArray(payRes.data) ? payRes.data : []);
+
+        remoteFees.invoices = invoices.map(normalizeInvoiceRow).filter(Boolean);
+        remoteFees.payments = payments.map(normalizePaymentRow).filter(Boolean);
+        remoteFees.loaded = true;
+        resolve(true);
+      }).catch(function () {
+        remoteFees.loaded = false;
+        remoteFees.invoices = null;
+        remoteFees.payments = null;
+        resolve(false);
+      }).finally(function () {
+        remoteFees.loading = false;
+      });
+    });
+
+    return remoteFees.loading;
+  }
+
+  function getInvoicesForUi() {
+    if (remoteFees.loaded && Array.isArray(remoteFees.invoices)) return remoteFees.invoices.slice();
+    return [];
+  }
+
+  function getPaymentsForUi() {
+    if (remoteFees.loaded && Array.isArray(remoteFees.payments)) {
+      return remoteFees.payments.slice().sort(function (a, b) {
+        var da = a.createdAt || a.paymentDate || '';
+        var db = b.createdAt || b.paymentDate || '';
+        return da < db ? 1 : da > db ? -1 : 0;
+      });
+    }
+    return [];
+  }
+
+  function findInvoiceByIdForUi(id) {
+    if (!id) return null;
+    var invoices = getInvoicesForUi();
+    for (var i = 0; i < invoices.length; i++) {
+      if (invoices[i] && invoices[i].id === id) return invoices[i];
+    }
+    return null;
+  }
+
+  function findLatestInvoiceForQueryForUi(query) {
+    var q = (query || '').toLowerCase().trim();
+    if (!q) return null;
+    var invoices = getInvoicesForUi();
+    var found = null;
+    invoices.forEach(function (inv) {
+      if (!inv) return;
+      if (found) return;
+      if (
+        (inv.pupilName && inv.pupilName.toLowerCase().indexOf(q) !== -1) ||
+        (inv.pupilId && String(inv.pupilId).toLowerCase().indexOf(q) !== -1) ||
+        (inv.id && String(inv.id).toLowerCase().indexOf(q) === 0) ||
+        (inv.invoiceNumber && String(inv.invoiceNumber).toLowerCase().indexOf(q) !== -1)
+      ) {
+        found = inv;
+      }
+    });
+    return found;
+  }
+
+  function loadState() {
+    return { invoices: [], payments: [], counters: { invoice: 1, receipt: 1 } };
+  }
+
+  function loadInvoiceDraft() {
+    var raw;
+    try {
+      raw = localStorage.getItem('shikola_fees_invoice_draft');
+    } catch (e) {
+      raw = null;
+    }
+    if (!raw) return;
+
+    var draft;
+    try {
+      draft = JSON.parse(raw);
+    } catch (e) {
+      return;
+    }
+    if (!draft || typeof draft !== 'object') return;
+
+    var select = document.getElementById('invoice-students-select');
+    var periodSelect = document.getElementById('invoice-period-select');
+    var dueInput = document.getElementById('invoice-due-date');
+
+    if (select && draft.selection != null) {
+      select.value = draft.selection;
+    }
+    if (periodSelect && draft.period != null) {
+      periodSelect.value = draft.period;
+    }
+    if (dueInput && draft.dueDate) {
+      dueInput.value = draft.dueDate;
+    }
+
+    if (Array.isArray(draft.items)) {
+      var feeItemLabels = document.querySelectorAll('[data-fee-item]');
+      feeItemLabels.forEach(function (label) {
+        if (!label) return;
+        var name = label.getAttribute('data-fee-item-name') || label.getAttribute('data-fee-item') || '';
+        if (!name) return;
+        var match = draft.items.find(function (it) { return it && it.name === name; });
+        if (!match) return;
+        var checkbox = label.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+          checkbox.checked = !!match.enabled;
+        }
+      });
+    }
+
+    if (window.showNotification) {
+      window.showNotification('Loaded saved invoice draft.', 'info');
+    }
+  }
+
+  function saveState(state) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+    }
+  }
+
+  function generateId(prefix, counters) {
+    var counter = counters && typeof counters[prefix] === 'number' ? counters[prefix] : 1;
+    var year = new Date().getFullYear();
+    var padded = String(counter).padStart(4, '0');
+    var id = prefix.toUpperCase() + '-' + year + '-' + padded;
+    if (counters) {
+      counters[prefix] = counter + 1;
+    }
+    return id;
+  }
+
+  function normalizeAmount(value) {
+    var n = parseFloat(String(value).replace(/[^0-9.\-]/g, ''));
+    if (isNaN(n) || !isFinite(n)) return 0;
+    return Math.max(0, n);
+  }
+
+  function ensureSeedData(state) {
+  }
+
+  function aggregateInvoicePayments(state, invoiceId) {
+    var total = 0;
+    state.payments.forEach(function (p) {
+      if (p && p.invoiceId === invoiceId) {
+        total += normalizeAmount(p.amountPaid);
+      }
+    });
+    return total;
+  }
+
+  function recomputeInvoiceStatus(state) {
+    state.invoices.forEach(function (inv) {
+      if (!inv) return;
+      var paid = aggregateInvoicePayments(state, inv.id);
+      inv.totalPaid = paid;
+      if (!inv.totalAmount || inv.totalAmount <= 0) {
+        inv.status = 'unpaid';
+      } else if (paid <= 0) {
+        inv.status = 'unpaid';
+      } else if (paid + 0.01 < inv.totalAmount) {
+        inv.status = 'partially_paid';
+      } else {
+        inv.status = 'paid';
+      }
+    });
+  }
+
+  
+  function initFeesManagementPage() {
+    var heading = document.querySelector('h1');
+    if (!heading) return;
+    if (heading.textContent.indexOf('Fees Management') === -1) return;
+
+    loadRemoteFeesData().then(function () {
+      renderReceipts();
+      renderPaymentHistory();
+    });
+
+    var generateBtn = document.getElementById('btn-generate-fee-invoice');
+    if (generateBtn) {
+      generateBtn.addEventListener('click', handleGenerateInvoiceClick);
+    }
+
+    var saveDraftBtn = document.getElementById('btn-save-fee-invoice-draft');
+    if (saveDraftBtn) {
+      saveDraftBtn.addEventListener('click', handleSaveInvoiceDraftClick);
+    }
+
+    var processBtn = document.getElementById('btn-process-fee-payment');
+    if (processBtn) {
+      processBtn.addEventListener('click', handleProcessPaymentClick);
+    }
+
+    var searchInput = document.getElementById('student-name-id');
+    if (searchInput) {
+      var searchButton = searchInput.parentNode && searchInput.parentNode.querySelector('button');
+      var triggerSearch = function () {
+        handleSearchInvoice(searchInput.value || '');
+      };
+      if (searchButton) {
+        searchButton.addEventListener('click', function (e) {
+          e.preventDefault();
+          triggerSearch();
+        });
+      }
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          triggerSearch();
+        }
+      });
+      setupStudentSearchAutocomplete(searchInput);
+    }
+
+    loadInvoiceDraft();
+  }
+
+  function handleSaveInvoiceDraftClick(event) {
+    event.preventDefault();
+    var select = document.getElementById('invoice-students-select');
+    var periodSelect = document.getElementById('invoice-period-select');
+    var dueInput = document.getElementById('invoice-due-date');
+
+    if (!select || !periodSelect || !dueInput) {
+      if (window.showNotification) {
+        window.showNotification('Invoice form is incomplete on this page.', 'error');
+      }
+      return;
+    }
+
+    var selection = select.value || '';
+    var period = periodSelect.value || '';
+    var dueDate = dueInput.value || '';
+
+    var itemConfigs = [];
+    var feeItemLabels = document.querySelectorAll('[data-fee-item]');
+    feeItemLabels.forEach(function (label) {
+      if (!label) return;
+      var checkbox = label.querySelector('input[type="checkbox"]');
+      var enabled = checkbox ? !!checkbox.checked : false;
+      var name = label.getAttribute('data-fee-item-name') || label.getAttribute('data-fee-item') || '';
+      var term = label.getAttribute('data-fee-term') || period;
+      var amountAttr = label.getAttribute('data-fee-amount');
+      var amount = normalizeAmount(amountAttr || 0);
+      if (!name || !amount) return;
+      itemConfigs.push({ name: name, term: term, amount: amount, enabled: enabled });
+    });
+
+    var draft = {
+      selection: selection,
+      period: period,
+      dueDate: dueDate,
+      items: itemConfigs
+    };
+
+    try {
+      localStorage.setItem('shikola_fees_invoice_draft', JSON.stringify(draft));
+    } catch (e) {
+      // ignore storage errors
+    }
+
+    if (window.showNotification) {
+      window.showNotification('Invoice draft saved (no invoices generated).', 'success');
+    }
+  }
+
+  function handleGenerateInvoiceClick(event) {
+    event.preventDefault();
+    var select = document.getElementById('invoice-students-select');
+    var periodSelect = document.getElementById('invoice-period-select');
+    var dueInput = document.getElementById('invoice-due-date');
+    if (!select || !periodSelect || !dueInput) {
+      if (window.showNotification) {
+        window.showNotification('Invoice form is incomplete on this page.', 'error');
+      }
+      return;
+    }
+
+    var selection = select.value || '';
+    var period = periodSelect.value || '';
+    var dueDate = dueInput.value || '';
+
+    if (!selection || selection === 'Select students or class') {
+      if (window.showNotification) {
+        window.showNotification('Please select a class or students for invoicing.', 'error');
+      }
+      return;
+    }
+    if (!period || period === 'Select period') {
+      if (window.showNotification) {
+        window.showNotification('Please select an invoice period.', 'error');
+      }
+      return;
+    }
+    if (!dueDate) {
+      if (window.showNotification) {
+        window.showNotification('Please select a due date.', 'error');
+      }
+      return;
+    }
+
+    if (selection === 'individual') {
+      if (window.showNotification) {
+        window.showNotification('Individual invoice generation can be handled from pupil details. Use class-based invoices for now.', 'info');
+      }
+      return;
+    }
+
+    if (selection.indexOf('class:') !== 0) {
+      if (window.showNotification) {
+        window.showNotification('Unsupported selection. Please choose a class option.', 'error');
+      }
+      return;
+    }
+
+    var classLabel = selection.slice('class:'.length);
+
+    var itemConfigs = [];
+    var feeItemLabels = document.querySelectorAll('[data-fee-item]');
+    feeItemLabels.forEach(function (label) {
+      var checkbox = label.querySelector('input[type="checkbox"]');
+      if (!checkbox) return;
+      var enabled = checkbox.checked;
+      var name = label.getAttribute('data-fee-item-name') || label.getAttribute('data-fee-item') || '';
+      var term = label.getAttribute('data-fee-term') || period;
+      var amountAttr = label.getAttribute('data-fee-amount');
+      var amount = normalizeAmount(amountAttr || 0);
+      if (!name || !amount) return;
+      itemConfigs.push({ name: name, term: term, amount: amount, enabled: enabled });
+    });
+
+    if (!itemConfigs.length) {
+      if (window.showNotification) {
+        window.showNotification('Please choose at least one fee item to include.', 'error');
+      }
+      return;
+    }
+
+    var pupilsPromise;
+    try {
+      if (window.ShikolaPupilsApi && typeof window.ShikolaPupilsApi.listPupils === 'function') {
+        pupilsPromise = window.ShikolaPupilsApi.listPupils();
+      }
+    } catch (e) {
+    }
+
+    if (!pupilsPromise) {
+      pupilsPromise = Promise.resolve([]);
+    }
+
+    pupilsPromise.then(function (list) {
+      var pupils = Array.isArray(list) ? list : [];
+      if (window.ShikolaPupilsHelpers && typeof window.ShikolaPupilsHelpers.normalizeForUi === 'function') {
+        pupils = pupils.map(function (p) {
+          return window.ShikolaPupilsHelpers.normalizeForUi(p) || p;
+        });
+      }
+      var matching = [];
+      pupils.forEach(function (p) {
+        if (!p) return;
+        var cls = p.classLabel || p.classGrade || p.className || '';
+        if (!cls) return;
+        if (cls === classLabel) {
+          matching.push(p);
+        }
+      });
+
+      if (!matching.length) {
+        if (window.showNotification) {
+          window.showNotification('No pupils found for ' + classLabel + '. Sample invoice not generated.', 'warning');
+        }
+        return;
+      }
+
+      var enabledItems = [];
+      var total = 0;
+      itemConfigs.forEach(function (cfg) {
+        if (!cfg || !cfg.enabled) return;
+        var amt = normalizeAmount(cfg.amount);
+        if (!amt) return;
+        enabledItems.push({ name: cfg.name, term: cfg.term || period, amount: amt });
+        total += amt;
+      });
+      if (!enabledItems.length || !total) {
+        if (window.showNotification) {
+          window.showNotification('No invoice items selected.', 'warning');
+        }
+        return;
+      }
+
+      if (hasAdminFeesApi()) {
+        var created = 0;
+        var chain = Promise.resolve();
+        matching.forEach(function (p) {
+          chain = chain.then(function () {
+            var name = p.fullName || p.name || '';
+            var pid = p.id || p.studentId || p.admissionNo || '';
+            if (!pid || !name) return null;
+            return window.ShikolaAPI.adminFees.createInvoice({
+              pupilId: pid,
+              pupilName: name,
+              className: classLabel,
+              dueDate: dueDate,
+              totalAmount: total,
+              billingPeriod: period,
+              notes: null,
+              items: enabledItems
+            }).then(function (res) {
+              if (res && res.success) created++;
+              return null;
+            });
+          });
+        });
+
+        chain.then(function () {
+          if (window.showNotification) {
+            window.showNotification('Generated invoices for ' + created + ' pupils in ' + classLabel + '.', created ? 'success' : 'warning');
+          }
+          return loadRemoteFeesData();
+        }).then(function () {
+          renderReceipts();
+          renderPaymentHistory();
+        }).catch(function () {
+          if (window.showNotification) {
+            window.showNotification('Invoice generation failed. Please check your connection.', 'error');
+          }
+        });
+        return;
+      }
+
+      // API-only mode - no local fallback
+      if (window.showNotification) {
+        // Backend API errors should not show as frontend toasts
+        // window.showNotification('Invoice generation requires API connection.', 'error');
+      }
+      return;
+    });
+
+  function handleSearchInvoice(query) {
+    var invoice = findLatestInvoiceForQueryForUi(query || '');
+    if (!invoice) {
+      if (window.showNotification) {
+        window.showNotification('No matching invoice found for search.', 'warning');
+      }
+      return;
+    }
+    bindInvoiceToCollectUi(invoice);
+  }
+
+  function setupStudentSearchAutocomplete(input) {
+    var container = document.getElementById('student-search-suggestions');
+    if (!container) return;
+
+    function clearSuggestions() {
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      container.classList.add('hidden');
+    }
+
+    function selectInvoice(inv) {
+      if (!inv) return;
+      input.value = inv.pupilName || inv.pupilId || inv.id || '';
+      bindInvoiceToCollectUi(inv);
+      clearSuggestions();
+    }
+
+    function updateSuggestions() {
+      var q = (input.value || '').toLowerCase().trim();
+      if (!q) {
+        clearSuggestions();
+        return;
+      }
+
+      var invoices = getInvoicesForUi();
+      var matches = invoices.filter(function (inv) {
+        if (!inv) return false;
+        var name = (inv.pupilName || '').toLowerCase();
+        var pid = inv.pupilId != null ? String(inv.pupilId).toLowerCase() : '';
+        var id = inv.id != null ? String(inv.id).toLowerCase() : '';
+        var invNo = inv.invoiceNumber != null ? String(inv.invoiceNumber).toLowerCase() : '';
+        return name.indexOf(q) !== -1 || pid.indexOf(q) !== -1 || id.indexOf(q) !== -1 || invNo.indexOf(q) !== -1;
+      }).slice(0, 6);
+
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+
+      if (!matches.length) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      matches.forEach(function (inv) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'w-full text-left px-3 py-1.5 flex items-center justify-between hover:bg-slate-50';
+        var left = document.createElement('span');
+        left.className = 'text-slate-700';
+        left.textContent = (inv.pupilName || 'Student') + (inv.classLabel ? ' • ' + inv.classLabel : '');
+        var right = document.createElement('span');
+        right.className = 'text-slate-400 text-[10px] font-mono';
+        right.textContent = inv.invoiceNumber || inv.id || '';
+        btn.appendChild(left);
+        btn.appendChild(right);
+
+        btn.addEventListener('click', function () {
+          selectInvoice(inv);
+        });
+
+        container.appendChild(btn);
+      });
+
+      container.classList.remove('hidden');
+    }
+
+    input.addEventListener('input', function () {
+      updateSuggestions();
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!container.contains(e.target) && e.target !== input) {
+        clearSuggestions();
+      }
+    });
+  }
+
+  function bindInvoiceToCollectUi(invoice) {
+    if (!invoice) return;
+    currentCollectInvoiceId = invoice.id || null;
+
+    var invoiceNumberInput = document.getElementById('invoice-number');
+    if (invoiceNumberInput) {
+      invoiceNumberInput.value = invoice.invoiceNumber || invoice.id || '';
+    }
+    var nameInput = document.getElementById('student-name-id');
+    if (nameInput && invoice.pupilName) {
+      nameInput.value = invoice.pupilName;
+    }
+
+    var container = document.getElementById('collect-outstanding-list');
+    if (container) {
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      (invoice.items || []).forEach(function (item) {
+        if (!item) return;
+        var row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200';
+        var left = document.createElement('div');
+        left.className = 'flex items-center gap-3';
+        var checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.className = 'rounded border-slate-300 text-emerald-600 focus:ring-emerald-400';
+        left.appendChild(checkbox);
+        var meta = document.createElement('div');
+        var title = document.createElement('div');
+        title.className = 'text-xs font-medium text-slate-800';
+        title.textContent = item.name || 'Fee Item';
+        var due = document.createElement('div');
+        due.className = 'text-[11px] text-slate-500';
+        var dueLabel = invoice.dueDate ? 'Due: ' + invoice.dueDate : 'Term: ' + (item.term || invoice.period || '');
+        due.textContent = dueLabel;
+        meta.appendChild(title);
+        meta.appendChild(due);
+        left.appendChild(meta);
+        row.appendChild(left);
+
+        var right = document.createElement('div');
+        right.className = 'text-right';
+        var amountEl = document.createElement('div');
+        amountEl.className = 'text-xs font-semibold text-orange-600';
+        amountEl.textContent = 'K ' + normalizeAmount(item.amount).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        var statusEl = document.createElement('div');
+        statusEl.className = 'text-[11px] text-slate-500';
+        statusEl.textContent = 'Outstanding';
+        right.appendChild(amountEl);
+        right.appendChild(statusEl);
+        row.appendChild(right);
+
+        container.appendChild(row);
+      });
+    }
+
+    var totalDueEl = document.querySelector('[data-fees-total-due]');
+    var amountPaidEl = document.querySelector('[data-fees-amount-paid]');
+    var balanceEl = document.querySelector('[data-fees-balance]');
+
+    var total = normalizeAmount(invoice.totalAmount);
+    var paid = normalizeAmount(invoice.totalPaid);
+    var balance = Math.max(0, total - paid);
+
+    if (totalDueEl) {
+      totalDueEl.textContent = 'K ' + total.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+    if (amountPaidEl) {
+      amountPaidEl.textContent = 'K ' + paid.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+    if (balanceEl) {
+      balanceEl.textContent = 'K ' + balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+  }
+
+  function handleProcessPaymentClick(event) {
+    event.preventDefault();
+    var invoiceNumberInput = document.getElementById('invoice-number');
+    var amountInput = document.getElementById('amount-paid');
+    var methodSelect = document.getElementById('payment-method');
+    var dateInput = document.getElementById('payment-date');
+    var refInput = document.getElementById('reference-number');
+
+    var bankSelect = document.getElementById('payment-bank');
+
+    var invoiceId = currentCollectInvoiceId || (invoiceNumberInput && invoiceNumberInput.value);
+    var amount = amountInput && amountInput.value;
+    var method = methodSelect && methodSelect.value;
+    var date = dateInput && dateInput.value;
+    var ref = refInput && refInput.value;
+
+    var bankId = bankSelect && bankSelect.value ? bankSelect.value : null;
+
+    var numericAmount = normalizeAmount(amount);
+    if (!numericAmount) {
+      if (window.showNotification) {
+        window.showNotification('Please enter a valid amount paid.', 'error');
+      }
+      return;
+    }
+    if (!method) {
+      if (window.showNotification) {
+        window.showNotification('Please select a payment method.', 'error');
+      }
+      return;
+    }
+    if (!date) {
+      if (window.showNotification) {
+        window.showNotification('Please select a payment date.', 'error');
+      }
+      return;
+    }
+
+    if (hasAdminFeesApi()) {
+      window.ShikolaAPI.adminFees.recordPayment({
+        invoiceId: invoiceId,
+        paymentMethod: method,
+        amountPaid: numericAmount,
+        paymentDate: date,
+        transactionId: ref,
+        paidBy: null,
+        notes: null,
+        bankId: bankId
+      }).then(function (res) {
+        if (!res || !res.success) {
+          throw new Error((res && res.error) || 'Payment could not be recorded');
+        }
+        var paymentRow = res.data && res.data.payment ? res.data.payment : null;
+        var receipt = res.data && res.data.receipt ? res.data.receipt : null;
+        var payment = normalizePaymentRow(Object.assign({}, paymentRow || {}, {
+          qrPayload: receipt && receipt.qrPayload,
+          receiptNumber: receipt && receipt.receiptNumber
+        }));
+
+        try {
+          window.dispatchEvent(new CustomEvent('shikola:fees-payment-recorded', { detail: payment }));
+        } catch (e) {}
+
+        try {
+          localStorage.setItem('shikola_last_fee_payment_id', (payment && payment.id) || '');
+        } catch (e) {}
+
+        if (window.shikolaButtons && typeof window.shikolaButtons.handleFeePayment === 'function') {
+          window.shikolaButtons.handleFeePayment();
+        } else if (window.showNotification) {
+          window.showNotification('Payment recorded successfully.', 'success');
+        }
+
+        return loadRemoteFeesData().then(function () {
+          var resolvedInvoiceId = (payment && payment.invoiceId) ? payment.invoiceId : invoiceId;
+          var invoice = resolvedInvoiceId ? findInvoiceByIdForUi(resolvedInvoiceId) : null;
+          if (invoice) {
+            bindInvoiceToCollectUi(invoice);
+          }
+          renderReceipts(payment ? payment.id : null);
+          renderPaymentHistory();
+        });
+      }).catch(function () {
+        if (window.showNotification) {
+          // Backend payment errors should not show as frontend toasts
+          // window.showNotification('Payment could not be recorded (backend). Saving locally instead.', 'warning');
+          console.warn('Payment could not be recorded (backend). Saving locally instead.');
+        }
+        // API-only mode - no local fallback
+        if (window.showNotification) {
+          // Backend API errors should not show as frontend toasts
+          // window.showNotification('Payment recording requires API connection.', 'error');
+        }
+        return;
+      });
+      return;
+    }
+
+    // API-only mode - no local fallback
+    if (window.showNotification) {
+      // Backend API errors should not show as frontend toasts
+      // window.showNotification('Payment recording requires API connection.', 'error');
+    }
+    return;
+  }
+
+  function renderReceipts(selectedId) {
+    var container = document.getElementById('fee-receipts-list');
+    if (!container) return;
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+    var payments = getPaymentsForUi();
+    payments.forEach(function (p) {
+      if (!p) return;
+      var row = document.createElement('div');
+      row.className = 'px-4 py-3 grid grid-cols-2 md:grid-cols-12 gap-2 items-center cursor-pointer hover:bg-slate-50';
+      row.setAttribute('data-receipt-id', p.id);
+
+      var col1 = document.createElement('div');
+      col1.className = 'md:col-span-2 text-slate-500 text-xs';
+      col1.textContent = p.receiptNumber || p.id;
+      row.appendChild(col1);
+
+      var col2 = document.createElement('div');
+      col2.className = 'md:col-span-3';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'font-medium text-slate-800 text-xs';
+      nameEl.textContent = p.pupilName || 'Pupil';
+      var classEl = document.createElement('div');
+      classEl.className = 'text-[11px] text-slate-400';
+      classEl.textContent = p.classLabel || '';
+      col2.appendChild(nameEl);
+      col2.appendChild(classEl);
+      row.appendChild(col2);
+
+      var col3 = document.createElement('div');
+      col3.className = 'md:col-span-2 text-emerald-600 text-xs font-semibold';
+      col3.textContent = 'K ' + normalizeAmount(p.amountPaid).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      row.appendChild(col3);
+
+      var col4 = document.createElement('div');
+      col4.className = 'md:col-span-2 text-slate-500 text-xs';
+      col4.textContent = p.paymentDate || '';
+      row.appendChild(col4);
+
+      var col5 = document.createElement('div');
+      col5.className = 'md:col-span-2 text-slate-500 text-xs';
+      col5.textContent = p.paymentMethod || '';
+      row.appendChild(col5);
+
+      var col6 = document.createElement('div');
+      col6.className = 'md:col-span-1';
+      var btn = document.createElement('button');
+      btn.className = 'text-emerald-600 hover:text-emerald-700';
+      btn.title = 'Print receipt';
+      btn.innerHTML = '<i class="fas fa-print text-xs"></i>';
+      col6.appendChild(btn);
+      row.appendChild(col6);
+
+      row.addEventListener('click', function () {
+        bindReceiptPreview(p);
+      });
+
+      container.appendChild(row);
+    });
+
+    if (payments.length && selectedId) {
+      var selected = null;
+      payments.forEach(function (p) {
+        if (!selected && p.id === selectedId) selected = p;
+      });
+      if (selected) {
+        bindReceiptPreview(selected);
+      }
+    } else if (payments.length) {
+      bindReceiptPreview(payments[0]);
+    }
+  }
+
+  function getFeeBanksForUi() {
+    var banks = [];
+    try {
+      var raw = localStorage.getItem('shikola_fee_invoice_banks');
+      if (!raw) return [];
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) banks = parsed;
+    } catch (e) {}
+    return banks;
+  }
+
+  function bindReceiptPreview(payment) {
+    if (!payment) return;
+    var map = {
+      number: payment.receiptNumber || payment.id,
+      'pupil-name': payment.pupilName || '',
+      class: payment.classLabel || '',
+      date: payment.paymentDate || '',
+      method: payment.paymentMethod || '',
+      amount: 'K ' + normalizeAmount(payment.amountPaid).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+    };
+    Object.keys(map).forEach(function (key) {
+      var value = map[key];
+      var nodes = document.querySelectorAll('[data-receipt-field="' + key + '"]');
+      nodes.forEach(function (el) {
+        el.textContent = value;
+      });
+    });
+
+    renderReceiptQrCode(payment);
+
+    var bankContainer = document.querySelector('[data-receipt-bank-container]');
+    var bankNameEl = document.querySelector('[data-receipt-bank-name]');
+    var bankAccountEl = document.querySelector('[data-receipt-bank-account]');
+    var bankInstrEl = document.querySelector('[data-receipt-bank-instructions]');
+
+    if (!bankContainer || !bankNameEl || !bankAccountEl || !bankInstrEl) {
+      return;
+    }
+
+    var bankId = payment.bankId ? String(payment.bankId) : null;
+    if (!bankId) {
+      bankContainer.classList.add('hidden');
+      bankNameEl.textContent = 'Not selected';
+      bankAccountEl.textContent = '-';
+      bankInstrEl.textContent = '';
+      return;
+    }
+
+    var banks = getFeeBanksForUi();
+    var bank = null;
+    for (var i = 0; i < banks.length; i++) {
+      var b = banks[i];
+      if (!b) continue;
+      var id = b.id != null ? String(b.id) : String(i);
+      if (id === bankId) {
+        bank = b;
+        break;
+      }
+    }
+
+    if (!bank) {
+      bankContainer.classList.add('hidden');
+      bankNameEl.textContent = 'Not selected';
+      bankAccountEl.textContent = '-';
+      bankInstrEl.textContent = '';
+      return;
+    }
+
+    bankNameEl.textContent = bank.name || 'Bank Account';
+    bankAccountEl.textContent = bank.accountNumber || '-';
+    bankInstrEl.textContent = bank.instructions || '';
+    bankContainer.classList.remove('hidden');
+  }
+
+  function buildReceiptQrPayload(payment) {
+    if (!payment) return '';
+    if (payment.qrPayload) return String(payment.qrPayload);
+    if (payment.verifyUrl) return String(payment.verifyUrl);
+    var receiptNo = payment.receiptNumber || payment.id || '';
+    var amount = normalizeAmount(payment.amountPaid);
+    var date = payment.paymentDate || '';
+    var method = payment.paymentMethod || '';
+    var pupilName = payment.pupilName || '';
+    var cls = payment.classLabel || '';
+    var ref = payment.reference || '';
+    return ['SHIKOLA', 'RCP', receiptNo, 'ZMW', amount, date, method, pupilName, cls, ref].join('|');
+  }
+
+  function renderReceiptQrCode(payment) {
+    var container = document.getElementById('fee-receipt-qr');
+    if (!container) return;
+
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+
+    var text = buildReceiptQrPayload(payment);
+    if (!text) return;
+
+    if (window.QRCode) {
+      try {
+        // eslint-disable-next-line no-new
+        new window.QRCode(container, {
+          text: text,
+          width: 84,
+          height: 84,
+          correctLevel: window.QRCode.CorrectLevel.M
+        });
+        return;
+      } catch (e) {
+      }
+    }
+
+    container.textContent = text;
+  }
+
+  function renderPaymentHistory() {
+    var container = document.getElementById('fee-payment-history');
+    if (!container) return;
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+    var payments = getPaymentsForUi();
+    payments.forEach(function (p) {
+      if (!p) return;
+      var row = document.createElement('div');
+      row.className = 'px-4 py-3 grid grid-cols-2 md:grid-cols-12 gap-2 items-center';
+
+      var dateCol = document.createElement('div');
+      dateCol.className = 'md:col-span-2 text-slate-500 text-xs';
+      dateCol.textContent = p.paymentDate || '';
+      row.appendChild(dateCol);
+
+      var pupilCol = document.createElement('div');
+      pupilCol.className = 'md:col-span-3';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'font-medium text-slate-800 text-xs';
+      nameEl.textContent = p.pupilName || 'Pupil';
+      var classEl = document.createElement('div');
+      classEl.className = 'text-[11px] text-slate-400';
+      classEl.textContent = p.classLabel || '';
+      pupilCol.appendChild(nameEl);
+      pupilCol.appendChild(classEl);
+      row.appendChild(pupilCol);
+
+      var typeCol = document.createElement('div');
+      typeCol.className = 'md:col-span-2 text-slate-500 text-xs';
+      typeCol.textContent = (p.items && p.items.length ? p.items[0].name : 'Tuition Fees');
+      row.appendChild(typeCol);
+
+      var amtCol = document.createElement('div');
+      amtCol.className = 'md:col-span-2 text-emerald-600 text-xs font-semibold';
+      amtCol.textContent = 'K ' + normalizeAmount(p.amountPaid).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      row.appendChild(amtCol);
+
+      var methodCol = document.createElement('div');
+      methodCol.className = 'md:col-span-2 text-slate-500 text-xs';
+      methodCol.textContent = p.paymentMethod || '';
+      row.appendChild(methodCol);
+
+      var statusCol = document.createElement('div');
+      statusCol.className = 'md:col-span-1';
+      var chip = document.createElement('span');
+      chip.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800';
+      chip.textContent = 'Paid';
+      statusCol.appendChild(chip);
+      row.appendChild(statusCol);
+
+      container.appendChild(row);
+    });
+  }
+  function formatCurrency(amount) {
+    var n = normalizeAmount(amount);
+    return 'K ' + n.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function getAdminFeesSummary() {
+    var invoices = getInvoicesForUi();
+    var payments = getPaymentsForUi();
+
+    var totalBilled = 0;
+    var totalCollected = 0;
+    var perClass = {};
+
+    invoices.forEach(function (inv) {
+      if (!inv) return;
+      var billed = normalizeAmount(inv.totalAmount);
+      var paid = normalizeAmount(inv.totalPaid);
+      var cls = inv.classLabel || 'Unassigned';
+
+      totalBilled += billed;
+      totalCollected += paid;
+
+      if (!perClass[cls]) {
+        perClass[cls] = { billed: 0, collected: 0 };
+      }
+      perClass[cls].billed += billed;
+      perClass[cls].collected += paid;
+    });
+
+    var totalOutstanding = Math.max(0, totalBilled - totalCollected);
+
+    return {
+      totalBilled: totalBilled,
+      totalCollected: totalCollected,
+      totalOutstanding: totalOutstanding,
+      perClass: perClass,
+      payments: payments
+    };
+  }
+
+  function initAdminAccountsPage() {
+    var heading = document.querySelector('h1');
+    if (!heading) return;
+    if (heading.textContent.indexOf('Accounts') === -1) return;
+
+    var ensureLoaded = loadRemoteFeesData();
+    Promise.resolve(ensureLoaded).then(function () {
+      var summary = getAdminFeesSummary();
+      if (!summary) return;
+
+      if (summary.totalBilled > 0 || summary.totalCollected > 0 || summary.totalOutstanding > 0) {
+      var billedSummaryEls = document.querySelectorAll('[data-fees-summary-billed]');
+      billedSummaryEls.forEach(function (el) {
+        el.textContent = formatCurrency(summary.totalBilled);
+      });
+      var collectedSummaryEls = document.querySelectorAll('[data-fees-summary-collected]');
+      collectedSummaryEls.forEach(function (el) {
+        el.textContent = formatCurrency(summary.totalCollected);
+      });
+      var outstandingSummaryEls = document.querySelectorAll('[data-fees-summary-outstanding]');
+      outstandingSummaryEls.forEach(function (el) {
+        el.textContent = formatCurrency(summary.totalOutstanding);
+      });
+
+      var billedReportEls = document.querySelectorAll('[data-fees-report-billed]');
+      billedReportEls.forEach(function (el) {
+        el.textContent = formatCurrency(summary.totalBilled);
+      });
+      var collectedReportEls = document.querySelectorAll('[data-fees-report-collected]');
+      collectedReportEls.forEach(function (el) {
+        el.textContent = formatCurrency(summary.totalCollected);
+      });
+      var outstandingReportEls = document.querySelectorAll('[data-fees-report-outstanding]');
+      outstandingReportEls.forEach(function (el) {
+        el.textContent = formatCurrency(summary.totalOutstanding);
+      });
+    }
+
+      var reportBody = document.getElementById('admin-fees-report-rows');
+      if (reportBody) {
+      while (reportBody.firstChild) {
+        reportBody.removeChild(reportBody.firstChild);
+      }
+      var classNames = Object.keys(summary.perClass || {}).sort();
+      classNames.forEach(function (cls) {
+        var data = summary.perClass[cls] || { billed: 0, collected: 0 };
+        var billed = normalizeAmount(data.billed);
+        var collected = normalizeAmount(data.collected);
+        var outstanding = Math.max(0, billed - collected);
+        var pct = billed > 0 ? Math.round((collected / billed) * 100) : 0;
+
+        var row = document.createElement('div');
+        row.className = 'px-4 py-2.5 grid grid-cols-12 gap-2 items-center';
+
+        var classCol = document.createElement('div');
+        classCol.className = 'col-span-4 text-slate-800';
+        classCol.textContent = cls;
+        row.appendChild(classCol);
+
+        var billedCol = document.createElement('div');
+        billedCol.className = 'col-span-2 text-right text-slate-800';
+        billedCol.textContent = formatCurrency(billed);
+        row.appendChild(billedCol);
+
+        var collectedCol = document.createElement('div');
+        collectedCol.className = 'col-span-2 text-right text-slate-800';
+        collectedCol.textContent = formatCurrency(collected);
+        row.appendChild(collectedCol);
+
+        var outstandingCol = document.createElement('div');
+        outstandingCol.className = 'col-span-2 text-right ' + (outstanding > 0 ? 'text-red-500' : 'text-slate-700');
+        outstandingCol.textContent = formatCurrency(outstanding);
+        row.appendChild(outstandingCol);
+
+        var pctCol = document.createElement('div');
+        pctCol.className = 'col-span-2 text-right text-slate-700';
+        pctCol.textContent = (pct || 0) + '%';
+        row.appendChild(pctCol);
+
+        reportBody.appendChild(row);
+      });
+    }
+
+      var recentContainer = document.getElementById('admin-fees-recent-payments');
+      if (recentContainer) {
+      while (recentContainer.firstChild) {
+        recentContainer.removeChild(recentContainer.firstChild);
+      }
+        var recent = getPaymentsForUi().slice(0, 5);
+      recent.forEach(function (p) {
+        if (!p) return;
+        var row = document.createElement('div');
+        row.className = 'flex items-center justify-between';
+
+        var left = document.createElement('div');
+        var top = document.createElement('div');
+        top.className = 'text-xs text-slate-800';
+        top.textContent = (p.pupilName || 'Pupil') + (p.classLabel ? ' • ' + p.classLabel : '');
+        var bottom = document.createElement('div');
+        bottom.className = 'text-[10px] text-slate-400';
+        bottom.textContent = (p.paymentDate || '') + ' • Receipt ' + (p.receiptNumber || p.id || '');
+        left.appendChild(top);
+        left.appendChild(bottom);
+
+        var right = document.createElement('div');
+        right.className = 'text-xs font-semibold text-emerald-600';
+        right.textContent = formatCurrency(p.amountPaid);
+
+        row.appendChild(left);
+        row.appendChild(right);
+
+        row.addEventListener('click', function () {
+          bindAdminFeeSlip(p);
+        });
+
+        recentContainer.appendChild(row);
+      });
+    }
+
+      var payments = getPaymentsForUi();
+      if (payments && payments.length) {
+        bindAdminFeeSlip(payments[0]);
+      }
+    });
+  }
+
+  function bindAdminFeeSlip(payment) {
+    if (!payment) return;
+    var admClassText = payment.classLabel ? payment.classLabel : '';
+
+    var nameEl = document.querySelector('[data-admin-fee-slip-name]');
+    if (nameEl) {
+      nameEl.textContent = payment.pupilName || 'Pupil';
+    }
+    var admClassEl = document.querySelector('[data-admin-fee-slip-adm-class]');
+    if (admClassEl) {
+      admClassEl.textContent = admClassText || payment.classLabel || '';
+    }
+    var receiptEl = document.querySelector('[data-admin-fee-slip-receipt]');
+    if (receiptEl) {
+      receiptEl.textContent = 'Receipt ' + (payment.receiptNumber || payment.id || '');
+    }
+    var dateEl = document.querySelector('[data-admin-fee-slip-date]');
+    if (dateEl) {
+      dateEl.textContent = payment.paymentDate || '';
+    }
+    var amountEl = document.querySelector('[data-admin-fee-slip-amount]');
+    if (amountEl) {
+      amountEl.textContent = formatCurrency(payment.amountPaid);
+    }
+
+    var invoice = payment.invoiceId ? findInvoiceByIdForUi(payment.invoiceId) : null;
+    var billed = invoice ? normalizeAmount(invoice.totalAmount) : 0;
+    var paid = invoice ? normalizeAmount(invoice.totalPaid) : normalizeAmount(payment.amountPaid);
+    var balance = Math.max(0, billed - paid);
+
+    var balanceEl = document.querySelector('[data-admin-fee-slip-balance]');
+    if (balanceEl) {
+      balanceEl.textContent = formatCurrency(balance);
+    }
+  }
+
+  // Expense Management Functions
+  function initExpenseManagementPage() {
+    var heading = document.querySelector('h1');
+    if (!heading) return;
+    if (heading.textContent.indexOf('Expense Management') === -1) return;
+
+    console.log('Initializing expense management page...');
+
+    // Initialize expense data
+    loadExpenseData();
+    
+    // Setup event listeners
+    var recordExpenseBtn = document.querySelector('button[aria-label="Record Expense"]');
+    console.log('Record Expense button found:', !!recordExpenseBtn);
+    if (recordExpenseBtn) {
+      recordExpenseBtn.addEventListener('click', function(e) {
+        console.log('Record Expense button clicked');
+        handleRecordExpense();
+      });
+    }
+
+    var clearBtn = document.querySelector('button[aria-label="Clear"]');
+    console.log('Clear button found:', !!clearBtn);
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function(e) {
+        console.log('Clear button clicked');
+        handleClearExpenseForm();
+      });
+    }
+
+    var addCategoryBtn = document.querySelector('button[aria-label="Add Category"]');
+    console.log('Add Category button found:', !!addCategoryBtn);
+    if (addCategoryBtn) {
+      addCategoryBtn.addEventListener('click', function(e) {
+        console.log('Add Category button clicked');
+        handleAddCategory();
+      });
+    }
+
+    // Setup search and filter event listeners
+    var searchInput = document.querySelector('input[placeholder="Search records..."]');
+    if (searchInput) {
+      searchInput.addEventListener('keyup', handleSearchExpenses);
+      searchInput.addEventListener('change', handleFilterExpenses);
+    }
+
+    var categoryFilter = document.querySelector('select[aria-label="Select category"]');
+    if (categoryFilter) {
+      categoryFilter.addEventListener('change', handleFilterExpenses);
+    }
+
+    // Set today's date as default
+    var dateInput = document.getElementById('date');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    console.log('Expense management initialization complete');
+  }
+
+  function loadExpenseData() {
+    // Load expenses from localStorage or API
+    var expenses = getExpensesFromStorage();
+    updateExpenseCards(expenses);
+    renderExpenseRecords(expenses);
+    renderExpenseCategories(expenses);
+    renderExpenseReports(expenses);
+  }
+
+  function getExpensesFromStorage() {
+    try {
+      var raw = localStorage.getItem('shikola_expenses');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveExpensesToStorage(expenses) {
+    try {
+      localStorage.setItem('shikola_expenses', JSON.stringify(expenses));
+    } catch (e) {}
+  }
+
+  function updateExpenseCards(expenses) {
+    var totalExpenses = 0;
+    var salaries = 0;
+    var operations = 0;
+    var todayExpenses = 0;
+    var monthExpenses = 0;
+    var transactionCount = expenses.length;
+
+    var today = new Date().toISOString().split('T')[0];
+    var currentMonth = new Date().getMonth();
+    var currentYear = new Date().getFullYear();
+
+    expenses.forEach(function(expense) {
+      var amount = normalizeAmount(expense.amount);
+      totalExpenses += amount;
+
+      var expenseDate = new Date(expense.date);
+      if (expenseDate.toISOString().split('T')[0] === today) {
+        todayExpenses += amount;
+      }
+      if (expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) {
+        monthExpenses += amount;
+      }
+
+      if (expense.category && expense.category.includes('Salaries')) {
+        salaries += amount;
+      } else if (expense.category && (expense.category.includes('Utilities') || expense.category.includes('Maintenance') || expense.category.includes('Supplies'))) {
+        operations += amount;
+      }
+    });
+
+    // Update stat cards
+    updateElement('[data-card="total-expenses"]', formatCurrency(totalExpenses));
+    updateElement('[data-card="salaries"]', formatCurrency(salaries));
+    updateElement('[data-card="operations"]', formatCurrency(operations));
+    
+    // Update summary text
+    updateElement('[data-summary="expense-count"]', transactionCount + ' expenses recorded');
+    updateElement('[data-summary="salary-count"]', Math.floor(salaries > 0 ? salaries / 5000 : 0) + ' salary payments');
+    updateElement('[data-summary="operations-count"]', Math.floor(operations > 0 ? operations / 1000 : 0) + ' operational expenses');
+    
+    // Update budget used (assuming budget of 500,000)
+    var budgetLimit = 500000;
+    var budgetUsed = totalExpenses > 0 ? Math.round((totalExpenses / budgetLimit) * 100) : 0;
+    updateElement('[data-card="budget-used"]', budgetUsed + '%');
+    updateElement('[data-summary="budget-status"]', budgetUsed > 80 ? 'Budget nearly exceeded' : 'Within budget');
+
+    // Update Add Expense tab stats
+    updateElement('[data-today-expenses]', formatCurrency(todayExpenses));
+    updateElement('[data-month-expenses]', formatCurrency(monthExpenses));
+    updateElement('[data-transaction-count]', transactionCount);
+  }
+
+  function updateElement(selector, value) {
+    var elements = document.querySelectorAll(selector);
+    elements.forEach(function(el) {
+      if (el) el.textContent = value;
+    });
+  }
+
+  function handleRecordExpense() {
+    console.log('handleRecordExpense called');
+    
+    var date = document.getElementById('date').value;
+    var category = document.getElementById('expense-category').value;
+    var amount = document.getElementById('amount').value;
+    var paymentMethod = document.getElementById('payment-method').value;
+    var paidTo = document.getElementById('paid-to').value;
+    var referenceNumber = document.getElementById('reference-number').value;
+    var description = document.getElementById('description').value;
+
+    console.log('Form values:', { date, category, amount, paymentMethod, paidTo, referenceNumber, description });
+
+    if (!date || !category || !amount || !paymentMethod) {
+      console.log('Validation failed - missing required fields');
+      if (window.showNotification) {
+        window.showNotification('Please fill in all required fields.', 'error');
+      }
+      return;
+    }
+
+    var expense = {
+      id: 'EXP-' + Date.now(),
+      date: date,
+      category: category,
+      amount: normalizeAmount(amount),
+      paymentMethod: paymentMethod,
+      paidTo: paidTo || '',
+      referenceNumber: referenceNumber || '',
+      description: description || '',
+      createdAt: new Date().toISOString()
+    };
+
+    console.log('Creating expense:', expense);
+
+    var expenses = getExpensesFromStorage();
+    expenses.unshift(expense);
+    saveExpensesToStorage(expenses);
+
+    console.log('Expense saved, total expenses:', expenses.length);
+
+    if (window.showNotification) {
+      window.showNotification('Expense recorded successfully.', 'success');
+    }
+
+    handleClearExpenseForm();
+    loadExpenseData();
+  }
+
+  function handleClearExpenseForm() {
+    document.getElementById('expense-category').value = 'Select category';
+    document.getElementById('amount').value = '';
+    document.getElementById('payment-method').value = 'Select method';
+    document.getElementById('paid-to').value = '';
+    document.getElementById('reference-number').value = '';
+    document.getElementById('description').value = '';
+  }
+
+  function renderExpenseRecords(expenses) {
+    var container = document.querySelector('[data-expense-records-container]');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (expenses.length === 0) {
+      container.innerHTML = '<div class="px-4 py-8 text-center text-slate-500 text-xs">No expense records found. Start by adding your first expense.</div>';
+      return;
+    }
+
+    expenses.slice(0, 50).forEach(function(expense) {
+      var row = document.createElement('div');
+      row.className = 'px-4 py-3 grid grid-cols-2 md:grid-cols-12 gap-2 items-center';
+      
+      row.innerHTML = 
+        '<div class="md:col-span-2 text-slate-500 text-xs">' + expense.date + '</div>' +
+        '<div class="md:col-span-3">' +
+          '<div class="font-medium text-slate-800 text-xs">' + expense.category + '</div>' +
+          '<div class="text-[11px] text-slate-400">' + (expense.description || 'No description') + '</div>' +
+        '</div>' +
+        '<div class="md:col-span-2 text-red-600 text-xs font-semibold">' + formatCurrency(expense.amount) + '</div>' +
+        '<div class="md:col-span-2 text-slate-500 text-xs">' + expense.paymentMethod + '</div>' +
+        '<div class="md:col-span-2 text-slate-500 text-xs">' + (expense.paidTo || 'N/A') + '</div>' +
+        '<div class="md:col-span-1">' +
+          '<button class="text-slate-400 hover:text-slate-600" onclick="deleteExpense(\'' + expense.id + '\')">' +
+            '<i class="fas fa-trash text-xs"></i>' +
+          '</button>' +
+        '</div>';
+      
+      container.appendChild(row);
+    });
+  }
+
+  function renderExpenseCategories(expenses) {
+    var container = document.querySelector('[data-expense-categories-container]');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    var categories = {};
+    var currentMonth = new Date().getMonth();
+    var currentYear = new Date().getFullYear();
+
+    expenses.forEach(function(expense) {
+      if (!categories[expense.category]) {
+        categories[expense.category] = { total: 0, count: 0, icon: 'fa-folder', color: 'blue' };
+      }
+      
+      var expenseDate = new Date(expense.date);
+      if (expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) {
+        categories[expense.category].total += expense.amount;
+        categories[expense.category].count += 1;
+      }
+    });
+
+    Object.keys(categories).forEach(function(categoryName) {
+      var category = categories[categoryName];
+      var card = document.createElement('div');
+      card.className = 'rounded-xl border border-slate-200 bg-slate-50 p-4';
+      
+      card.innerHTML = 
+        '<div class="flex items-center justify-between mb-3">' +
+          '<div class="h-8 w-8 rounded-lg bg-' + category.color + '-100 flex items-center justify-center">' +
+            '<i class="fas ' + category.icon + ' text-' + category.color + '-600 text-sm"></i>' +
+          '</div>' +
+          '<button class="text-slate-400 hover:text-slate-600" onclick="deleteCategory(\'' + categoryName + '\')">' +
+            '<i class="fas fa-ellipsis-v text-xs"></i>' +
+          '</button>' +
+        '</div>' +
+        '<div class="text-sm font-semibold text-slate-800">' + categoryName + '</div>' +
+        '<div class="text-xs text-slate-500 mt-1">Expense category</div>' +
+        '<div class="mt-3 pt-3 border-t border-slate-200">' +
+          '<div class="flex items-center justify-between text-xs">' +
+            '<span class="text-slate-500">This Month</span>' +
+            '<span class="font-medium text-red-600">' + formatCurrency(category.total) + '</span>' +
+          '</div>' +
+          '<div class="flex items-center justify-between text-xs mt-1">' +
+            '<span class="text-slate-500">Transactions</span>' +
+            '<span class="font-medium text-slate-700">' + category.count + '</span>' +
+          '</div>' +
+        '</div>';
+      
+      container.appendChild(card);
+    });
+
+    if (Object.keys(categories).length === 0) {
+      container.innerHTML = '<div class="col-span-full text-center text-slate-500 text-xs py-8">No categories found. Add expenses to see categories here.</div>';
+    }
+  }
+
+  function renderExpenseReports(expenses) {
+    var container = document.querySelector('[data-expense-reports-categories]');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    var categories = {};
+    var total = 0;
+
+    expenses.forEach(function(expense) {
+      if (!categories[expense.category]) {
+        categories[expense.category] = 0;
+      }
+      categories[expense.category] += expense.amount;
+      total += expense.amount;
+    });
+
+    Object.keys(categories).forEach(function(categoryName) {
+      var amount = categories[categoryName];
+      var percentage = total > 0 ? Math.round((amount / total) * 100) : 0;
+      var color = getCategoryColor(categoryName);
+      
+      var categoryDiv = document.createElement('div');
+      categoryDiv.innerHTML = 
+        '<div>' +
+          '<div class="flex items-center justify-between mb-1">' +
+            '<span class="text-xs text-slate-600">' + categoryName + '</span>' +
+            '<span class="text-xs font-medium text-slate-800">' + percentage + '%</span>' +
+          '</div>' +
+          '<div class="h-2 w-full bg-slate-200 rounded-full overflow-hidden">' +
+            '<div class="h-full w-[' + percentage + '%] bg-' + color + '-500 rounded-full"></div>' +
+          '</div>' +
+        '</div>';
+      
+      container.appendChild(categoryDiv);
+    });
+
+    if (Object.keys(categories).length === 0) {
+      container.innerHTML = '<div class="text-center text-slate-500 text-xs">No expense data available for reports.</div>';
+    }
+  }
+
+  function getCategoryColor(categoryName) {
+    if (categoryName.includes('Salaries')) return 'purple';
+    if (categoryName.includes('Administrative')) return 'pink';
+    if (categoryName.includes('Utilities')) return 'blue';
+    if (categoryName.includes('Maintenance')) return 'yellow';
+    return 'gray';
+  }
+
+  function deleteExpense(expenseId) {
+    if (!confirm('Are you sure you want to delete this expense?')) return;
+    
+    var expenses = getExpensesFromStorage();
+    expenses = expenses.filter(function(expense) { return expense.id !== expenseId; });
+    saveExpensesToStorage(expenses);
+    
+    if (window.showNotification) {
+      window.showNotification('Expense deleted successfully.', 'success');
+    }
+    
+    loadExpenseData();
+  }
+
+  function deleteCategory(categoryName) {
+    if (!confirm('Are you sure you want to delete all expenses in category "' + categoryName + '"?')) return;
+    
+    var expenses = getExpensesFromStorage();
+    expenses = expenses.filter(function(expense) { return expense.category !== categoryName; });
+    saveExpensesToStorage(expenses);
+    
+    if (window.showNotification) {
+      window.showNotification('Category deleted successfully.', 'success');
+    }
+    
+    loadExpenseData();
+  }
+
+  function handleAddCategory() {
+    var categoryName = prompt('Enter new category name:');
+    if (!categoryName) return;
+    
+    // Add to category dropdown
+    var categorySelect = document.getElementById('expense-category');
+    if (categorySelect) {
+      var option = document.createElement('option');
+      option.value = categoryName;
+      option.textContent = categoryName;
+      categorySelect.appendChild(option);
+    }
+    
+    if (window.showNotification) {
+      window.showNotification('Category added successfully.', 'success');
+    }
+  }
+
+  function handleExportExpenses() {
+    console.log('Export expenses called');
+    var expenses = getExpensesFromStorage();
+    
+    if (expenses.length === 0) {
+      if (window.showNotification) {
+        window.showNotification('No expenses to export.', 'warning');
+      }
+      return;
+    }
+
+    // Create CSV content
+    var csvContent = 'Date,Category,Amount,Payment Method,Paid To,Reference Number,Description\n';
+    
+    expenses.forEach(function(expense) {
+      csvContent += [
+        expense.date || '',
+        expense.category || '',
+        expense.amount || 0,
+        expense.paymentMethod || '',
+        expense.paidTo || '',
+        expense.referenceNumber || '',
+        (expense.description || '').replace(/"/g, '""') // Escape quotes in description
+      ].map(function(field) {
+        return '"' + String(field).replace(/"/g, '""') + '"'; // Quote and escape each field
+      }).join(',') + '\n';
+    });
+
+    // Create download link
+    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement('a');
+    var url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'expenses_' + new Date().toISOString().split('T')[0] + '.csv');
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    if (window.showNotification) {
+      window.showNotification('Expenses exported successfully.', 'success');
+    }
+  }
+
+  function handleFilterExpenses() {
+    console.log('Filter expenses called');
+    var searchTerm = document.querySelector('input[placeholder="Search records..."]').value.toLowerCase();
+    var categoryFilter = document.querySelector('select[aria-label="Select category"]').value;
+    
+    var expenses = getExpensesFromStorage();
+    var filteredExpenses = expenses.filter(function(expense) {
+      var matchesSearch = !searchTerm || 
+        expense.category.toLowerCase().includes(searchTerm) ||
+        expense.paidTo.toLowerCase().includes(searchTerm) ||
+        expense.description.toLowerCase().includes(searchTerm) ||
+        expense.referenceNumber.toLowerCase().includes(searchTerm);
+      
+      var matchesCategory = !categoryFilter || categoryFilter === 'All Categories' || expense.category === categoryFilter;
+      
+      return matchesSearch && matchesCategory;
+    });
+    
+    renderExpenseRecords(filteredExpenses);
+    
+    if (window.showNotification) {
+      window.showNotification(`Showing ${filteredExpenses.length} filtered expenses.`, 'info');
+    }
+  }
+
+  function handleSearchExpenses(event) {
+    if (event.key === 'Enter' || event.type === 'click') {
+      handleFilterExpenses();
+    }
+  }
+
+  // Make functions globally accessible for onclick handlers and Alpine.js
+  window.deleteExpense = deleteExpense;
+  window.deleteCategory = deleteCategory;
+  window.handleRecordExpense = handleRecordExpense;
+  window.handleClearExpenseForm = handleClearExpenseForm;
+  window.handleAddCategory = handleAddCategory;
+  window.handleExportExpenses = handleExportExpenses;
+  window.handleFilterExpenses = handleFilterExpenses;
+  window.handleSearchExpenses = handleSearchExpenses;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      initFeesManagementPage();
+    } catch (e) {}
+    try {
+      initAdminAccountsPage();
+    } catch (e) {}
+    try {
+      initExpenseManagementPage();
+    } catch (e) {}
+  });
+});

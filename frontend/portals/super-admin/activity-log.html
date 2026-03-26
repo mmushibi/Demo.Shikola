@@ -1,0 +1,408 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Log - Shikola</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    
+    <!-- Core Scripts -->
+    <script src="/config/config.js"></script>
+    <script src="/shared-assets/js/shared-auth.js"></script>
+    <script src="/shared-assets/js/shared-api-client.js"></script>
+    <script src="/shared-assets/js/shared-realtime-sync.js"></script>
+    <script src="super-admin-offline-manager.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="/shared-assets/js/shared-notifications.js" defer></script>
+    <script src="/shared-assets/js/shared-export-print.js" defer></script>
+    <script src="/shared-assets/js/shared-chart-interactions.js" defer></script>
+    
+    <!-- Icons -->
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+    <div class="flex-1 flex gap-8 w-full">
+        <aside class="flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+            <div class="flex items-center gap-3 mb-10">
+                <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-15 rounded-2xl object-cover">
+            
+            <div>
+                        <div class="text-sm text-slate-400">Console</div>
+                    </div>
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Console</span>
+                    </a>
+                    
+                    <a href="schools.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-school"></i></span>
+                        <span class="flex-1">Schools</span>
+                    </a>
+                    
+                    <a href="users-and-roles.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-users"></i></span>
+                        <span class="flex-1">Users & Roles</span>
+                    </a>
+                    
+                    <a href="create-user.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-plus"></i></span>
+                        <span class="flex-1">Create Users</span>
+                    </a>
+                    
+                    <a href="global-user-search.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-search"></i></span>
+                        <span class="flex-1">Global Search</span>
+                    </a>
+                    
+                    <a href="payments-coupons.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-ticket-alt"></i></span>
+                        <span class="flex-1">Payments & Coupons</span>
+                    </a>
+                    
+                    <a href="subscriptions.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-layer-group"></i></span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    
+                    <a href="plans.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">Plans & Events</span>
+                    </a>
+                    
+                    <a href="activity-log.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 text-orange-600 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="font-medium flex-1">Activity Log</span>
+                    </a>
+                    
+                    <a href="system-health.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-heartbeat"></i></span>
+                        <span class="flex-1">System Health</span>
+                    </a>
+                    
+                    <a href="settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-gear"></i></span>
+                        <span class="flex-1">Settings</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center mt-6 px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium w-full justify-center">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+
+        </aside>
+
+        <main class="flex-1 w-full px-6 py-6 pl-72" x-data="activityLogData()">
+        
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl lg:text-3xl font-semibold text-slate-800">Activity Log</h1>
+                            <p class="text-sm text-slate-400 mt-1">System-wide events and audit trail</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-4 text-xs">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4">
+                            <div class="text-xs uppercase tracking-wide text-slate-400">Events (last 24h)</div>
+                            <div class="mt-1 text-2xl font-semibold text-slate-800" x-text="countLast24h()"></div>
+                            <div class="mt-1 text-xs text-slate-500">Across all schools</div>
+                        </div>
+                        <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-4">
+                            <div class="text-xs uppercase tracking-wide text-emerald-600">Provisioning</div>
+                            <div class="mt-1 text-2xl font-semibold text-slate-800" x-text="countProvisioning24h()"></div>
+                            <div class="mt-1 text-xs text-emerald-600">School create / update events</div>
+                        </div>
+                        <div class="rounded-2xl bg-sky-50 border border-sky-100 p-4">
+                            <div class="text-xs uppercase tracking-wide text-sky-600">Billing changes</div>
+                            <div class="mt-1 text-2xl font-semibold text-slate-800" x-text="countBilling24h()"></div>
+                            <div class="mt-1 text-xs text-sky-600">Plan upgrades, downgrades, overrides</div>
+                        </div>
+                        <div class="rounded-2xl bg-amber-50 border border-amber-100 p-4">
+                            <div class="text-xs uppercase tracking-wide text-amber-600">Security-sensitive</div>
+                            <div class="mt-1 text-2xl font-semibold text-slate-800" x-text="countSecurity24h()"></div>
+                            <div class="mt-1 text-xs text-amber-600">Impersonations, key changes</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 xl:grid-cols-[2.1fr,1.1fr] gap-6 flex-1">
+                        <div id="superadmin-activity-log-section" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Activity stream</div>
+                                    <div class="text-xs text-slate-400 mt-1">Backed by a future <code>platform_audit_logs</code> table and/or per-portal logs such as <code>accountant_audit_logs</code></div>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 text-xs">
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs text-slate-600" @click="exportCsv()">
+                                        <i class="fas fa-file-csv text-slate-400"></i>
+                                        <span>Export CSV</span>
+                                    </button>
+                                    <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2 text-xs text-slate-600" @click="printTable()">
+                                        <i class="fas fa-print text-slate-400"></i>
+                                        <span>Print</span>
+                                    </button>
+                                    <input type="date" class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 bg-white" aria-label="Start date" x-model="startDate" @change="applyFilters()">
+                                    <input type="date" class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 bg-white" aria-label="End date" x-model="endDate" @change="applyFilters()">
+                                    <select class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 bg-white" aria-label="Filter by action type" x-model="actionFilter" @change="applyFilters()">
+                                        <option value="all">All actions</option>
+                                        <option value="CREATE">Create</option>
+                                        <option value="UPDATE">Update</option>
+                                        <option value="DELETE">Delete</option>
+                                        <option value="IMPERSONATE">Impersonation</option>
+                                    </select>
+                                    <select class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 bg-white" aria-label="Filter by severity" x-model="severityFilter">
+                                        <option value="all">All severities</option>
+                                        <option value="info">Info</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 rounded-2xl bg-rose-50 border border-rose-100 p-4 text-sm text-rose-700" x-show="error" x-text="error"></div>
+
+                            <div class="mt-4 overflow-x-auto text-xs flex-1">
+                                <table id="superadmin-activity-log-table" class="min-w-full">
+                                    <thead>
+                                        <tr class="text-left text-slate-400">
+                                            <th class="pb-2 pr-4 font-medium">Timestamp</th>
+                                            <th class="pb-2 pr-4 font-medium">Actor</th>
+                                            <th class="pb-2 pr-4 font-medium">School</th>
+                                            <th class="pb-2 pr-4 font-medium">Action</th>
+                                            <th class="pb-2 pr-4 font-medium">Details</th>
+                                            <th class="pb-2 font-medium text-right">Severity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                                        <tr x-show="loading">
+                                            <td class="py-4 text-center text-slate-400" colspan="6">Loading activity...</td>
+                                        </tr>
+
+                                        <template x-for="row in filteredItems()" :key="row.id">
+                                            <tr>
+                                                <td class="py-2 pr-4 text-xs" x-text="formatDateTime(row.createdAt)"></td>
+                                                <td class="py-2 pr-4">
+                                                    <div class="font-medium text-slate-800" x-text="row.userEmail || '—'"></div>
+                                                    <div class="text-xs text-slate-400" x-text="row.userRole || '—'"></div>
+                                                </td>
+                                                <td class="py-2 pr-4 text-xs" x-text="row.schoolId ? String(row.schoolId).slice(0, 12) : '—'"></td>
+                                                <td class="py-2 pr-4 text-xs" x-text="actionLabel(row)"></td>
+                                                <td class="py-2 pr-4 text-xs" x-text="row.description || (row.entityType ? (row.entityType + (row.entityId ? (' #' + row.entityId) : '')) : '—')"></td>
+                                                <td class="py-2 pr-4 text-right">
+                                                    <span class="px-2 py-1 rounded-full text-xs" :class="severityBadgeClass(row.severity)" x-text="row.severity"></span>
+                                                </td>
+                                            </tr>
+                                        </template>
+
+                                        <tr x-show="!loading && !error && filteredItems().length === 0">
+                                            <td class="py-4 text-center text-slate-400" colspan="6">No activity found.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6 text-xs">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">How to persist logs</div>
+                                        <div class="text-xs text-slate-400 mt-1">Shape a <code>platform_audit_logs</code> table or reuse portal-specific logs</div>
+                                    </div>
+                                </div>
+                                <ul class="space-y-2 text-slate-600">
+                                    <li>Include columns such as <code>school_id</code>, <code>user_id</code>, <code>action</code>, <code>resource_type</code>, <code>resource_id</code>, <code>old_values</code>, <code>new_values</code>, <code>metadata</code>, <code>created_at</code>.</li>
+                                    <li>For financial operations, you already have <code>accountant_audit_logs</code> which can be surfaced here per school.</li>
+                                    <li>Attach client information like IP address, user agent and session ID for compliance.</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Filters & enforcement</div>
+                                        <div class="text-xs text-slate-400 mt-1">Recommended checks when wiring backend</div>
+                                    </div>
+                                </div>
+                                <ul class="space-y-2 text-slate-600">
+                                    <li>Only Super Admins should query cross-school logs; respect RLS on school-specific tables.</li>
+                                    <li>Consider a retention strategy (e.g. 12–24 months) and cold storage for older events.</li>
+                                    <li>Expose download APIs for CSV / JSON exports with server-side filtering and pagination.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </main>
+    </body>
+    <script>
+        // Activity log Alpine.js component
+        function activityLogData() {
+            return {
+                loading: false,
+                error: '',
+                items: [],
+                startDate: '',
+                endDate: '',
+                actionFilter: 'all',
+                severityFilter: 'all',
+                
+                init() {
+                    this.loadActivity();
+                },
+                
+                async loadActivity() {
+                    this.loading = true;
+                    this.error = '';
+                    try {
+                        // Load activity log from API
+                        this.items = [];
+                    } catch (err) {
+                        this.error = 'Failed to load activity log';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                filteredItems() {
+                    return this.items.filter(item => {
+                        let matches = true;
+                        
+                        if (this.startDate && item.createdAt) {
+                            matches = matches && new Date(item.createdAt) >= new Date(this.startDate);
+                        }
+                        
+                        if (this.endDate && item.createdAt) {
+                            matches = matches && new Date(item.createdAt) <= new Date(this.endDate);
+                        }
+                        
+                        if (this.actionFilter !== 'all') {
+                            matches = matches && item.actionType === this.actionFilter;
+                        }
+                        
+                        if (this.severityFilter !== 'all') {
+                            matches = matches && item.severity === this.severityFilter;
+                        }
+                        
+                        return matches;
+                    });
+                },
+                
+                applyFilters() {
+                    // Filters are reactive through x-model
+                },
+                
+                countLast24h() {
+                    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                    return this.items.filter(item => 
+                        item.createdAt && new Date(item.createdAt) >= twentyFourHoursAgo
+                    ).length;
+                },
+                
+                countProvisioning24h() {
+                    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                    return this.items.filter(item => 
+                        item.createdAt && 
+                        new Date(item.createdAt) >= twentyFourHoursAgo &&
+                        (item.actionType === 'CREATE' || item.actionType === 'UPDATE') &&
+                        item.entityType === 'School'
+                    ).length;
+                },
+                
+                countBilling24h() {
+                    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                    return this.items.filter(item => 
+                        item.createdAt && 
+                        new Date(item.createdAt) >= twentyFourHoursAgo &&
+                        (item.actionType === 'UPGRADE' || item.actionType === 'DOWNGRADE') &&
+                        item.entityType === 'Subscription'
+                    ).length;
+                },
+                
+                countSecurity24h() {
+                    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                    return this.items.filter(item => 
+                        item.createdAt && 
+                        new Date(item.createdAt) >= twentyFourHoursAgo &&
+                        (item.actionType === 'IMPERSONATE' || item.actionType === 'SECURITY_CHANGE')
+                    ).length;
+                },
+                
+                exportCsv() {
+                    if (window.ShikolaExportPrint) {
+                        window.ShikolaExportPrint.exportTableToCsv('superadmin-activity-log-table', 'activity-log.csv');
+                    } else {
+                        console.log('Export CSV functionality not available');
+                    }
+                },
+                
+                printTable() {
+                    if (window.ShikolaExportPrint) {
+                        window.ShikolaExportPrint.printTable('superadmin-activity-log-table');
+                    } else {
+                        window.print();
+                    }
+                },
+                
+                formatDateTime(dateString) {
+                    if (!dateString) return '—';
+                    return new Date(dateString).toLocaleString();
+                },
+                
+                actionLabel(row) {
+                    const labels = {
+                        'CREATE': 'Created',
+                        'UPDATE': 'Updated', 
+                        'DELETE': 'Deleted',
+                        'IMPERSONATE': 'Impersonated',
+                        'UPGRADE': 'Upgraded',
+                        'DOWNGRADE': 'Downgraded'
+                    };
+                    return labels[row.actionType] || row.actionType || '—';
+                },
+                
+                severityBadgeClass(severity) {
+                    const classes = {
+                        'info': 'bg-blue-50 text-blue-600',
+                        'warning': 'bg-amber-50 text-amber-600',
+                        'critical': 'bg-rose-50 text-rose-600'
+                    };
+                    return classes[severity] || 'bg-slate-50 text-slate-600';
+                }
+            };
+        }
+
+        // Register Alpine.js component
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('activityLogData', activityLogData);
+        });
+    </script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

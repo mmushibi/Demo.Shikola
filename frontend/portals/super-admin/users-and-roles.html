@@ -1,0 +1,437 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users And Roles - Shikola</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    
+    <!-- Core Scripts -->
+    <script src="../../public/api-config.js"></script>
+    <script src="../../shared-assets/js/shared-auth.js"></script>
+    <script src="../../shared-assets/js/shared-api-client.js"></script>
+    <script src="super-admin-offline-manager.js"></script>
+    <script src="global-user-search-enhanced.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    
+    <!-- Icons -->
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+    <div class="flex-1 flex gap-8 w-full">
+        <aside class="flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+            <div class="flex items-center gap-3 mb-10">
+                <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-15 rounded-2xl object-cover">
+            <div>
+                <div class="text-sm text-slate-400">Console</div>
+            </div>
+            </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Console</span>
+                    </a>
+                    
+                    <a href="schools.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-school"></i></span>
+                        <span class="flex-1">Schools</span>
+                    </a>
+                    
+                    <a href="users-and-roles.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 text-orange-600 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-users"></i></span>
+                        <span class="font-medium flex-1">Users & Roles</span>
+                    </a>
+                    
+                    <a href="create-user.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-plus"></i></span>
+                        <span class="flex-1">Create Users</span>
+                    </a>
+                    
+                    <a href="global-user-search.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-search"></i></span>
+                        <span class="flex-1">Global Search</span>
+                    </a>
+                    
+                    <a href="payments-coupons.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-ticket-alt"></i></span>
+                        <span class="flex-1">Payments & Coupons</span>
+                    </a>
+                    
+                    <a href="subscriptions.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-layer-group"></i></span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    
+                    <a href="plans.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">Plans & Events</span>
+                    </a>
+                    
+                    <a href="activity-log.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="flex-1">Activity Log</span>
+                    </a>
+                    
+                    <a href="system-health.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-heartbeat"></i></span>
+                        <span class="flex-1">System Health</span>
+                    </a>
+                    
+                    <a href="settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-gear"></i></span>
+                        <span class="flex-1">Settings</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center mt-6 px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium w-full justify-center">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+
+        </aside>
+
+        <main class="flex-1 w-full px-6 py-6 pl-72" x-data="globalUserSearch()">
+            
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl lg:text-3xl font-semibold text-slate-800">Global Users & Roles</h1>
+                            <p class="text-sm text-slate-400 mt-1">Search across all schools for support, audits and impersonation</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="bg-white rounded-xl border border-slate-200 px-3 py-2 text-xs">
+                                <span class="text-slate-500">Impersonation:</span>
+                                <span id="header-policy-status" class="font-medium text-slate-800 ml-1">Enabled</span>
+                            </div>
+                            <button @click="editImpersonationPolicy" class="px-3 py-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-medium transition">
+                                <i class="fas fa-cog mr-1"></i>
+                                Policy Settings
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 xl:grid-cols-[2.1fr,1.1fr] gap-6 flex-1">
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">User directory</div>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 text-xs">
+                                    <div class="relative flex items-center bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 w-full sm:w-64">
+                                        <i class="fas fa-search text-slate-400 text-xs mr-2"></i>
+                                        <input id="users-search" type="text" placeholder="Search by name, email or school" autocomplete="off" x-model="searchQuery" @blur="hideSuggestions" @focus="showSuggestions = searchQuery.length > 0" class="bg-transparent text-xs text-slate-600 placeholder-slate-400 focus:outline-none flex-1" aria-label="Search users" title="Search by name, email or school">
+                                        <div id="users-search-suggestions" x-show="showSuggestions && suggestions.length > 0" class="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-10">
+                                            <template x-for="suggestion in suggestions" :key="suggestion.email">
+                                                <div @click="selectSuggestion(suggestion)" class="px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0">
+                                                    <div class="text-xs font-medium text-slate-800" x-text="suggestion.name"></div>
+                                                    <div class="text-xs text-slate-500" x-text="suggestion.email"></div>
+                                                    <div class="text-xs text-slate-400" x-text="suggestion.role"></div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <select id="users-role-filter" x-model="filters.role" @change="applyFilters" class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 bg-white" aria-label="Filter by role" title="Filter users by role">
+                                        <option value="">All roles</option>
+                                        <option value="Super Admin">Super Admin</option>
+                                        <option value="Operations">Operations</option>
+                                        <option value="School Admin">School Admin</option>
+                                        <option value="Head Teacher">Head Teacher</option>
+                                        <option value="Deputy Head">Deputy Head</option>
+                                        <option value="Teacher">Teacher</option>
+                                        <option value="Accountant">Accountant</option>
+                                        <option value="Parent">Parent</option>
+                                        <option value="Pupil">Pupil</option>
+                                    </select>
+                                    <select id="users-status-filter" x-model="filters.status" @change="applyFilters" class="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 bg-white" aria-label="Filter by status" title="Filter users by status">
+                                        <option value="">All statuses</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 overflow-x-auto text-xs flex-1">
+                                <table class="min-w-full">
+                                    <thead>
+                                        <tr class="text-left text-slate-400">
+                                            <th class="pb-2 pr-4 font-medium">User</th>
+                                            <th class="pb-2 pr-4 font-medium">Role</th>
+                                            <th class="pb-2 pr-4 font-medium">School</th>
+                                            <th class="pb-2 pr-4 font-medium">Email</th>
+                                            <th class="pb-2 pr-4 font-medium">Last login</th>
+                                            <th class="pb-2 pr-4 font-medium">Status</th>
+                                            <th class="pb-2 font-medium text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                                        <tr x-show="loading" id="users-loading-row">
+                                            <td class="py-4 text-center text-slate-400" colspan="7">Loading users...</td>
+                                        </tr>
+                                        <tr x-show="!loading && searchResults.length === 0 && searchQuery.length > 0">
+                                            <td class="py-4 text-center text-slate-400" colspan="7">No users found matching your search.</td>
+                                        </tr>
+                                        <template x-for="user in searchResults" :key="user.id">
+                                            <tr class="hover:bg-slate-50">
+                                                <td class="py-3 pr-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium text-slate-600" x-text="getInitials(user.name)"></div>
+                                                        <div>
+                                                            <div class="font-medium text-slate-800" x-text="user.name"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 pr-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs font-medium" :class="getRoleColor(user.role)" x-text="user.role"></span>
+                                                </td>
+                                                <td class="py-3 pr-4 text-slate-600" x-text="user.school || 'N/A'"></td>
+                                                <td class="py-3 pr-4 text-slate-600" x-text="user.email"></td>
+                                                <td class="py-3 pr-4 text-slate-600" x-text="formatDateTime(user.lastLogin)"></td>
+                                                <td class="py-3 pr-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs font-medium" :class="getStatusColor(user.status)" x-text="user.status"></span>
+                                                </td>
+                                                <td class="py-3 text-right">
+                                                    <button @click="viewUser(user)" class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-medium transition">View</button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6 text-xs">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Impersonation policy</div>
+                                        <div class="text-xs text-slate-400 mt-1">Controls required confirmations before switching sessions</div>
+                                    </div>
+                                    <button id="edit-impersonation-policy" type="button" @click="editImpersonationPolicy" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">Edit</button>
+                                </div>
+                                <div class="space-y-2 text-slate-600">
+                                    <div class="flex items-center justify-between">
+                                        <span>Require reason</span>
+                                        <span id="policy-require-reason" class="font-semibold text-slate-800">Yes</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span>Allowed targets</span>
+                                        <span data-policy-targets class="font-semibold text-slate-800">Admins & staff roles</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Counts by role</div>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                            <span class="text-slate-600">School Admins</span>
+                                        </div>
+                                        <span id="count-role-admin" class="font-semibold text-slate-800" x-text="statistics?.schoolAdmins || 0"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                                            <span class="text-slate-600">Teachers</span>
+                                        </div>
+                                        <span id="count-role-teacher" class="font-semibold text-slate-800" x-text="statistics?.teachers || 0"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+                                            <span class="text-slate-600">Accountants</span>
+                                        </div>
+                                        <span id="count-role-accountant" class="font-semibold text-slate-800" x-text="statistics?.accountants || 0"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+                                            <span class="text-slate-600">Other roles</span>
+                                        </div>
+                                        <span id="count-role-other" class="font-semibold text-slate-800" x-text="statistics?.other || 0"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Impersonation guidance</div>
+                                    </div>
+                                </div>
+                                <ul class="space-y-2 text-slate-600">
+                                    <li>Require Super Admin authentication for every impersonation.</li>
+                                    <li>Record impersonation events in a dedicated audit table with timestamps, reason and target user.</li>
+                                    <li>Always display a clear banner when a session is impersonating another user.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Impersonation Policy Edit Modal -->
+                <div x-show="showImpersonationPolicyModal" 
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4"
+                     style="display: none;">
+                    <div x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform scale-95"
+                         x-transition:enter-end="opacity-100 transform scale-100"
+                         x-transition:leave="transition ease-in duration-200"
+                         x-transition:leave-start="opacity-100 transform scale-100"
+                         x-transition:leave-end="opacity-0 transform scale-95"
+                         class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-slate-800">Edit Impersonation Policy</h3>
+                            <button @click="showImpersonationPolicyModal = false" 
+                                    class="text-slate-400 hover:text-slate-600 transition">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <form @submit.prevent="saveImpersonationPolicy" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">
+                                    Require Reason for Impersonation
+                                </label>
+                                <div class="flex items-center">
+                                    <input type="radio" 
+                                           id="require-reason-yes" 
+                                           name="requireReason" 
+                                           value="true"
+                                           x-model="impersonationPolicy.requireReason"
+                                           class="mr-2">
+                                    <label for="require-reason-yes" class="text-sm text-slate-600 mr-4">Yes</label>
+                                    <input type="radio" 
+                                           id="require-reason-no" 
+                                           name="requireReason" 
+                                           value="false"
+                                           x-model="impersonationPolicy.requireReason"
+                                           class="mr-2">
+                                    <label for="require-reason-no" class="text-sm text-slate-600">No</label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">
+                                    Allowed Target Roles
+                                </label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" 
+                                               value="Super Admin"
+                                               x-model="impersonationPolicy.allowedTargets"
+                                               class="mr-2 rounded border-slate-300">
+                                        <span class="text-sm text-slate-600">Super Admin</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" 
+                                               value="Operations"
+                                               x-model="impersonationPolicy.allowedTargets"
+                                               class="mr-2 rounded border-slate-300">
+                                        <span class="text-sm text-slate-600">Operations</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" 
+                                               value="School Admin"
+                                               x-model="impersonationPolicy.allowedTargets"
+                                               class="mr-2 rounded border-slate-300">
+                                        <span class="text-sm text-slate-600">School Admin</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" 
+                                               value="Head Teacher"
+                                               x-model="impersonationPolicy.allowedTargets"
+                                               class="mr-2 rounded border-slate-300">
+                                        <span class="text-sm text-slate-600">Head Teacher</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" 
+                                               value="Deputy Head"
+                                               x-model="impersonationPolicy.allowedTargets"
+                                               class="mr-2 rounded border-slate-300">
+                                        <span class="text-sm text-slate-600">Deputy Head</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" 
+                                               value="Teacher"
+                                               x-model="impersonationPolicy.allowedTargets"
+                                               class="mr-2 rounded border-slate-300">
+                                        <span class="text-sm text-slate-600">Teacher</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" 
+                                               value="Accountant"
+                                               x-model="impersonationPolicy.allowedTargets"
+                                               class="mr-2 rounded border-slate-300">
+                                        <span class="text-sm text-slate-600">Accountant</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" 
+                                               value="Parent"
+                                               x-model="impersonationPolicy.allowedTargets"
+                                               class="mr-2 rounded border-slate-300">
+                                        <span class="text-sm text-slate-600">Parent</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" 
+                                               value="Pupil"
+                                               x-model="impersonationPolicy.allowedTargets"
+                                               class="mr-2 rounded border-slate-300">
+                                        <span class="text-sm text-slate-600">Pupil</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                                <button type="button" 
+                                        @click="showImpersonationPolicyModal = false"
+                                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 transition">
+                                    Cancel
+                                </button>
+                                <button type="submit" 
+                                        :disabled="savingPolicy"
+                                        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                                    <span x-show="!savingPolicy">Save Changes</span>
+                                    <span x-show="savingPolicy">Saving...</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+        </main>
+    </body>
+</html>

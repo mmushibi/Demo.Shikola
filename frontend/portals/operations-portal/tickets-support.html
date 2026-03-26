@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Restrict to tablet and desktop only */
+        @media (max-width: 768px) {
+            body {
+                display: none !important;
+            }
+            body::after {
+                content: "This portal is only available on tablet and desktop devices. Please use a larger screen to access the Operations Portal.";
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                text-align: center;
+                font-family: system-ui, -apple-system, sans-serif;
+                font-size: 18px;
+                color: #374151;
+                background: #f9fafb;
+                padding: 20px;
+            }
+        }
+        
+        /* Ensure minimum width for tablet landscape */
+        @media (max-width: 1024px) and (orientation: portrait) {
+            body {
+                min-width: 768px;
+                overflow-x: auto;
+            }
+        }
+    </style>
+    <title>Tickets & Support - Operations Portal</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/config/config.js"></script>
+    <script src="/shared-assets/js/shared-api-client.js"></script>
+    <script src="operations-api.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/shared-auth.js" defer></script>
+    <script src="/shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-assets/css/styles.css">
+    <style>
+        body.operations-page {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+        }
+
+        /* Ocean Blue Theme */
+        .ocean-blue-primary { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+        .ocean-blue-secondary { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .ocean-blue-accent { background: linear-gradient(135deg, #0284c7, #0369a1); }
+        
+        /* Ocean Green Theme */
+        .ocean-green-primary { background: linear-gradient(135deg, #10b981, #059669); }
+        .ocean-green-secondary { background: linear-gradient(135deg, #34d399, #10b981); }
+        .ocean-green-accent { background: linear-gradient(135deg, #059669, #047857); }
+        
+        /* Orange Accent */
+        .orange-accent { background: linear-gradient(135deg, #fb923c, #f97316); }
+        .orange-secondary { background: linear-gradient(135deg, #fdba74, #fb923c); }
+
+        .nav-active {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+        }
+
+        .nav-item:hover {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(2, 132, 199, 0.1));
+        }
+
+        .ocean-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(14, 165, 233, 0.1);
+        }
+
+        .ocean-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.15);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+    </style>
+</head>
+<body class="operations-page">
+    <div x-data="{
+        sidebarOpen: false,
+        tickets: [],
+        selectedTicket: null,
+        loading: false,
+        showTicketModal: false,
+        showAssignModal: false,
+        showResolveModal: false,
+        showEscalateModal: false,
+        filters: {
+            status: '',
+            priority: '',
+            category: ''
+        },
+        assignForm: {
+            ticketId: '',
+            assigneeId: ''
+        },
+        resolveForm: {
+            ticketId: '',
+            resolution: '',
+            satisfactionScore: 5
+        },
+        escalateForm: {
+            ticketId: '',
+            escalationLevel: '',
+            reason: ''
+        },
+        availableStaff: [],
+        async init() {
+            await this.loadTickets();
+            await this.loadAvailableStaff();
+        },
+        async loadTickets() {
+            this.loading = true;
+            try {
+                const response = await window.operationsAPI.getSupportTickets(this.filters);
+                if (response.success) {
+                    this.tickets = response.data;
+                }
+            } catch (error) {
+                console.error('Failed to load tickets:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async loadAvailableStaff() {
+            try {
+                const response = await window.operationsAPI.getAvailableStaff();
+                if (response.success) {
+                    this.availableStaff = response.data;
+                }
+            } catch (error) {
+                console.error('Failed to load available staff:', error);
+            }
+        },
+        async loadTicketDetails(ticketId) {
+            try {
+                const response = await window.operationsAPI.getTicketDetails(ticketId);
+                if (response.success) {
+                    this.selectedTicket = response.data;
+                }
+            } catch (error) {
+                console.error('Failed to load ticket details:', error);
+            }
+        },
+        async assignTicket() {
+            try {
+                const response = await window.operationsAPI.assignTicket(this.assignForm.ticketId, this.assignForm.assigneeId);
+                if (response.success) {
+                    this.showAssignModal = false;
+                    this.assignForm = { ticketId: '', assigneeId: '' };
+                    await this.loadTickets();
+                }
+            } catch (error) {
+                console.error('Failed to assign ticket:', error);
+            }
+        },
+        async resolveTicket() {
+            try {
+                const response = await window.operationsAPI.resolveTicket(
+                    this.resolveForm.ticketId,
+                    this.resolveForm.resolution,
+                    this.resolveForm.satisfactionScore
+                );
+                if (response.success) {
+                    this.showResolveModal = false;
+                    this.resolveForm = { ticketId: '', resolution: '', satisfactionScore: 5 };
+                    await this.loadTickets();
+                }
+            } catch (error) {
+                console.error('Failed to resolve ticket:', error);
+            }
+        },
+        async escalateTicket() {
+            try {
+                const response = await window.operationsAPI.escalateTicket(
+                    this.escalateForm.ticketId,
+                    this.escalateForm.escalationLevel,
+                    this.escalateForm.reason
+                );
+                if (response.success) {
+                    this.showEscalateModal = false;
+                    this.escalateForm = { ticketId: '', escalationLevel: '', reason: '' };
+                    await this.loadTickets();
+                }
+            } catch (error) {
+                console.error('Failed to escalate ticket:', error);
+            }
+        },
+        openTicketDetails(ticket) {
+            this.selectedTicket = ticket;
+            this.showTicketModal = true;
+        },
+        openAssignModal(ticket) {
+            this.assignForm.ticketId = ticket.id;
+            this.showAssignModal = true;
+        },
+        openResolveModal(ticket) {
+            this.resolveForm.ticketId = ticket.id;
+            this.showResolveModal = true;
+        },
+        openEscalateModal(ticket) {
+            this.escalateForm.ticketId = ticket.id;
+            this.showEscalateModal = true;
+        },
+        getPriorityColor(priority) {
+            switch (priority) {
+                case 'critical': return 'text-red-600 bg-red-50';
+                case 'high': return 'text-orange-600 bg-orange-50';
+                case 'medium': return 'text-yellow-600 bg-yellow-50';
+                case 'low': return 'text-green-600 bg-green-50';
+                default: return 'text-gray-600 bg-gray-50';
+            }
+        },
+        getStatusColor(status) {
+            switch (status) {
+                case 'open': return 'text-blue-600 bg-blue-50';
+                case 'in_progress': return 'text-yellow-600 bg-yellow-50';
+                case 'resolved': return 'text-green-600 bg-green-50';
+                case 'escalated': return 'text-red-600 bg-red-50';
+                case 'closed': return 'text-gray-600 bg-gray-50';
+                default: return 'text-gray-600 bg-gray-50';
+            }
+        },
+        getCategoryColor(category) {
+            switch (category) {
+                case 'technical': return 'text-purple-600 bg-purple-50';
+                case 'billing': return 'text-green-600 bg-green-50';
+                case 'account': return 'text-blue-600 bg-blue-50';
+                case 'feature': return 'text-orange-600 bg-orange-50';
+                case 'bug': return 'text-red-600 bg-red-50';
+                default: return 'text-gray-600 bg-gray-50';
+            }
+        },
+        formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    }" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <!-- Sidebar Navigation -->
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="nav-menu space-y-1 text-sm">
+                    <a href="dashboard.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-chart-line"></i>
+                        </span>
+                        <span class="flex-1">Dashboard</span>
+                    </a>
+                    <a href="schools-management.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-school"></i>
+                        </span>
+                        <span class="flex-1">Schools Management</span>
+                    </a>
+                    <a href="subscriptions.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-credit-card"></i>
+                        </span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    <a href="user-management.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-users-cog"></i>
+                        </span>
+                        <span class="flex-1">User Management</span>
+                    </a>
+                    <a href="tickets-support.html" class="nav-active flex items-center gap-3 px-4 py-3 rounded-xl text-white shadow-md">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-ticket-alt"></i>
+                        </span>
+                        <span class="font-medium flex-1">Tickets & Support</span>
+                    </a>
+                    <a href="system-monitoring.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-server"></i>
+                        </span>
+                        <span class="flex-1">System Monitoring</span>
+                    </a>
+                    <a href="reports.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-file-alt"></i>
+                        </span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                    <a href="profile.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-user-circle"></i>
+                        </span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <!-- Header -->
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                        <div>
+                            <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Tickets & Support</h1>
+                            <p class="text-sm text-slate-500 mt-1">Manage customer support tickets and escalations</p>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="flex flex-wrap gap-4 mb-6">
+                        <label class="sr-only" for="ticketStatusFilter">Filter by ticket status</label>
+                        <select x-model="filters.status" @change="loadTickets()" id="ticketStatusFilter" title="Filter by ticket status" class="px-4 py-2 rounded-xl border border-slate-200 text-sm">
+                            <option value="">All Status</option>
+                            <option value="open">Open</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="escalated">Escalated</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                        <label class="sr-only" for="ticketPriorityFilter">Filter by ticket priority</label>
+                        <select x-model="filters.priority" @change="loadTickets()" id="ticketPriorityFilter" title="Filter by ticket priority" class="px-4 py-2 rounded-xl border border-slate-200 text-sm">
+                            <option value="">All Priority</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <label class="sr-only" for="ticketCategoryFilter">Filter by ticket category</label>
+                        <select x-model="filters.category" @change="loadTickets()" id="ticketCategoryFilter" title="Filter by ticket category" class="px-4 py-2 rounded-xl border border-slate-200 text-sm">
+                            <option value="">All Categories</option>
+                            <option value="technical">Technical</option>
+                            <option value="billing">Billing</option>
+                            <option value="account">Account</option>
+                            <option value="feature">Feature Request</option>
+                            <option value="bug">Bug Report</option>
+                        </select>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-1 overflow-y-auto">
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            <div class="ocean-card bg-white rounded-2xl p-6 shadow-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="ocean-blue-primary w-12 h-12 rounded-xl flex items-center justify-center text-white">
+                                        <i class="fas fa-ticket-alt"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                                        Active
+                                    </span>
+                                </div>
+                                <h3 class="text-2xl font-bold text-slate-800" x-text="tickets.length"></h3>
+                                <p class="text-sm text-slate-500 mt-1">Total Tickets</p>
+                            </div>
+
+                            <div class="ocean-card bg-white rounded-2xl p-6 shadow-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="orange-accent w-12 h-12 rounded-xl flex items-center justify-center text-white">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                                        Urgent
+                                    </span>
+                                </div>
+                                <h3 class="text-2xl font-bold text-slate-800" x-text="tickets.filter(t => t.priority === 'critical').length"></h3>
+                                <p class="text-sm text-slate-500 mt-1">Critical Priority</p>
+                            </div>
+
+                            <div class="ocean-card bg-white rounded-2xl p-6 shadow-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="ocean-green-primary w-12 h-12 rounded-xl flex items-center justify-center text-white">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full">
+                                        Pending
+                                    </span>
+                                </div>
+                                <h3 class="text-2xl font-bold text-slate-800" x-text="tickets.filter(t => t.status === 'in_progress').length"></h3>
+                                <p class="text-sm text-slate-500 mt-1">In Progress</p>
+                            </div>
+
+                            <div class="ocean-card bg-white rounded-2xl p-6 shadow-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="ocean-blue-secondary w-12 h-12 rounded-xl flex items-center justify-center text-white">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                                        Resolved
+                                    </span>
+                                </div>
+                                <h3 class="text-2xl font-bold text-slate-800" x-text="tickets.filter(t => t.status === 'resolved' && new Date(t.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length"></h3>
+                                <p class="text-sm text-slate-500 mt-1">This Week</p>
+                            </div>
+                        </div>
+
+                        <!-- Tickets Table -->
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Support Tickets</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="border-b border-slate-200">
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Ticket ID</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Subject</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">School</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Category</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Priority</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Status</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Created</th>
+                                            <th class="text-left py-3 px-4 text-sm font-medium text-slate-700">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template x-for="ticket in tickets" :key="ticket.id">
+                                            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                                <td class="py-3 px-4">
+                                                    <span class="text-sm font-medium text-slate-800" x-text="'#' + ticket.id"></span>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <p class="text-sm font-medium text-slate-800" x-text="ticket.subject"></p>
+                                                    <p class="text-xs text-slate-500" x-text="ticket.requesterName"></p>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <p class="text-sm text-slate-800" x-text="ticket.schoolName"></p>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs font-medium" 
+                                                          :class="getCategoryColor(ticket.category)"
+                                                          x-text="ticket.category.toUpperCase()"></span>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs font-medium" 
+                                                          :class="getPriorityColor(ticket.priority)"
+                                                          x-text="ticket.priority.toUpperCase()"></span>
+                                                </td>
+                                                <td class="py-3 px-4">
+                                                    <span class="px-2 py-1 rounded-full text-xs font-medium" 
+                                                          :class="getStatusColor(ticket.status)"
+                                                          x-text="ticket.status.replace('_', ' ').toUpperCase()"></span>
+                                                </td>
+                                                <td class="py-3 px-4 text-sm text-slate-600" x-text="formatDate(ticket.createdAt)"></td>
+                                                <td class="py-3 px-4">
+                                                    <div class="flex gap-2">
+                                                        <button @click="openTicketDetails(ticket)" 
+                                                                class="text-blue-600 hover:text-blue-800 text-sm">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button @click="openAssignModal(ticket)" 
+                                                                class="text-green-600 hover:text-green-800 text-sm">
+                                                            <i class="fas fa-user-plus"></i>
+                                                        </button>
+                                                        <button @click="openResolveModal(ticket)" 
+                                                                class="text-purple-600 hover:text-purple-800 text-sm">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                        <button @click="openEscalateModal(ticket)" 
+                                                                class="text-orange-600 hover:text-orange-800 text-sm">
+                                                            <i class="fas fa-arrow-up"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Ticket Details Modal -->
+        <div x-show="showTicketModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-slate-800">Ticket Details</h3>
+                    <button @click="showTicketModal = false" class="text-slate-400 hover:text-slate-600" title="Close ticket details" aria-label="Close ticket details">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div x-show="selectedTicket" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-slate-500">Ticket ID</p>
+                            <p class="font-medium" x-text="'#' + selectedTicket.id"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500">Priority</p>
+                            <span class="px-2 py-1 rounded-full text-xs font-medium" 
+                                  :class="getPriorityColor(selectedTicket.priority)"
+                                  x-text="selectedTicket.priority.toUpperCase()"></span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500">Category</p>
+                            <span class="px-2 py-1 rounded-full text-xs font-medium" 
+                                  :class="getCategoryColor(selectedTicket.category)"
+                                  x-text="selectedTicket.category.toUpperCase()"></span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500">Status</p>
+                            <span class="px-2 py-1 rounded-full text-xs font-medium" 
+                                  :class="getStatusColor(selectedTicket.status)"
+                                  x-text="selectedTicket.status.replace('_', ' ').toUpperCase()"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 mb-2">Subject</p>
+                        <p class="font-medium" x-text="selectedTicket.subject"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 mb-2">Description</p>
+                        <p class="text-slate-700" x-text="selectedTicket.description"></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-slate-500">Requester</p>
+                            <p class="font-medium" x-text="selectedTicket.requesterName"></p>
+                            <p class="text-sm text-slate-600" x-text="selectedTicket.requesterEmail"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500">School</p>
+                            <p class="font-medium" x-text="selectedTicket.schoolName"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 mb-2">Actions</p>
+                        <div class="flex gap-2">
+                            <button @click="openAssignModal(selectedTicket); showTicketModal = false" 
+                                    class="ocean-blue-primary text-white px-3 py-1 rounded-lg text-sm">
+                                Assign
+                            </button>
+                            <button @click="openResolveModal(selectedTicket); showTicketModal = false" 
+                                    class="ocean-green-primary text-white px-3 py-1 rounded-lg text-sm">
+                                Resolve
+                            </button>
+                            <button @click="openEscalateModal(selectedTicket); showTicketModal = false" 
+                                    class="orange-accent text-white px-3 py-1 rounded-lg text-sm">
+                                Escalate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assign Ticket Modal -->
+        <div x-show="showAssignModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4">Assign Ticket</h3>
+                <form @submit.prevent="assignTicket()">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="assigneeSelect">Assign to</label>
+                            <select x-model="assignForm.assigneeId" required
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                    id="assigneeSelect" title="Select staff member to assign ticket">
+                                <option value="">Select Staff Member</option>
+                                <template x-for="staff in availableStaff" :key="staff.id">
+                                    <option :value="staff.id" x-text="`${staff.name} (${staff.department})`"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 ocean-blue-primary text-white py-2 rounded-lg font-medium hover:ocean-blue-accent transition">
+                            Assign Ticket
+                        </button>
+                        <button type="button" @click="showAssignModal = false" 
+                                class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg font-medium hover:bg-slate-200 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Resolve Ticket Modal -->
+        <div x-show="showResolveModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4">Resolve Ticket</h3>
+                <form @submit.prevent="resolveTicket()">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="resolutionTextarea">Resolution</label>
+                            <textarea x-model="resolveForm.resolution" required
+                                      rows="4"
+                                      placeholder="Describe how the ticket was resolved..."
+                                      id="resolutionTextarea" title="Enter ticket resolution details"
+                                      class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="satisfactionScore">Satisfaction Score</label>
+                            <select x-model="resolveForm.satisfactionScore" required
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                    id="satisfactionScore" title="Select satisfaction score">
+                                <option value="5">5 - Very Satisfied</option>
+                                <option value="4">4 - Satisfied</option>
+                                <option value="3">3 - Neutral</option>
+                                <option value="2">2 - Dissatisfied</option>
+                                <option value="1">1 - Very Dissatisfied</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 ocean-green-primary text-white py-2 rounded-lg font-medium hover:ocean-green-accent transition">
+                            Resolve Ticket
+                        </button>
+                        <button type="button" @click="showResolveModal = false" 
+                                class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg font-medium hover:bg-slate-200 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Escalate Ticket Modal -->
+        <div x-show="showEscalateModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4">Escalate Ticket</h3>
+                <form @submit.prevent="escalateTicket()">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1" for="escalationLevel">Escalation Level</label>
+                            <select x-model="escalateForm.escalationLevel" required
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"
+                                    id="escalationLevel" title="Select escalation level">
+                                <option value="">Select Level</option>
+                                <option value="level_1">Level 1 - Senior Support</option>
+                                <option value="level_2">Level 2 - Team Lead</option>
+                                <option value="level_3">Level 3 - Manager</option>
+                                <option value="level_4">Level 4 - Director</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Reason for Escalation</label>
+                            <textarea x-model="escalateForm.reason" required
+                                      rows="3"
+                                      placeholder="Explain why this ticket needs escalation..."
+                                      class="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-ocean-blue-500"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 orange-accent text-white py-2 rounded-lg font-medium hover:orange-secondary transition">
+                            Escalate Ticket
+                        </button>
+                        <button type="button" @click="showEscalateModal = false" 
+                                class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg font-medium hover:bg-slate-200 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

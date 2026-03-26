@@ -1,0 +1,1552 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - My Timetable</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../config.js"></script>
+    <script src="../school-admin/timetables-api.js" defer></script>
+    <script src="../school-admin/classes-api.js" defer></script>
+    <script src="../school-admin/break-config-api.js" defer></script>
+    <script src="../../shared-assets/js/shared-spreadsheet-export.js" defer></script>
+    <script src="../../shared-assets/js/shared-break-display.js" defer></script>
+    <script src="teacher-api.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../shared-assets/js/shared-realtime-sync.js" defer></script>
+    <script src="../../shared-assets/js/shared-universal-notifications.js" defer></script>
+    <script src="../../shared-assets/js/shared-messages.js" defer></script>
+    <script src="../../shared-assets/js/button-functions.js" defer></script>
+    <script src="../../shared-assets/js/shared-admin-notifications.js" defer></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page">
+    <div x-data="teacherTimetablePage()" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                        <span class="flex-1">Attendance</span>
+                    </a>
+                    <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">My Timetable</span>
+                    </a>
+                    <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                        <span class="flex-1">Classes</span>
+                    </a>
+                    <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                        <span class="flex-1">Exams</span>
+                    </a>
+                    <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                        <span class="flex-1">Class Tests</span>
+                    </a>
+                    <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div x-show="sidebarOpen" x-cloak x-transition:enter="transition ease-in-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in-out duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    </div>
+
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                            <span class="flex-1">Attendance</span>
+                        </a>
+                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                            <span class="flex-1">My Timetable</span>
+                        </a>
+                        <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                            <span class="flex-1">Classes</span>
+                        </a>
+                        <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                            <span class="flex-1">Exams</span>
+                        </a>
+                        <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                            <span class="flex-1">Class Tests</span>
+                        </a>
+                        <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                            <span class="flex-1">Reports</span>
+                        </a>
+                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                            <span class="flex-1">Messaging</span>
+                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                            <span class="flex-1">Profile</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center justify-center px-2">
+                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-10 w-auto rounded-2xl lg:hidden ml-16 pl-9" x-show="!sidebarOpen">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">My Timetable</h1>
+                                <p class="text-xs sm:text-sm text-slate-400 mt-1 hidden sm:block">Weekly view of your lessons across classes.</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-3">
+                            <button type="button" @click="exportTimetable()" class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-xs font-medium hover:bg-slate-100 flex items-center gap-2">
+                                <i class="fas fa-download text-emerald-500 text-xs"></i>
+                                <span>Export CSV</span>
+                            </button>
+                            <div
+                                x-data="{
+                                    query: '',
+                                    focus: false,
+                                    selectedIndex: -1,
+                                    pupils: [],
+                                    assessments: [],
+                                    classes: [],
+                                    get allSuggestions() {
+                                        const allItems = [
+                                            ...this.pupils.map(p => ({type: 'pupil', name: p, icon: 'fa-user-graduate', url: '#'})),
+                                            ...this.assessments.map(a => ({type: 'assessment', name: a, icon: 'fa-clipboard-check', url: 'class-tests.html'})),
+                                            ...this.classes.map(c => ({type: 'class', name: c, icon: 'fa-chalkboard', url: 'classes.html'}))
+                                        ];
+                                        if (!this.query) return allItems.slice(0, 8);
+                                        const q = this.query.toLowerCase();
+                                        return allItems.filter(item => item.name.toLowerCase().includes(q)).slice(0, 8);
+                                    },
+                                    tryAutoSelectTeacherFromAuth: function () {
+                                        try {
+                                            if (!window.shikolaAuth || typeof window.shikolaAuth.getCurrentUser !== 'function') {
+                                                return;
+                                            }
+                                            var user = window.shikolaAuth.getCurrentUser();
+                                            if (!user || !user.email) {
+                                                return;
+                                            }
+                                            if (!window.ShikolaEmployeesStore || typeof window.ShikolaEmployeesStore.list !== 'function') {
+                                                return;
+                                            }
+                                            var employees = window.ShikolaEmployeesStore.list() || [];
+                                            if (!Array.isArray(employees) || !employees.length) {
+                                                return;
+                                            }
+                                            var email = String(user.email || '').toLowerCase();
+                                            var usernamePart = email.split('@')[0] || '';
+                                            var match = null;
+                                            for (var i = 0; i < employees.length; i++) {
+                                                var emp = employees[i] || {};
+                                                var login = (emp.loginUsername || '').toLowerCase();
+                                                var empEmail = (emp.email || '').toLowerCase();
+                                                if (login && (login === email || login === usernamePart)) {
+                                                    match = emp;
+                                                    break;
+                                                }
+                                                if (!match && empEmail && empEmail === email) {
+                                                    match = emp;
+                                                }
+                                            }
+                                            if (!match) {
+                                                return;
+                                            }
+                                            var name = (match.fullName || match.name || match.staffId || '').trim();
+                                            if (!name) {
+                                                return;
+                                            }
+                                            if (this.teacherOptions.indexOf(name) === -1) {
+                                                this.teacherOptions.push(name);
+                                            }
+                                            this.selectedTeacher = name;
+                                            this.updateTodayLessons();
+                                            this.buildWeekGrid();
+                                        } catch (e) {
+                                        }
+                                    },
+                        if (!user || !user.email) {
+                            return;
+                        }
+                        if (!window.ShikolaEmployeesStore || typeof window.ShikolaEmployeesStore.list !== 'function') {
+                            return;
+                        }
+                        var employees = window.ShikolaEmployeesStore.list() || [];
+                        if (!Array.isArray(employees) || !employees.length) {
+                            return;
+                        }
+                        var email = String(user.email || '').toLowerCase();
+                        var usernamePart = email.split('@')[0] || '';
+                        var match = null;
+                        for (var i = 0; i < employees.length; i++) {
+                            var emp = employees[i] || {};
+                            var login = (emp.loginUsername || '').toLowerCase();
+                            var empEmail = (emp.email || '').toLowerCase();
+                            if (login && (login === email || login === usernamePart)) {
+                                match = emp;
+                                break;
+                            }
+                            if (!match && empEmail && empEmail === email) {
+                                match = emp;
+                            }
+                        }
+                        if (!match) {
+                            return;
+                        }
+                        var name = (match.fullName || match.name || match.staffId || '').trim();
+                        if (!name) {
+                            return;
+                        }
+                        if (this.teacherOptions.indexOf(name) === -1) {
+                            this.teacherOptions.push(name);
+                        }
+                        this.selectedTeacher = name;
+                        this.updateTodayLessons();
+                        this.buildWeekGrid();
+                    } catch (e) {
+                    }
+                },
+                                    selectSuggestion(item) {
+                                        if (item.url && item.url !== '#') {
+                                            window.location.href = item.url;
+                                        }
+                                        this.query = item.name;
+                                        this.focus = false;
+                                    },
+                                    moveSelection(direction) {
+                                        const items = this.allSuggestions;
+                                        if (direction === 'down') {
+                                            this.selectedIndex = Math.min(this.selectedIndex + 1, items.length - 1);
+                                        } else {
+                                            this.selectedIndex = Math.max(this.selectedIndex - 1, -1);
+                                        }
+                                    },
+                                    selectCurrent() {
+                                        if (this.selectedIndex >= 0 && this.allSuggestions[this.selectedIndex]) {
+                                            this.selectSuggestion(this.allSuggestions[this.selectedIndex]);
+                                        }
+                                    }
+                                }"
+                                class="relative hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-80"
+                                @click.outside="focus = false"
+                                @keydown.arrow-down.prevent="moveSelection('down')"
+                                @keydown.arrow-up.prevent="moveSelection('up')"
+                                @keydown.enter.prevent="selectCurrent()"
+                                @keydown.escape="focus = false">
+                                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search pupils, assessments, classes..."
+                                    class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1"
+                                    x-model="query"
+                                    @focus="focus = true; selectedIndex = -1"
+                                    @input="focus = true; selectedIndex = -1">
+                                <div
+                                    x-show="focus && allSuggestions.length"
+                                    x-cloak
+                                    class="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-20 max-h-80 overflow-y-auto">
+                                    <template x-for="(item, index) in allSuggestions" :key="item.name">
+                                        <button
+                                            type="button"
+                                            class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                                            :class="index === selectedIndex ? 'bg-orange-50 border-l-2 border-orange-400' : ''"
+                                            @mousedown.prevent="selectSuggestion(item)">
+                                            <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                                 :class="{
+                                                     'bg-indigo-100 text-indigo-600': item.type === 'pupil',
+                                                     'bg-orange-100 text-orange-600': item.type === 'assessment',
+                                                     'bg-emerald-100 text-emerald-600': item.type === 'class'
+                                                 }">
+                                                <i :class="item.icon + ' text-xs'"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="font-medium text-slate-700 truncate" x-text="item.name"></div>
+                                                <div class="text-[10px] text-slate-400 capitalize" x-text="item.type"></div>
+                                            </div>
+                                        </button>
+                                    </template>
+                                    <div x-show="!allSuggestions.length && query" class="px-3 py-4 text-center text-slate-400">
+                                        <i class="fas fa-search mb-2 text-lg"></i>
+                                        <div>No results found</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative" x-data="window.ShikolaAdminNotifications ? window.ShikolaAdminNotifications.dropdown({ links: { pupilCreated: 'classes.html#students', employeeCreated: '', feesPaymentRecorded: '', attendanceUpdated: 'attendance.html' } }) : { open: false, notifications: [], unreadCount() { return 0; }, loadServerNotifications() {}, markAllRead() {} }" @click.outside="open = false">
+                                <button type="button" class="relative h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" @click="open = !open; if (open) { loadServerNotifications(); }" aria-label="Notifications">
+                                    <i class="far fa-bell"></i>
+                                    <span x-show="unreadCount() > 0" x-cloak class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center" x-text="unreadCount()"></span>
+                                </button>
+                                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-80 rounded-xl bg-white shadow-lg border border-slate-100 z-30 overflow-hidden">
+                                    <div class="p-4 border-b border-slate-100">
+                                        <div class="flex items-center justify-between">
+                                            <h3 class="text-sm font-semibold text-slate-800">Notifications</h3>
+                                            <button x-show="unreadCount() > 0" @click="markAllRead()" class="text-xs text-orange-500 hover:text-orange-600 font-medium">Mark all read</button>
+                                        </div>
+                                    </div>
+                                    <div class="max-h-96 overflow-y-auto">
+                                        <template x-for="notification in notifications" :key="notification.id">
+                                            <div class="p-4 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 cursor-pointer transition-colors" 
+                                                 :class="!notification.read ? 'bg-orange-50/30' : ''"
+                                                 @click="handleClick(notification)">
+                                                <div class="flex gap-3">
+                                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                                                         :class="{
+                                                             'bg-orange-100 text-orange-600': notification.color === 'orange',
+                                                             'bg-red-100 text-red-600': notification.color === 'red',
+                                                             'bg-blue-100 text-blue-600': notification.color === 'blue',
+                                                             'bg-emerald-100 text-emerald-600': notification.color === 'emerald'
+                                                         }">
+                                                        <i :class="notification.icon + ' text-xs'"></i>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="flex items-center gap-2 mb-1">
+                                                            <div class="text-sm font-medium text-slate-800 truncate" x-text="notification.title"></div>
+                                                            <div x-show="!notification.read" class="w-2 h-2 rounded-full bg-orange-400 flex-shrink-0"></div>
+                                                        </div>
+                                                        <div class="text-xs text-slate-600 mb-1 break-words max-h-10 overflow-hidden" x-text="notification.message"></div>
+                                                        <div class="text-[10px] text-slate-400" x-text="notification.time"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="p-3 border-t border-slate-100">
+                                        <button class="w-full text-center text-xs text-orange-500 hover:text-orange-600 font-medium">View all notifications</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <div class="text-xs font-medium text-slate-700">Shikola</div>
+                                        <div class="text-[10px] text-slate-400">Teacher</div>
+                                    </div>
+                                </button>
+                                <div
+                                    x-show="open"
+                                    x-cloak
+                                    class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
+                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
+                                        <span class="w-4 flex justify-center text-slate-400">
+                                            <i class="fas fa-id-badge"></i>
+                                        </span>
+                                        <span>Profile</span>
+                                    </a>
+                                    <div class="my-1 border-t border-slate-100"></div>
+                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                        <span class="w-4 flex justify-center">
+                                            <i class="fas fa-right-from-bracket"></i>
+                                        </span>
+                                        <span>Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                        <label class="text-[11px] text-slate-500">Class</label>
+                        <select x-model="selectedClass" aria-label="Select class" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400 min-w-[160px]">
+                            <option value="">Select class</option>
+                            <template x-for="cls in classOptions" :key="cls">
+                                <option :value="cls" x-text="cls"></option>
+                            </template>
+                        </select>
+                        <span class="text-[11px] text-slate-400" x-show="selectedClass" x-text="'Showing timetable for ' + selectedClass"></span>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <!-- Lessons Today Popup -->
+                        <div x-data="{ open: false }" class="relative">
+                            <button type="button" @click="open = !open" @click.outside="open = false" class="w-full rounded-2xl bg-indigo-50 border border-indigo-100 p-4 flex items-center justify-between hover:bg-indigo-100 transition-colors">
+                                <div>
+                                    <div class="text-[11px] uppercase tracking-wide text-indigo-500">Lessons today</div>
+                                    <div class="mt-1 text-xl font-semibold text-slate-800" x-text="lessonsToday.length"></div>
+                                </div>
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-indigo-500">
+                                    <i class="fas fa-book-open text-sm"></i>
+                                </div>
+                            </button>
+                            <div x-show="open" x-cloak class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-20">
+                                <div class="text-sm font-semibold text-slate-800 mb-3">Today's Lessons</div>
+                                <div class="space-y-2">
+                                    <template x-for="lesson in lessonsToday" :key="lesson.id">
+                                        <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+                                            <div>
+                                                <div class="text-[11px] font-medium text-slate-700" x-text="lesson.periodTime"></div>
+                                                <div class="text-[10px] text-slate-500" x-text="lesson.label"></div>
+                                            </div>
+                                            <span class="text-[10px] text-indigo-600" x-text="lesson.roomName"></span>
+                                        </div>
+                                    </template>
+                                    <div x-show="!lessonsToday.length" class="text-[11px] text-slate-400 text-center py-2">
+                                        No lessons scheduled for today.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Free Periods Popup -->
+                        <div x-data="{ open: false }" class="relative">
+                            <button type="button" @click="open = !open" @click.outside="open = false" class="w-full rounded-2xl bg-emerald-50 border border-emerald-100 p-4 flex items-center justify-between hover:bg-emerald-100 transition-colors">
+                                <div>
+                                    <div class="text-[11px] uppercase tracking-wide text-emerald-500">Free periods</div>
+                                    <div class="mt-1 text-xl font-semibold text-slate-800" x-text="freePeriodsToday.length"></div>
+                                </div>
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-emerald-500">
+                                    <i class="fas fa-clock text-sm"></i>
+                                </div>
+                            </button>
+                            <div x-show="open" x-cloak class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-20">
+                                <div class="text-sm font-semibold text-slate-800 mb-3">Free Periods</div>
+                                <div class="space-y-3">
+                                    <template x-for="slot in freePeriodsToday" :key="slot.id">
+                                        <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-100">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <div class="text-[11px] font-medium text-emerald-700" x-text="slot.time"></div>
+                                                <span class="text-[10px] text-emerald-600" x-text="slot.label || 'Free period'"></span>
+                                            </div>
+                                            <div class="text-[10px] text-slate-600" x-text="slot.description || 'No lesson scheduled in this slot.'"></div>
+                                        </div>
+                                    </template>
+                                    <div x-show="!freePeriodsToday.length" class="text-[11px] text-slate-400 text-center py-2">
+                                        No free periods today.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Classes This Term Popup -->
+                        <div x-data="{ open: false }" class="relative">
+                            <button type="button" @click="open = !open" @click.outside="open = false" class="w-full rounded-2xl bg-orange-50 border border-orange-100 p-4 flex items-center justify-between hover:bg-orange-100 transition-colors" title="View classes this term">
+                                <div>
+                                    <div class="text-[11px] uppercase tracking-wide text-orange-500">Classes this term</div>
+                                    <div class="mt-1 text-xl font-semibold text-slate-800" x-text="classesThisTerm.length || 0"></div>
+                                </div>
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-orange-500">
+                                    <i class="fas fa-chalkboard-teacher text-sm" aria-label="Classes"></i>
+                                </div>
+                            </button>
+                            <div x-show="open" x-cloak class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-20">
+                                <div class="text-sm font-semibold text-slate-800 mb-3">Classes This Term</div>
+                                <div class="space-y-2">
+                                    <template x-for="cls in classesThisTerm" :key="cls.className">
+                                        <div class="p-2 rounded-lg bg-orange-50 border border-orange-100">
+                                            <div class="text-[11px] font-medium text-slate-700" x-text="cls.className"></div>
+                                            <div class="text-[10px] text-slate-500" x-text="cls.subjectsLabel || 'Subjects not set'"></div>
+                                        </div>
+                                    </template>
+                                    <div x-show="!classesThisTerm.length" class="text-[11px] text-slate-400 text-center py-2">
+                                        No classes found in your timetable yet.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 rounded-2xl border border-slate-100 bg-slate-50/60 overflow-auto text-xs">
+                        <table class="min-w-full">
+                            <thead class="bg-slate-50 text-slate-500">
+                                <tr>
+                                    <th class="px-4 py-2 text-left font-medium">Time</th>
+                                    <template x-for="day in weekdays" :key="day.key">
+                                        <th class="px-4 py-2 text-left font-medium" x-text="day.label"></th>
+                                    </template>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-slate-100 text-slate-700">
+                                <template x-for="row in weekGrid" :key="row.periodId">
+                                    <tr>
+                                        <td class="px-4 py-3 font-medium text-slate-600" x-text="row.label"></td>
+                                        <template x-for="cell in row.cells" :key="cell.dayKey">
+                                            <td class="px-4 py-3">
+                                                <template x-if="cell.slot">
+                                                    <div>
+                                                        <div class="font-semibold" x-text="cell.slotDisplay"></div>
+                                                        <div class="text-[11px] text-slate-500" x-text="cell.slot.roomName"></div>
+                                                    </div>
+                                                </template>
+                                            </td>
+                                        </template>
+                                    </tr>
+                                </template>
+                                <tr x-show="hasTimetable && selectedTeacher && !weekGrid.length">
+                                    <td colspan="7" class="px-4 py-3 text-center text-slate-400">No weekly timetable available for this teacher.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs">
+                        <!-- Today's Focus -->
+                        <div class="rounded-2xl border border-slate-100 bg-white p-4" x-data="{ editing: false, focus: '', savedFocus: 'Use this space to note today\'s key ideas.\n\nExamples (edit these):\n- Warm-up or recap\n- New topic or activity\n- Practice or assessment focus' }">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-sm font-semibold text-slate-800">Today's focus</div>
+                                <button type="button" @click="editing = !editing" class="text-slate-400 hover:text-slate-600" :aria-label="editing ? 'Save' : 'Edit'" title="Edit today's focus">
+                                    <i class="fas" :class="editing ? 'fa-save' : 'fa-edit'"></i>
+                                    <span class="sr-only" x-text="editing ? 'Save' : 'Edit'"></span>
+                                </button>
+                            </div>
+                            <div x-show="!editing" x-cloak>
+                                <p class="text-[11px] text-slate-600 whitespace-pre-line" x-text="savedFocus || 'No focus points added yet'"></p>
+                            </div>
+                            <div x-show="editing" x-cloak>
+                                <textarea 
+                                    x-model="focus"
+                                    placeholder="Enter key concepts for today's lessons..."
+                                    class="w-full h-20 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-400 resize-none"
+                                    @keydown.enter.prevent="savedFocus = focus; editing = false"
+                                    @keydown.escape="editing = false"></textarea>
+                                <div class="mt-2 flex gap-2">
+                                    <button type="button" @click="savedFocus = focus; editing = false" class="px-2 py-1 rounded-lg bg-slate-900 text-white text-[10px] font-medium hover:bg-slate-800">Save</button>
+                                    <button type="button" @click="editing = false" class="px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[10px] font-medium hover:bg-slate-100">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Assessments -->
+                        <div class="rounded-2xl border border-slate-100 bg-white p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-sm font-semibold text-slate-800">Upcoming assessments</div>
+                                <span class="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-[10px] font-medium" x-text="upcomingAssessments.length"></span>
+                            </div>
+                            <div class="space-y-2">
+                                <template x-for="assessment in upcomingAssessments" :key="assessment.id">
+                                    <div class="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <span class="font-medium text-slate-700" x-text="assessment.classLabel"></span>
+                                            <span class="text-[10px] text-slate-500" x-text="assessment.dateLabel"></span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-600">
+                                            <span x-text="assessment.type"></span>
+                                            <span class="mx-1" x-show="assessment.subject">&middot;</span>
+                                            <span x-text="assessment.subject"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="!upcomingAssessments.length" class="text-[11px] text-slate-400 text-center py-2">
+                                    No upcoming assessments yet.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="rounded-2xl border border-slate-100 bg-white p-4" x-data="{
+                            storageKey: 'shikola_teacher_notes_v1',
+                            notes: [],
+                            showNoteForm: false,
+                            newNoteText: '',
+                            newNoteClass: '',
+                            file: null,
+                            error: '',
+                            init() {
+                                this.loadNotes();
+                            },
+                            loadNotes() {
+                                try {
+                                    var raw = localStorage.getItem(this.storageKey);
+                                    if (!raw) {
+                                        this.notes = [];
+                                        return;
+                                    }
+                                    var parsed = JSON.parse(raw);
+                                    this.notes = Array.isArray(parsed) ? parsed : [];
+                                } catch (e) {
+                                    this.notes = [];
+                                }
+                            },
+                            saveNotes() {
+                                try {
+                                    localStorage.setItem(this.storageKey, JSON.stringify(this.notes || []));
+                                } catch (e) {}
+                            },
+                            handleFileChange(event) {
+                                this.error = '';
+                                var files = event.target && event.target.files ? event.target.files : null;
+                                if (!files || !files.length) {
+                                    this.file = null;
+                                    return;
+                                }
+                                var f = files[0];
+                                var maxSize = 2 * 1024 * 1024;
+                                var name = f.name || '';
+                                var lower = name.toLowerCase();
+                                if (!(lower.endsWith('.doc') || lower.endsWith('.docx'))) {
+                                    this.error = 'Only .doc or .docx files are allowed.';
+                                    this.file = null;
+                                    event.target.value = '';
+                                    return;
+                                }
+                                if (f.size > maxSize) {
+                                    this.error = 'Attachment must be 2MB or smaller.';
+                                    this.file = null;
+                                    event.target.value = '';
+                                    return;
+                                }
+                                this.file = {
+                                    name: f.name,
+                                    size: f.size
+                                };
+                            },
+                            clearForm() {
+                                this.newNoteText = '';
+                                this.newNoteClass = '';
+                                this.file = null;
+                                this.error = '';
+                            },
+                            sendNote() {
+                                this.error = '';
+                                if (!this.newNoteText || !this.newNoteClass) {
+                                    this.error = 'Please enter a note and select a class.';
+                                    return;
+                                }
+                                var now = new Date();
+                                var note = {
+                                    id: 'NT-' + now.getTime().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+                                    text: this.newNoteText,
+                                    className: this.newNoteClass,
+                                    createdAt: now.toISOString(),
+                                    attachmentName: this.file ? this.file.name : null,
+                                    attachmentSize: this.file ? this.file.size : null
+                                };
+                                this.notes.unshift(note);
+                                this.saveNotes();
+                                this.clearForm();
+                                this.showNoteForm = false;
+                            },
+                            formatTime(iso) {
+                                if (!iso) return '';
+                                try {
+                                    var d = new Date(iso);
+                                    return d.toLocaleString();
+                                } catch (e) {
+                                    return '';
+                                }
+                            }
+                        }">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-sm font-semibold text-slate-800">Notes</div>
+                                <button type="button" @click="showNoteForm = !showNoteForm" class="text-slate-400 hover:text-slate-600" aria-label="Add note">
+                                    <i class="fas fa-plus"></i>
+                                    <span class="sr-only">Add note</span>
+                                </button>
+                            </div>
+
+                            <!-- Add Note Form -->
+                            <div x-show="showNoteForm" x-cloak class="mb-3 p-2 rounded-lg bg-slate-50 border border-slate-100 space-y-2">
+                                <textarea
+                                    x-model="newNoteText"
+                                    placeholder="Note message..."
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-orange-400 resize-none"
+                                    aria-label="Enter note message"
+                                    title="Enter note message"></textarea>
+                                <select
+                                    x-model="newNoteClass"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                                    title="Select class for notes"
+                                    aria-label="Select class for notes">
+                                    <option value="">Select class...</option>
+                                    <template x-for="cls in classOptions" :key="cls">
+                                        <option :value="cls" x-text="cls"></option>
+                                    </template>
+                                </select>
+                                <input
+                                    type="file"
+                                    accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                    @change="handleFileChange($event)"
+                                    class="w-full text-[11px] text-slate-600"
+                                    title="Select attachment file"
+                                    aria-label="Select attachment file"
+                                    placeholder="Choose .doc or .docx file">
+                                <div class="text-[10px] text-slate-400">Optional attachment (.doc/.docx, max 2MB).</div>
+                                <div class="text-[10px] text-red-500" x-show="error" x-text="error"></div>
+                                <div class="flex gap-2">
+                                    <button type="button" @click="sendNote()" class="px-2 py-1 rounded-lg bg-slate-900 text-white text-[10px] font-medium hover:bg-slate-800">Send</button>
+                                    <button type="button" @click="showNoteForm = false" class="px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[10px] font-medium hover:bg-slate-100">Cancel</button>
+                                </div>
+                            </div>
+
+                            <!-- Notes List -->
+                            <div class="space-y-2">
+                                <template x-for="note in notes" :key="note.id">
+                                    <div class="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                                        <div class="text-[11px] text-slate-700 mb-1" x-text="note.text"></div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="text-[10px] text-slate-500 flex items-center gap-1">
+                                                <i class="fas fa-paper-plane"></i>
+                                                <span>To:</span>
+                                                <span x-text="note.className"></span>
+                                                <span x-show="note.attachmentName" class="ml-2 inline-flex items-center gap-1 text-[10px] text-slate-500">
+                                                    <i class="fas fa-paperclip"></i>
+                                                    <span x-text="note.attachmentName"></span>
+                                                </span>
+                                            </div>
+                                            <span class="text-[10px] text-slate-400" x-text="formatTime(note.createdAt)"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div x-show="!notes.length" class="text-[11px] text-slate-400 text-center py-2">
+                                    No notes sent yet.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="custom-cursor"></div>
+    <script src="../../shared-assets/js/script.js"></script>
+
+    <script>
+        function teacherTimetablePage() {
+            return {
+                sidebarOpen: false,
+                chatOpen: false,
+                activeTab: 'overview',
+                teacherName: '',
+                selectedTeacher: '',
+                teacherOptions: [],
+                selectedClass: '',
+                classOptions: [],
+                liveClasses: [],
+                weekdays: [],
+                lessonsToday: [],
+                weekGrid: [],
+                freePeriodsToday: [],
+                classesThisTerm: [],
+                upcomingAssessments: [],
+                hasTimetable: false,
+                tryAutoSelectTeacherFromAuth: function () {
+                    try {
+                        if (!window.shikolaAuth || typeof window.shikolaAuth.getCurrentUser !== 'function') {
+                            return;
+                        }
+                        var user = window.shikolaAuth.getCurrentUser();
+                        if (!user || !user.email) {
+                            return;
+                        }
+                        if (!window.ShikolaEmployeesStore || typeof window.ShikolaEmployeesStore.list !== 'function') {
+                            return;
+                        }
+                        var employees = window.ShikolaEmployeesStore.list() || [];
+                        if (!Array.isArray(employees) || !employees.length) {
+                            return;
+                        }
+                        var email = String(user.email || '').toLowerCase();
+                        var usernamePart = email.split('@')[0] || '';
+                        var match = null;
+                        for (var i = 0; i < employees.length; i++) {
+                            var emp = employees[i] || {};
+                            var login = (emp.loginUsername || '').toLowerCase();
+                            var empEmail = (emp.email || '').toLowerCase();
+                            if (login && (login === email || login === usernamePart)) {
+                                match = emp;
+                                break;
+                            }
+                            if (!match && empEmail && empEmail === email) {
+                                match = emp;
+                            }
+                        }
+                        if (!match) {
+                            return;
+                        }
+                        var name = (match.fullName || match.name || match.staffId || '').trim();
+                        if (!name) {
+                            return;
+                        }
+                        this.teacherName = name;
+                        this.teacherOptions = [name];
+                        this.selectedTeacher = name;
+                        this.updateTodayLessons();
+                        this.buildWeekGrid();
+                        this.refreshClassOptionsFromTimetable();
+                        this.updateFreePeriodsAndClasses();
+                        this.loadUpcomingAssessments();
+                    } catch (e) {
+                    }
+                },
+                async init() {
+                    var self = this;
+                    await this.loadLiveData();
+                    await this.refreshFromStore();
+                    this.tryAutoSelectTeacherFromAuth();
+                    try {
+                        this.$watch('selectedTeacher', function () {
+                            self.updateTodayLessons();
+                            self.buildWeekGrid();
+                            self.refreshClassOptionsFromTimetable();
+                            self.updateFreePeriodsAndClasses();
+                            self.loadUpcomingAssessments();
+                        });
+                    } catch (e) {
+                    }
+                    try {
+                        this.$watch('selectedClass', function () {
+                            self.updateTodayLessons();
+                            self.buildWeekGrid();
+                            self.updateFreePeriodsAndClasses();
+                            self.loadUpcomingAssessments();
+                        });
+                    } catch (e) {
+                    }
+                    try {
+                        window.addEventListener('shikola:timetables-updated', function () {
+                            self.refreshFromStore();
+                        });
+                    } catch (e) {
+                    }
+                },
+                loadLiveData: async function () {
+                    try {
+                        if (window.ShikolaClassesUi && typeof window.ShikolaClassesUi.getClassOptions === 'function') {
+                            var cls = await window.ShikolaClassesUi.getClassOptions();
+                            this.liveClasses = cls || [];
+                        }
+                    } catch (e) {}
+                },
+                apiTimetableData: [],
+                async refreshFromStore() {
+                    // Try new enhanced API first
+                    try {
+                        if (window.ShikolaTeacherTimetable) {
+                            // Use the new enhanced timetable system
+                            const state = window.ShikolaTeacherTimetable.getState();
+                            if (state && state.timetable.length > 0) {
+                                this.hasTimetable = true;
+                                this.apiTimetableData = state.timetable;
+                                
+                                // Extract classes from timetable
+                                const classSet = new Set();
+                                state.timetable.forEach(entry => {
+                                    if (entry.class_name) classSet.add(entry.class_name);
+                                });
+                                this.classOptions = Array.from(classSet).map(name => ({ id: name, name: name }));
+                                
+                                // Build weekdays from data
+                                this.weekdays = [
+                                    { key: 'MON', label: 'Monday', enabled: true },
+                                    { key: 'TUE', label: 'Tuesday', enabled: true },
+                                    { key: 'WED', label: 'Wednesday', enabled: true },
+                                    { key: 'THU', label: 'Thursday', enabled: true },
+                                    { key: 'FRI', label: 'Friday', enabled: true }
+                                ];
+                                
+                                // Update data with real backend info
+                                this.lessonsToday = this.getTodayLessonsFromState(state);
+                                this.freePeriodsToday = this.getFreePeriodsFromState(state);
+                                this.classesThisTerm = this.getClassesFromState(state);
+                                this.weekGrid = this.buildWeekGridFromState(state);
+                                
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Failed to load from enhanced API, trying legacy API', e);
+                    }
+                    
+                    // Try legacy API
+                    try {
+                        if (window.ShikolaTeacherApi) {
+                            const data = await window.ShikolaTeacherApi.getTimetable(this.selectedClass);
+                            if (Array.isArray(data) && data.length) {
+                                this.apiTimetableData = data;
+                                this.hasTimetable = true;
+                                
+                                // Extract classes from timetable
+                                const classSet = new Set();
+                                data.forEach(entry => {
+                                    if (entry.className) classSet.add(entry.className);
+                                });
+                                this.classOptions = Array.from(classSet);
+                                
+                                // Build weekdays from data
+                                this.weekdays = [
+                                    { key: 'MON', label: 'Monday', enabled: true },
+                                    { key: 'TUE', label: 'Tuesday', enabled: true },
+                                    { key: 'WED', label: 'Wednesday', enabled: true },
+                                    { key: 'THU', label: 'Thursday', enabled: true },
+                                    { key: 'FRI', label: 'Friday', enabled: true }
+                                ];
+                                
+                                this.updateTodayLessonsFromApi();
+                                this.buildWeekGridFromApi();
+                                this.updateFreePeriodsAndClasses();
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Failed to load timetable from API, using local fallback', e);
+                    }
+                    
+                    // Fallback to localStorage
+                    try {
+                        if (!window.ShikolaTimetablesStore || typeof window.ShikolaTimetablesStore.getLatestMasterTimetable !== 'function') {
+                            return;
+                        }
+                        var latest = window.ShikolaTimetablesStore.getLatestMasterTimetable();
+                        if (!latest) {
+                            this.hasTimetable = false;
+                            this.teacherOptions = [];
+                            this.weekdays = [];
+                            this.lessonsToday = [];
+                            this.weekGrid = [];
+                            this.freePeriodsToday = [];
+                            this.classesThisTerm = [];
+                            this.upcomingAssessments = [];
+                            return;
+                        }
+                        this.hasTimetable = true;
+                        this.weekdays = (latest.weekdays || []).filter(function (d) { return d && d.enabled; });
+                        try {
+                            if (typeof window.ShikolaTimetablesStore.listTeachersWithTimetables === 'function') {
+                                var teachers = window.ShikolaTimetablesStore.listTeachersWithTimetables();
+                                if (Array.isArray(teachers)) {
+                                    this.teacherOptions = teachers;
+                                }
+                            }
+                        } catch (e) {
+                        }
+                        if (!this.selectedTeacher && this.teacherOptions.length) {
+                            this.selectedTeacher = this.teacherOptions[0];
+                        }
+                        if (!this.teacherName && this.selectedTeacher) {
+                            this.teacherName = this.selectedTeacher;
+                        }
+                        this.updateTodayLessons();
+                        this.buildWeekGrid();
+                        this.refreshClassOptionsFromTimetable();
+                        this.updateFreePeriodsAndClasses();
+                        this.loadUpcomingAssessments();
+                    } catch (e) {
+                    }
+                },
+                // Helper functions for enhanced API data processing
+                getTodayLessonsFromState: function(state) {
+                    const today = new Date();
+                    const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
+                    
+                    return state.timetable.filter(entry => 
+                        entry.day_of_week === dayOfWeek && 
+                        !entry.is_break_time
+                    ).map(entry => ({
+                        id: entry.id,
+                        periodTime: `${entry.start_time} - ${entry.end_time}`,
+                        label: `${entry.subject_name || 'Subject'} · ${entry.class_name || 'Class'}`,
+                        roomName: entry.room || 'Classroom'
+                    }));
+                },
+                
+                getFreePeriodsFromState: function(state) {
+                    const today = new Date();
+                    const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
+                    
+                    return state.timetable.filter(entry => 
+                        entry.day_of_week === dayOfWeek && 
+                        entry.is_break_time
+                    ).map(entry => ({
+                        id: entry.id,
+                        time: `${entry.start_time} - ${entry.end_time}`,
+                        label: entry.break_type || 'Break',
+                        description: 'Break period'
+                    }));
+                },
+                
+                getClassesFromState: function(state) {
+                    const classMap = new Map();
+                    
+                    state.timetable.forEach(entry => {
+                        if (!entry.is_break_time && entry.class_id && entry.class_name) {
+                            if (!classMap.has(entry.class_id)) {
+                                classMap.set(entry.class_id, {
+                                    className: entry.class_name,
+                                    subjectsLabel: '',
+                                    subjects: []
+                                });
+                            }
+                            
+                            if (entry.subject_name && 
+                                !classMap.get(entry.class_id).subjects.includes(entry.subject_name)) {
+                                classMap.get(entry.class_id).subjects.push(entry.subject_name);
+                            }
+                        }
+                    });
+
+                    // Update subjects label
+                    classMap.forEach(cls => {
+                        cls.subjectsLabel = cls.subjects.join(', ');
+                    });
+
+                    return Array.from(classMap.values());
+                },
+                
+                buildWeekGridFromState: function(state) {
+                    const timeSlots = [...new Set(state.timetable.map(entry => 
+                        `${entry.start_time}-${entry.end_time}`
+                    ))].sort();
+                    
+                    const weekdays = [
+                        { key: 'MON', label: 'Monday', enabled: true },
+                        { key: 'TUE', label: 'Tuesday', enabled: true },
+                        { key: 'WED', label: 'Wednesday', enabled: true },
+                        { key: 'THU', label: 'Thursday', enabled: true },
+                        { key: 'FRI', label: 'Friday', enabled: true }
+                    ];
+                    
+                    const grid = [];
+                    
+                    timeSlots.forEach(timeSlot => {
+                        const [startTime, endTime] = timeSlot.split('-');
+                        const row = {
+                            periodId: timeSlot,
+                            label: `${startTime} - ${endTime}`,
+                            cells: []
+                        };
+                        
+                        weekdays.forEach(day => {
+                            const entry = state.timetable.find(e => 
+                                e.day_of_week === this.getDayNumber(day.key) && 
+                                e.start_time === startTime && 
+                                e.end_time === endTime
+                            );
+                            
+                            row.cells.push({
+                                dayKey: day.key,
+                                slot: entry ? {
+                                    id: entry.id,
+                                    subjectName: entry.subject_name,
+                                    className: entry.class_name,
+                                    roomName: entry.room,
+                                    slotDisplay: entry.subject_name || entry.break_type || 'Period',
+                                    isBreak: entry.is_break_time
+                                } : null,
+                                slotDisplay: entry ? (entry.is_break_time ? entry.break_type : entry.subject_name) : ''
+                            });
+                        });
+                        
+                        grid.push(row);
+                    });
+                    
+                    return grid;
+                },
+                
+                getDayNumber: function(dayKey) {
+                    const dayMap = { 'MON': 1, 'TUE': 2, 'WED': 3, 'THU': 4, 'FRI': 5, 'SAT': 6, 'SUN': 7 };
+                    return dayMap[dayKey] || 1;
+                },
+                
+                updateTodayLessons: function () {
+                    this.lessonsToday = [];
+                    var teacher = this.selectedTeacher || this.teacherName;
+                    if (!teacher || !window.ShikolaTimetablesStore || typeof window.ShikolaTimetablesStore.getTeacherTimetable !== 'function') {
+                        return;
+                    }
+                    var result = window.ShikolaTimetablesStore.getTeacherTimetable(teacher);
+                    if (!result || !result.slots) {
+                        return;
+                    }
+                    var now = new Date();
+                    var keyMap = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+                    var todayKey = keyMap[now.getDay()] || 'MON';
+                    var selectedClass = this.selectedClass;
+                    var slots = result.slots.filter(function (s) {
+                        if (!s || s.dayKey !== todayKey) return false;
+                        if (selectedClass && s.className !== selectedClass) return false;
+                        return true;
+                    });
+                    slots.sort(function (a, b) {
+                        if (a.periodTime === b.periodTime) return 0;
+                        return a.periodTime < b.periodTime ? -1 : 1;
+                    });
+                    this.lessonsToday = slots.map(function (s) {
+                        return {
+                            id: s.id,
+                            periodTime: s.periodTime,
+                            label: (s.subjectCode || '') + ' · ' + (s.className || ''),
+                            roomName: s.roomName
+                        };
+                    });
+                },
+                buildWeekGrid: function () {
+                    this.weekGrid = [];
+                    var teacher = this.selectedTeacher || this.teacherName;
+                    if (!teacher || !window.ShikolaTimetablesStore || typeof window.ShikolaTimetablesStore.getTeacherTimetable !== 'function') {
+                        return;
+                    }
+                    var result = window.ShikolaTimetablesStore.getTeacherTimetable(teacher);
+                    if (!result || !result.timetable) {
+                        return;
+                    }
+                    var timetable = result.timetable;
+                    var periods = Array.isArray(timetable.periods) ? timetable.periods.slice() : [];
+                    var days = (timetable.weekdays || []).filter(function (d) { return d && d.enabled; });
+                    var selectedClass = this.selectedClass;
+                    var slots = Array.isArray(result.slots) ? result.slots : [];
+                    if (selectedClass) {
+                        slots = slots.filter(function (s) { return s && s.className === selectedClass; });
+                    }
+                    periods.sort(function (a, b) {
+                        if (a.start === b.start) return 0;
+                        return a.start < b.start ? -1 : 1;
+                    });
+                    var rows = [];
+                    for (var i = 0; i < periods.length; i++) {
+                        var p = periods[i];
+                        var row = {
+                            periodId: p.id,
+                            label: (p.start && p.end) ? (p.start + ' - ' + p.end) : (p.name || p.id),
+                            cells: []
+                        };
+                        for (var d = 0; d < days.length; d++) {
+                            var day = days[d];
+                            var match = null;
+                            for (var s = 0; s < slots.length; s++) {
+                                var slot = slots[s];
+                                if (slot.dayKey === day.key && slot.periodId === p.id) {
+                                    match = slot;
+                                    break;
+                                }
+                            }
+                            row.cells.push({
+                                dayKey: day.key,
+                                slot: match,
+                                slotDisplay: match ? ((match.subjectCode || '') + ' · ' + (match.className || '')) : ''
+                            });
+                        }
+                        rows.push(row);
+                    }
+                    this.weekGrid = rows;
+                },
+                refreshClassOptionsFromTimetable: function () {
+                    this.classOptions = [];
+                    var teacher = this.selectedTeacher || this.teacherName;
+                    if (!teacher || !window.ShikolaTimetablesStore || typeof window.ShikolaTimetablesStore.getTeacherTimetable !== 'function') {
+                        return;
+                    }
+                    try {
+                        var result = window.ShikolaTimetablesStore.getTeacherTimetable(teacher);
+                        if (!result || !Array.isArray(result.slots)) {
+                            return;
+                        }
+                        var seen = {};
+                        var classes = [];
+                        // Add live classes first
+                        try {
+                            if (this.liveClasses) {
+                                for (var j = 0; j < this.liveClasses.length; j++) {
+                                    var lc = String(this.liveClasses[j] || '').trim();
+                                    if (lc) {
+                                        seen[lc] = true;
+                                        classes.push(lc);
+                                    }
+                                }
+                            }
+                        } catch (e) {}
+                        // Add classes from timetable
+                        for (var i = 0; i < result.slots.length; i++) {
+                            var slot = result.slots[i];
+                            if (!slot || !slot.className) continue;
+                            var name = String(slot.className);
+                            if (seen[name]) continue;
+                            seen[name] = true;
+                            classes.push(name);
+                        }
+                        this.classOptions = classes;
+                        if (this.classOptions.length) {
+                            if (!this.selectedClass || this.classOptions.indexOf(this.selectedClass) === -1) {
+                                this.selectedClass = this.classOptions[0];
+                            }
+                        } else {
+                            this.selectedClass = '';
+                        }
+                    } catch (e) {
+                    }
+                },
+                updateFreePeriodsAndClasses: function () {
+                    this.freePeriodsToday = [];
+                    this.classesThisTerm = [];
+                    var teacher = this.selectedTeacher || this.teacherName;
+                    if (!teacher || !window.ShikolaTimetablesStore || typeof window.ShikolaTimetablesStore.getTeacherTimetable !== 'function') {
+                        return;
+                    }
+                    try {
+                        var result = window.ShikolaTimetablesStore.getTeacherTimetable(teacher);
+                        if (!result || !result.timetable) {
+                            return;
+                        }
+                        var timetable = result.timetable;
+                        var periods = Array.isArray(timetable.periods) ? timetable.periods : [];
+                        var slots = Array.isArray(result.slots) ? result.slots.slice() : [];
+                        var selectedClass = this.selectedClass;
+                        if (selectedClass) {
+                            slots = slots.filter(function (s) { return s && s.className === selectedClass; });
+                        }
+                        var byClass = {};
+                        for (var i = 0; i < slots.length; i++) {
+                            var slot = slots[i];
+                            if (!slot || !slot.className) continue;
+                            var cname = String(slot.className);
+                            if (!byClass[cname]) {
+                                byClass[cname] = { name: cname, subjects: {} };
+                            }
+                            if (slot.subjectCode) {
+                                byClass[cname].subjects[String(slot.subjectCode)] = true;
+                            }
+                        }
+                        var classes = [];
+                        for (var key in byClass) {
+                            if (!Object.prototype.hasOwnProperty.call(byClass, key)) continue;
+                            var rec = byClass[key];
+                            var subjects = Object.keys(rec.subjects);
+                            classes.push({
+                                className: rec.name,
+                                subjectsLabel: subjects.length ? subjects.join(', ') : ''
+                            });
+                        }
+                        this.classesThisTerm = classes;
+
+                        var free = [];
+                        if (!periods.length) {
+                            this.freePeriodsToday = free;
+                            return;
+                        }
+                        var now = new Date();
+                        var keyMap = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+                        var todayKey = keyMap[now.getDay()] || 'MON';
+                        var slotsToday = slots.filter(function (s) { return s && s.dayKey === todayKey; });
+                        for (var pIndex = 0; pIndex < periods.length; pIndex++) {
+                            var p = periods[pIndex];
+                            var hasLesson = false;
+                            for (var j = 0; j < slotsToday.length; j++) {
+                                var sl = slotsToday[j];
+                                if (sl.periodId === p.id) {
+                                    hasLesson = true;
+                                    break;
+                                }
+                            }
+                            if (!hasLesson) {
+                                free.push({
+                                    id: 'FREE-' + (todayKey || '') + '-' + (p.id || pIndex),
+                                    time: (p.start && p.end) ? (p.start + ' - ' + p.end) : (p.name || ''),
+                                    label: 'Free period',
+                                    description: 'No lesson scheduled in this slot.'
+                                });
+                            }
+                        }
+                        this.freePeriodsToday = free;
+                    } catch (e) {
+                        this.freePeriodsToday = [];
+                        this.classesThisTerm = [];
+                    }
+                },
+                loadUpcomingAssessments: function () {
+                    this.upcomingAssessments = [];
+                },
+                updateTodayLessonsFromApi: function () {
+                    this.lessonsToday = [];
+                    if (!this.apiTimetableData || !this.apiTimetableData.length) return;
+                    
+                    var now = new Date();
+                    var dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, etc.
+                    var selectedClass = this.selectedClass;
+                    
+                    var slots = this.apiTimetableData.filter(function (entry) {
+                        if (entry.dayOfWeek !== dayOfWeek) return false;
+                        if (selectedClass && entry.className !== selectedClass) return false;
+                        return true;
+                    });
+                    
+                    slots.sort(function (a, b) {
+                        return (a.periodNumber || 0) - (b.periodNumber || 0);
+                    });
+                    
+                    this.lessonsToday = slots.map(function (s) {
+                        return {
+                            id: s.id,
+                            periodTime: (s.startTime || '') + ' - ' + (s.endTime || ''),
+                            label: (s.subject || '') + ' · ' + (s.className || ''),
+                            roomName: s.room || ''
+                        };
+                    });
+                },
+                buildWeekGridFromApi: function () {
+                    this.weekGrid = [];
+                    if (!this.apiTimetableData || !this.apiTimetableData.length) return;
+                    
+                    var selectedClass = this.selectedClass;
+                    var slots = this.apiTimetableData;
+                    if (selectedClass) {
+                        slots = slots.filter(function (s) { return s.className === selectedClass; });
+                    }
+                    
+                    // Get unique periods
+                    var periodMap = {};
+                    slots.forEach(function (s) {
+                        var key = s.periodNumber || 0;
+                        if (!periodMap[key]) {
+                            periodMap[key] = {
+                                periodNumber: key,
+                                startTime: s.startTime,
+                                endTime: s.endTime
+                            };
+                        }
+                    });
+                    
+                    var periods = Object.values(periodMap).sort(function (a, b) {
+                        return a.periodNumber - b.periodNumber;
+                    });
+                    
+                    var days = this.weekdays || [];
+                    var dayToIndex = { 'MON': 1, 'TUE': 2, 'WED': 3, 'THU': 4, 'FRI': 5 };
+                    
+                    var rows = [];
+                    for (var i = 0; i < periods.length; i++) {
+                        var p = periods[i];
+                        var row = {
+                            periodId: p.periodNumber,
+                            label: (p.startTime || '') + ' - ' + (p.endTime || ''),
+                            cells: []
+                        };
+                        for (var d = 0; d < days.length; d++) {
+                            var day = days[d];
+                            var dayIndex = dayToIndex[day.key] || 0;
+                            var match = null;
+                            for (var s = 0; s < slots.length; s++) {
+                                var slot = slots[s];
+                                if (slot.dayOfWeek === dayIndex && slot.periodNumber === p.periodNumber) {
+                                    match = slot;
+                                    break;
+                                }
+                            }
+                            row.cells.push({
+                                dayKey: day.key,
+                                slot: match,
+                                slotDisplay: match ? ((match.subject || '') + ' · ' + (match.className || '')) : ''
+                            });
+                        }
+                        rows.push(row);
+                    }
+                    this.weekGrid = rows;
+                },
+                
+                // Enhanced export functionality with break support
+                exportTimetable: function() {
+                    if (!this.apiTimetableData || !this.apiTimetableData.length) {
+                        alert('No timetable data available to export.');
+                        return;
+                    }
+                    
+                    // Use enhanced spreadsheet export if available
+                    if (window.shikolaSpreadsheetExport) {
+                        this.exportTimetableWithSpreadsheet();
+                    } else {
+                        this.exportTimetableLegacy();
+                    }
+                },
+                
+                exportTimetableWithSpreadsheet: function() {
+                    var self = this;
+                    var apiBase = window.SHIKOLA_API_BASE || '/api';
+                    var token = localStorage.getItem('shikola_token') || localStorage.getItem('authToken');
+                    
+                    if (!token) {
+                        alert('Authentication required for export');
+                        return;
+                    }
+                    
+                    // Get current teacher ID from auth or use teacher name
+                    var teacherId = this.getCurrentTeacherId();
+                    
+                    var params = new URLSearchParams({
+                        format: 'teacher',
+                        teacher_id: teacherId,
+                        academic_year: this.currentAcademicYear || ''
+                    });
+                    
+                    fetch(apiBase + '/api/teacher/timetable/export-timetable?' + params.toString(), {
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Use spreadsheet export library
+                            var result = window.shikolaSpreadsheetExport.exportTimetableToCSV(
+                                data.data,
+                                {
+                                    format: 'teacher',
+                                    academicYear: data.metadata.academic_year,
+                                    schoolName: data.metadata.school_name
+                                }
+                            );
+                            
+                            if (result.success) {
+                                alert('Timetable exported successfully to ' + result.filename);
+                            } else {
+                                alert('Export failed: ' + result.error);
+                            }
+                        } else {
+                            alert('Export failed: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Export error:', error);
+                        alert('Export failed. Please try again.');
+                        // Fallback to legacy export
+                        self.exportTimetableLegacy();
+                    });
+                },
+                
+                exportTimetableLegacy: function() {
+                    // Fallback CSV export method
+                    var rows = [];
+                    rows.push(['Day', 'Time', 'Class', 'Subject', 'Room', 'Type']);
+                    
+                    var self = this;
+                    var dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                    
+                    this.apiTimetableData.forEach(function(entry) {
+                        var dayName = dayNames[entry.dayOfWeek - 1] || 'Unknown';
+                        var timeRange = (entry.startTime || '') + ' - ' + (entry.endTime || '');
+                        var isBreak = entry.isBreak || entry.breakType || entry.type === 'break';
+                        
+                        rows.push([
+                            dayName,
+                            timeRange,
+                            entry.className || 'N/A',
+                            isBreak ? (entry.breakName || 'Break') : (entry.subject || 'N/A'),
+                            entry.room || 'N/A',
+                            isBreak ? 'Break' : 'Lesson'
+                        ]);
+                    });
+                    
+                    if (rows.length <= 1) {
+                        alert('No timetable data to export.');
+                        return;
+                    }
+                    
+                    var csvContent = rows.map(function (row) {
+                        return row.map(function (cell) {
+                            var value = (cell || '').toString();
+                            if (value.indexOf(',') !== -1 || value.indexOf('"') !== -1) {
+                                value = '"' + value.replace(/"/g, '""') + '"';
+                            }
+                            return value;
+                        }).join(',');
+                    }).join('\n');
+                    
+                    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    var filename = 'teacher-timetable-' + (this.teacherName || 'teacher') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                },
+                
+                getCurrentTeacherId: function() {
+                    // Try to get teacher ID from current user data
+                    try {
+                        if (window.shikolaAuth && typeof window.shikolaAuth.getCurrentUser === 'function') {
+                            var user = window.shikolaAuth.getCurrentUser();
+                            if (user && user.id) {
+                                return user.id;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error getting teacher ID:', e);
+                    }
+                    
+                    // Fallback to teacher name (API should handle this)
+                    return this.teacherName || 'current';
+                }
+            };
+        }
+    </script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

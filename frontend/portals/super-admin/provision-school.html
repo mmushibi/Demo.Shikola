@@ -1,0 +1,821 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - Provision New School</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script>
+    function enforceDesktopOnly() {
+        if (window.innerWidth < 1024) {
+            document.body.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center bg-slate-900">
+                    <div class="text-center p-8">
+                        <i class="fas fa-desktop text-xs text-slate-400 mb-4"></i>
+                        <h1 class="text-2xl font-semibold text-white mb-2">Desktop Required</h1>
+                        <p class="text-slate-400 mb-6">The Super Admin Console requires a desktop browser (1024px or larger).</p>
+                        <p class="text-slate-500 text-xs">Please switch to a desktop device to access this console.</p>
+                    </div>
+                </div>
+            `;
+            return false;
+        }
+        return true;
+    }
+
+    window.addEventListener('load', enforceDesktopOnly);
+    window.addEventListener('resize', () => {
+        if (!enforceDesktopOnly()) {
+            location.reload();
+        }
+    });
+    </script>
+
+    <script src="/config/config.js"></script>
+    <script src="/shared-assets/js/shared-auth.js"></script>
+    <script src="/shared-assets/js/shared-api-client.js"></script>
+    <script src="/shared-assets/js/shared-school-type-ui.js"></script>
+    <script src="super-admin-offline-manager.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page">
+    <div x-data="provisionSchoolData()" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-8 w-full">
+            <aside class="flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex items-center gap-3 mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-15 rounded-2xl object-cover">
+                    <div>
+                        <div class="text-sm text-slate-400">Console</div>
+                    </div>
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Console</span>
+                    </a>
+                    <a href="schools.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 text-orange-600 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-school"></i></span>
+                        <span class="font-medium flex-1">Schools</span>
+                    </a>
+                    <a href="users-and-roles.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-users"></i></span>
+                        <span class="flex-1">Users & Roles</span>
+                    </a>
+                    <a href="create-user.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-plus"></i></span>
+                        <span class="flex-1">Create Users</span>
+                    </a>
+                    <a href="delete-management.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-trash-alt"></i></span>
+                        <span class="flex-1">Delete Management</span>
+                    </a>
+                    <a href="subscriptions.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-layer-group"></i></span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    <a href="plans.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">Plans & Events</span>
+                    </a>
+                    <a href="activity-log.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="flex-1">Activity Log</span>
+                    </a>
+                    <a href="settings.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-gear"></i></span>
+                        <span class="flex-1">Settings</span>
+                    </a>
+                </nav>
+
+                <div class="mt-4 pt-4 border-t border-dashed border-slate-200">
+                    <div class="text-xs uppercase tracking-wide text-slate-400 mb-1">Portals</div>
+
+                    <button type="button" data-portal="school-admin" class="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-shield"></i></span>
+                        <span class="flex-1 text-left">School Admin</span>
+                    </button>
+
+                    <button type="button" data-portal="teacher-portal" class="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chalkboard-teacher"></i></span>
+                        <span class="flex-1 text-left">Teacher Portal</span>
+                    </button>
+
+                    <button type="button" data-portal="pupil-portal" class="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-graduate"></i></span>
+                        <span class="flex-1 text-left">Pupil Portal</span>
+                    </button>
+
+                    <button type="button" data-portal="accountant-portal" class="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-tie"></i></span>
+                        <span class="flex-1 text-left">Accountant Portal</span>
+                    </button>
+                </div>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center mt-6 px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium w-full justify-center">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="flex-1 w-full px-6 py-6 pl-72">
+                   <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-2xl lg:text-3xl font-semibold text-slate-800">Provision New School</h1>
+                            <p class="text-sm text-slate-400 mt-1">Create a new school and its primary School Admin</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600" @click="goBack()">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                <span>Back to schools</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                            <div class="text-sm font-semibold text-slate-800">Primary admin account</div>
+                            <div class="text-xs text-slate-400 mt-1">This email/password is used to log into the School Admin portal</div>
+
+                            <div class="mt-4 space-y-4 text-sm">
+                                <div>
+                                    <label class="text-xs text-slate-500">School name *</label>
+                                    <input type="text" x-model="form.schoolName" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="">
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs text-slate-500">Admin email *</label>
+                                        <input type="email" x-model="form.email" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-slate-500">Admin phone</label>
+                                        <input type="text" x-model="form.phone" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="+260 ...">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="text-xs text-slate-500">Admin full name</label>
+                                    <input type="text" x-model="form.fullName" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="">
+                                </div>
+
+                                <div>
+                                    <label class="text-xs text-slate-500">Password (optional)</label>
+                                    <div class="relative mt-1">
+                                        <input :type="showPassword ? 'text' : 'password'" x-model="form.password" class="w-full border border-slate-200 rounded-xl px-3 py-2 pr-20 text-sm" placeholder="Leave blank to auto-generate">
+                                        <div class="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+                                            <button type="button" @click="generatePassword()" class="p-1 text-slate-400 hover:text-slate-600" title="Generate password">
+                                                <i class="fas fa-sync-alt text-xs"></i>
+                                            </button>
+                                            <button type="button" @click="showPassword = !showPassword" class="p-1 text-slate-400 hover:text-slate-600" title="Toggle visibility">
+                                                <i class="fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs text-slate-400 mt-1">If you leave this blank, the server generates a password and returns it once.</div>
+                                </div>
+
+                                <div>
+                                    <label class="text-xs text-slate-500">Subscription plan (optional)</label>
+                                    <select x-model="form.subscriptionPlan" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                                        <option value="">Use trial (default)</option>
+                                        <option value="growth">Growth</option>
+                                        <option value="pro">Pro</option>
+                                        <option value="ultimate">Ultimate</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                            <div class="text-sm font-semibold text-slate-800">School profile</div>
+                            <div class="text-xs text-slate-400 mt-1">Optional, can be filled by the school during onboarding</div>
+
+                            <div class="mt-4 space-y-4 text-sm">
+                                <div>
+                                    <label class="text-xs text-slate-500">School type</label>
+                                    <select x-model="form.schoolType" @change="updateSchoolTypeUI()" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" aria-label="School type" title="School type">
+                                        <option value="">Select school type</option>
+                                        <option value="primary">Primary School</option>
+                                        <option value="secondary">Secondary School</option>
+                                        <option value="tertiary">Tertiary Institution</option>
+                                        <option value="technical">Technical/Vocational</option>
+                                        <option value="special">Special Education</option>
+                                        <option value="international">International School</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="text-xs text-slate-500">Address</label>
+                                    <input type="text" x-model="form.address" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Street / Area">
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs text-slate-500">City</label>
+                                        <input type="text" x-model="form.city" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" list="citySuggestions">
+                                        <datalist id="citySuggestions">
+                                            <template x-for="item in citySuggestions" :key="item">
+                                                <option :value="item"></option>
+                                            </template>
+                                        </datalist>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-slate-500">Province</label>
+                                        <input type="text" x-model="form.province" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" list="provinceSuggestions" @input.debounce.200ms="onProvinceChange()">
+                                        <datalist id="provinceSuggestions">
+                                            <template x-for="p in provinces" :key="p">
+                                                <option :value="p"></option>
+                                            </template>
+                                        </datalist>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs text-slate-500">District</label>
+                                        <input type="text" x-model="form.district" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" list="districtSuggestions" @input.debounce.200ms="onDistrictChange()">
+                                        <datalist id="districtSuggestions">
+                                            <template x-for="item in districtSuggestions" :key="item">
+                                                <option :value="item"></option>
+                                            </template>
+                                        </datalist>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-slate-500">Subdomain</label>
+                                        <input type="text" x-model="form.subdomain" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-xs text-slate-500">Website</label>
+                                        <input type="text" x-model="form.website" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-slate-500">Estimated pupils</label>
+                                        <input type="number" min="0" x-model.number="form.pupilEstimate" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="0" title="Estimated pupils" @input="pupilEstimateManual = true">
+                                        <div class="text-xs text-slate-400 mt-1" x-show="selectedPlanLimitText" x-text="selectedPlanLimitText"></div>
+                                    </div>
+                                </div>
+
+                                <!-- School Type Specific Settings -->
+                                <div x-show="form.schoolType" x-transition class="space-y-4">
+                                    <div class="border-t border-slate-100 pt-4">
+                                        <div class="text-xs font-semibold text-slate-700 mb-3" x-text="getSchoolTypeSettingsTitle()"></div>
+                                        
+                                        <!-- Primary School Settings -->
+                                        <div x-show="form.schoolType === 'primary'" class="space-y-3">
+                                            <div>
+                                                <label class="text-xs text-slate-500">Grade levels (e.g., Grade 1-7)</label>
+                                                <input type="text" x-model="form.gradeLevels" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Grade 1-7" title="Grade levels">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Class size preference</label>
+                                                <select x-model="form.classSizePreference" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" title="Class size preference">
+                                                    <option value="">Select preference</option>
+                                                    <option value="small">Small (20-30)</option>
+                                                    <option value="medium">Medium (31-40)</option>
+                                                    <option value="large">Large (41+)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Secondary School Settings -->
+                                        <div x-show="form.schoolType === 'secondary'" class="space-y-3">
+                                            <div>
+                                                <label class="text-xs text-slate-500">Grade levels (e.g., Grade 8-12)</label>
+                                                <input type="text" x-model="form.gradeLevels" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Grade 8-12" title="Grade levels">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Science lab facilities</label>
+                                                <select x-model="form.scienceLabs" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" title="Science lab facilities">
+                                                    <option value="">Select option</option>
+                                                    <option value="basic">Basic</option>
+                                                    <option value="standard">Standard</option>
+                                                    <option value="advanced">Advanced</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Exam board affiliation</label>
+                                                <input type="text" x-model="form.examBoard" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="e.g., ECZ, Cambridge" title="Exam board">
+                                            </div>
+                                        </div>
+
+                                        <!-- Tertiary Institution Settings -->
+                                        <div x-show="form.schoolType === 'tertiary'" class="space-y-3">
+                                            <div>
+                                                <label class="text-xs text-slate-500">Institution type</label>
+                                                <select x-model="form.institutionType" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" title="Institution type">
+                                                    <option value="">Select type</option>
+                                                    <option value="university">University</option>
+                                                    <option value="college">College</option>
+                                                    <option value="technical_college">Technical College</option>
+                                                    <option value="vocational_institute">Vocational Institute</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Accreditation body</label>
+                                                <input type="text" x-model="form.accreditationBody" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="e.g., HEAZA, ZAQA" title="Accreditation">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Research facilities</label>
+                                                <select x-model="form.researchFacilities" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" title="Research facilities">
+                                                    <option value="">Select option</option>
+                                                    <option value="limited">Limited</option>
+                                                    <option value="moderate">Moderate</option>
+                                                    <option value="extensive">Extensive</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Technical/Vocational Settings -->
+                                        <div x-show="form.schoolType === 'technical'" class="space-y-3">
+                                            <div>
+                                                <label class="text-xs text-slate-500">Primary trade areas</label>
+                                                <input type="text" x-model="form.tradeAreas" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="e.g., Mechanics, Electrical, Plumbing" title="Trade areas">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Workshop facilities</label>
+                                                <select x-model="form.workshopFacilities" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" title="Workshop facilities">
+                                                    <option value="">Select option</option>
+                                                    <option value="basic">Basic</option>
+                                                    <option value="standard">Standard</option>
+                                                    <option value="industrial">Industrial Grade</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Industry partnerships</label>
+                                                <input type="text" x-model="form.industryPartners" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="Partner companies" title="Industry partners">
+                                            </div>
+                                        </div>
+
+                                        <!-- Special Education Settings -->
+                                        <div x-show="form.schoolType === 'special'" class="space-y-3">
+                                            <div>
+                                                <label class="text-xs text-slate-500">Special needs focus</label>
+                                                <select x-model="form.specialNeedsFocus" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" title="Special needs focus">
+                                                    <option value="">Select focus area</option>
+                                                    <option value="learning_disabilities">Learning Disabilities</option>
+                                                    <option value="physical_disabilities">Physical Disabilities</option>
+                                                    <option value="autism_spectrum">Autism Spectrum</option>
+                                                    <option value="hearing_impairment">Hearing Impairment</option>
+                                                    <option value="visual_impairment">Visual Impairment</option>
+                                                    <option value="multiple">Multiple Disabilities</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Therapy services available</label>
+                                                <input type="text" x-model="form.therapyServices" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="e.g., Speech, Occupational, Physical" title="Therapy services">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Pupil-teacher ratio</label>
+                                                <select x-model="form.pupilTeacherRatio" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" title="Pupil-teacher ratio">
+                                                    <option value="">Select ratio</option>
+                                                    <option value="1:1">1:1</option>
+                                                    <option value="1:3">1:3</option>
+                                                    <option value="1:5">1:5</option>
+                                                    <option value="1:8">1:8</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- International School Settings -->
+                                        <div x-show="form.schoolType === 'international'" class="space-y-3">
+                                            <div>
+                                                <label class="text-xs text-slate-500">Curriculum system</label>
+                                                <select x-model="form.curriculumSystem" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" title="Curriculum system">
+                                                    <option value="">Select curriculum</option>
+                                                    <option value="cambridge">Cambridge International</option>
+                                                    <option value="ib">International Baccalaureate</option>
+                                                    <option value="edexcel">Edexcel</option>
+                                                    <option value="american">American Curriculum</option>
+                                                    <option value="british">British National</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Languages offered</label>
+                                                <input type="text" x-model="form.languagesOffered" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" placeholder="e.g., English, French, Spanish" title="Languages">
+                                            </div>
+                                            <div>
+                                                <label class="text-xs text-slate-500">Exchange programs</label>
+                                                <select x-model="form.exchangePrograms" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" title="Exchange programs">
+                                                    <option value="">Select option</option>
+                                                    <option value="none">None</option>
+                                                    <option value="regional">Regional</option>
+                                                    <option value="international">International</option>
+                                                    <option value="global">Global Network</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="text-xs text-slate-500">Upload logo</label>
+                                    <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" @change="onLogoSelected($event)">
+                                    <div class="text-xs text-slate-400 mt-1" x-show="logoFileName" x-text="logoFileName"></div>
+                                </div>
+
+                                <div x-show="createdPassword" x-cloak class="mt-4 rounded-xl bg-emerald-50 border border-emerald-100 p-4">
+                                    <div class="text-xs font-semibold text-emerald-700">Generated password</div>
+                                    <div class="text-sm text-emerald-800 mt-1 break-all" x-text="createdPassword"></div>
+                                    <div class="text-xs text-emerald-700 mt-1">Copy and share this with the school admin. It will not be shown again.</div>
+                                </div>
+
+                                <div x-show="error" x-cloak class="mt-4 rounded-xl bg-rose-50 border border-rose-100 p-3 text-sm text-rose-700" x-text="error"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex items-center justify-end gap-2">
+                        <button type="button" class="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-600" @click="goBack()">Cancel</button>
+                        <button type="button" class="px-4 py-2 rounded-xl bg-orange-500 text-white text-sm font-semibold" :disabled="submitting" @click="submit()">
+                            <span x-show="!submitting">Provision school</span>
+                            <span x-show="submitting" x-cloak>Provisioning...</span>
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function provisionSchoolData() {
+            return {
+                submitting: false,
+                error: '',
+                createdPassword: '',
+                logoFile: null,
+                logoFileName: '',
+                subscriptionTiers: [],
+                pupilEstimateManual: false,
+                selectedPlanLimitText: '',
+                showPassword: false,
+                provinces: ['Central', 'Copperbelt', 'Eastern', 'Luapula', 'Lusaka', 'Muchinga', 'Northern', 'North-Western', 'Southern', 'Western'],
+                districtsByProvince: {
+                    'Central': ['Chibombo', 'Chisamba', 'Chitambo', 'Kabwe', 'Kapiri Mposhi', 'Luano', 'Mkushi', 'Mumbwa', 'Ngabwe', 'Serenje', 'Shibuyunji'],
+                    'Copperbelt': ['Chililabombwe', 'Chingola', 'Kalulushi', 'Kitwe', 'Luanshya', 'Lufwanyama', 'Masaiti', 'Mpongwe', 'Mufulira', 'Ndola'],
+                    'Eastern': ['Chadiza', 'Chama', 'Chasefu', 'Chipangali', 'Chipata', 'Kasenengwa', 'Katete', 'Lumezi', 'Lundazi', 'Lusangazi', 'Mambwe', 'Nyimba', 'Petauke', 'Sinda', 'Vubwi'],
+                    'Luapula': ['Chembe', 'Chiengi', 'Chifunabuli', 'Chipili', 'Kawambwa', 'Lunga', 'Mansa', 'Milenge', 'Mwansabombwe', 'Mwense', 'Nchelenge', 'Samfya'],
+                    'Lusaka': ['Chilanga', 'Chongwe', 'Kafue', 'Luangwa', 'Lusaka', 'Rufunsa'],
+                    'Muchinga': ['Chinsali', 'Isoka', 'Kanchibiya', 'Lavushimanda', 'Mafinga', 'Mpika', 'Nakonde', "Shiwang'andu"],
+                    'Northern': ['Chilubi', 'Kaputa', 'Kasama', 'Lunte', 'Lupososhi', 'Luwingu', 'Mbala', 'Mporokoso', 'Mpulungu', 'Mungwi', 'Nsama', 'Senga'],
+                    'North-Western': ['Chavuma', 'Ikelenge', 'Kabompo', 'Kasempa', 'Kalumbila', 'Manyinga', 'Mufumbwe', 'Mushindamo', 'Mwinilunga', 'Solwezi', 'Zambezi'],
+                    'Southern': ['Chikankata', 'Chirundu', 'Choma', 'Gwembe', 'Itezhi-Tezhi', 'Kalomo', 'Kazungula', 'Livingstone', 'Mazabuka', 'Monze', 'Namwala', 'Pemba', 'Siavonga', 'Sinazongwe', 'Zimba'],
+                    'Western': ['Kalabo', 'Kaoma', 'Limulunga', 'Luampa', 'Lukulu', 'Mitete', 'Mongu', 'Mulobezi', 'Mwandi', 'Nalolo', 'Nkeyema', 'Senanga', 'Sesheke', "Shang'ombo", 'Sikongo', 'Sioma']
+                },
+                districtSuggestions: [],
+                citySuggestions: [],
+                form: {
+                    schoolName: '',
+                    email: '',
+                    phone: '',
+                    fullName: '',
+                    password: '',
+                    subscriptionPlan: '',
+                    schoolType: '',
+                    address: '',
+                    city: '',
+                    province: '',
+                    district: '',
+                    subdomain: '',
+                    website: '',
+                    pupilEstimate: null,
+                    logoUrl: '',
+                    // Primary school fields
+                    gradeLevels: '',
+                    classSizePreference: '',
+                    // Secondary school fields
+                    scienceLabs: '',
+                    examBoard: '',
+                    // Tertiary institution fields
+                    institutionType: '',
+                    accreditationBody: '',
+                    researchFacilities: '',
+                    // Technical school fields
+                    tradeAreas: '',
+                    workshopFacilities: '',
+                    industryPartners: '',
+                    // Special education fields
+                    specialNeedsFocus: '',
+                    therapyServices: '',
+                    pupilTeacherRatio: '',
+                    // International school fields
+                    curriculumSystem: '',
+                    languagesOffered: '',
+                    exchangePrograms: ''
+                },
+
+                init() {
+                    if (!window.ShikolaAPI) {
+                        this.error = 'API client not available.';
+                        return;
+                    }
+
+                    this.loadSubscriptionTiers();
+                    this.onProvinceChange();
+                    this.syncStudentEstimateFromPlan();
+                },
+
+                async loadSubscriptionTiers() {
+                    try {
+                        const res = await window.ShikolaAPI.get('/api/frontend/portals/super-admin/subscription/tiers');
+                        if (res.success && res.data && Array.isArray(res.data.tiers)) {
+                            this.subscriptionTiers = res.data.tiers;
+                        }
+                    } catch (_err) {}
+                },
+
+                normalizePlanKey(value) {
+                    return String(value || '').trim().toLowerCase();
+                },
+
+                findTierByPlan(planValue) {
+                    const key = this.normalizePlanKey(planValue);
+                    if (!key) return null;
+                    const tiers = Array.isArray(this.subscriptionTiers) ? this.subscriptionTiers : [];
+                    const byDisplay = tiers.find(t => this.normalizePlanKey(t.displayName) === key);
+                    if (byDisplay) return byDisplay;
+                    const byName = tiers.find(t => this.normalizePlanKey(t.name) === key);
+                    if (byName) return byName;
+                    return null;
+                },
+
+                syncPupilEstimateFromPlan() {
+                    const tier = this.findTierByPlan(this.form.subscriptionPlan);
+                    const limit = tier ? Number(tier.maxPupils || 0) : 0;
+
+                    if (limit > 0) {
+                        this.selectedPlanLimitText = `Plan limit: up to ${limit.toLocaleString()} pupils (you can adjust)`;
+                        if (!this.pupilEstimateManual) {
+                            const current = Number(this.form.pupilEstimate || 0);
+                            if (!current) {
+                                this.form.pupilEstimate = limit;
+                            } else {
+                                this.form.pupilEstimate = Math.min(current, limit);
+                            }
+                        }
+                    } else if (this.form.subscriptionPlan) {
+                        this.selectedPlanLimitText = 'Plan limit: unlimited pupils (you can adjust)';
+                        if (!this.pupilEstimateManual && (this.form.pupilEstimate == null || this.form.pupilEstimate === '')) {
+                            this.form.pupilEstimate = 0;
+                        }
+                    } else {
+                        this.selectedPlanLimitText = 'Trial default: 50 pupils (you can adjust)';
+                        if (!this.pupilEstimateManual) {
+                            const current = Number(this.form.pupilEstimate || 0);
+                            this.form.pupilEstimate = current || 50;
+                        }
+                    }
+                },
+
+                onProvinceChange() {
+                    const province = String(this.form.province || '').trim();
+                    const districts = this.districtsByProvince[province] || [];
+                    this.districtSuggestions = districts.slice(0, 300);
+                    this.citySuggestions = districts.slice(0, 300);
+                },
+
+                onDistrictChange() {
+                    const province = String(this.form.province || '').trim();
+                    const districts = this.districtsByProvince[province] || [];
+                    if (!districts.length) return;
+                    const district = String(this.form.district || '').trim().toLowerCase();
+                    if (!district) {
+                        this.citySuggestions = districts.slice(0, 300);
+                        return;
+                    }
+                    this.citySuggestions = districts
+                        .filter(d => String(d).toLowerCase().includes(district))
+                        .slice(0, 300);
+                },
+
+                onLogoSelected(evt) {
+                    const file = evt && evt.target && evt.target.files && evt.target.files[0] ? evt.target.files[0] : null;
+                    this.logoFile = file;
+                    this.logoFileName = file ? file.name : '';
+                },
+
+                goBack() {
+                    window.location.href = 'schools.html';
+                },
+
+                updateSchoolTypeUI() {
+                    // Trigger the shared school type UI system
+                    if (window.shikolaSchoolTypeUI) {
+                        window.shikolaSchoolTypeUI.currentSchoolType = this.form.schoolType;
+                        window.shikolaSchoolTypeUI.updateUIVisibility();
+                        window.shikolaSchoolTypeUI.updateFormFields();
+                    }
+
+                    // Clear irrelevant fields when school type changes
+                    this.clearIrrelevantFields();
+                },
+
+                clearIrrelevantFields() {
+                    const schoolType = this.form.schoolType;
+                    
+                    // Reset all school type-specific fields
+                    const specificFields = [
+                        'gradeLevels', 'classSizePreference', 'scienceLabs', 'examBoard',
+                        'institutionType', 'accreditationBody', 'researchFacilities',
+                        'tradeAreas', 'workshopFacilities', 'industryPartners',
+                        'specialNeedsFocus', 'therapyServices', 'pupilTeacherRatio',
+                        'curriculumSystem', 'languagesOffered', 'exchangePrograms'
+                    ];
+
+                    // Clear fields that don't belong to the selected school type
+                    specificFields.forEach(field => {
+                        if (!this.isFieldRelevantToSchoolType(field, schoolType)) {
+                            this.form[field] = '';
+                        }
+                    });
+                },
+
+                isFieldRelevantToSchoolType(field, schoolType) {
+                    const relevance = {
+                        primary: ['gradeLevels', 'classSizePreference'],
+                        secondary: ['gradeLevels', 'scienceLabs', 'examBoard'],
+                        tertiary: ['institutionType', 'accreditationBody', 'researchFacilities'],
+                        technical: ['tradeAreas', 'workshopFacilities', 'industryPartners'],
+                        special: ['specialNeedsFocus', 'therapyServices', 'pupilTeacherRatio'],
+                        international: ['curriculumSystem', 'languagesOffered', 'exchangePrograms']
+                    };
+                    
+                    return relevance[schoolType]?.includes(field) || false;
+                },
+
+                notify(message, type) {
+                    try {
+                        if (window.shikolaButtons && typeof window.shikolaButtons.showNotification === 'function') {
+                            window.shikolaButtons.showNotification(message, type || 'info');
+                        }
+                    } catch (e) {}
+                },
+
+                async submit() {
+                    this.error = '';
+                    this.createdPassword = '';
+
+                    const schoolName = (this.form.schoolName || '').trim();
+                    const email = (this.form.email || '').trim();
+
+                    if (!schoolName || !email) {
+                        this.error = 'School name and admin email are required.';
+                        return;
+                    }
+
+                    if (!window.ShikolaAPI) {
+                        this.error = 'API client not available.';
+                        return;
+                    }
+
+                    this.submitting = true;
+
+                    try {
+                        this.syncPupilEstimateFromPlan();
+                        const payload = {
+                            schoolName: schoolName,
+                            email: email,
+                            phone: (this.form.phone || '').trim() || null,
+                            fullName: (this.form.fullName || '').trim() || null,
+                            password: (this.form.password || '').trim() || null,
+                            subscriptionPlan: (this.form.subscriptionPlan || '').trim() || null,
+                            schoolType: (this.form.schoolType || '').trim() || null,
+                            address: (this.form.address || '').trim() || null,
+                            city: (this.form.city || '').trim() || null,
+                            province: (this.form.province || '').trim() || null,
+                            district: (this.form.district || '').trim() || null,
+                            subdomain: (this.form.subdomain || '').trim() || null,
+                            website: (this.form.website || '').trim() || null,
+                            pupilEstimate: (this.form.pupilEstimate == null || this.form.pupilEstimate === '') ? null : Number(this.form.pupilEstimate),
+                            logoUrl: null,
+                            // School type-specific fields
+                            gradeLevels: (this.form.gradeLevels || '').trim() || null,
+                            classSizePreference: (this.form.classSizePreference || '').trim() || null,
+                            scienceLabs: (this.form.scienceLabs || '').trim() || null,
+                            examBoard: (this.form.examBoard || '').trim() || null,
+                            institutionType: (this.form.institutionType || '').trim() || null,
+                            accreditationBody: (this.form.accreditationBody || '').trim() || null,
+                            researchFacilities: (this.form.researchFacilities || '').trim() || null,
+                            tradeAreas: (this.form.tradeAreas || '').trim() || null,
+                            workshopFacilities: (this.form.workshopFacilities || '').trim() || null,
+                            industryPartners: (this.form.industryPartners || '').trim() || null,
+                            specialNeedsFocus: (this.form.specialNeedsFocus || '').trim() || null,
+                            therapyServices: (this.form.therapyServices || '').trim() || null,
+                            pupilTeacherRatio: (this.form.pupilTeacherRatio || '').trim() || null,
+                            curriculumSystem: (this.form.curriculumSystem || '').trim() || null,
+                            languagesOffered: (this.form.languagesOffered || '').trim() || null,
+                            exchangePrograms: (this.form.exchangePrograms || '').trim() || null
+                        };
+
+                        const result = await window.ShikolaAPI.post('/api/frontend/portals/super-admin/schools', payload);
+
+                        if (!result.success) {
+                            if (result.status === 401 || result.status === 403) {
+                                window.location.href = '../frontend/public/super-admin-signin.html';
+                                return;
+                            }
+                            this.error = result.error || 'Failed to provision school.';
+                            return;
+                        }
+
+                        this.createdPassword = result.data?.generatedPassword || '';
+                        const schoolId = result.data?.id || null;
+
+                        if (schoolId && this.logoFile && window.ShikolaAPI && typeof window.ShikolaAPI.upload === 'function') {
+                            try {
+                                const fd = new FormData();
+                                fd.append('schoolId', schoolId);
+                                fd.append('logo', this.logoFile);
+                                const uploadRes = await window.ShikolaAPI.upload('/api/frontend/portals/super-admin/schools/logo', fd);
+                                if (!uploadRes.success) {
+                                    this.notify(uploadRes.error || 'Logo upload failed', 'error');
+                                }
+                            } catch (_e) {
+                                this.notify('Logo upload failed', 'error');
+                            }
+                        }
+
+                        if (result.data && result.data.notifications) {
+                            const eOk = result.data.notifications.email && result.data.notifications.email.ok;
+                            const sOk = result.data.notifications.sms && (result.data.notifications.sms.ok || result.data.notifications.sms.queued);
+                            if (!eOk) {
+                                this.notify('Email confirmation was not sent (configure EMAIL_* on the server).', 'info');
+                            }
+                            if (!sOk && (this.form.phone || '').trim()) {
+                                this.notify('SMS confirmation was not queued (check SMS settings).', 'info');
+                            }
+                        }
+                        this.notify('School provisioned successfully', 'success');
+
+                        if (!this.createdPassword) {
+                            window.location.href = 'schools.html';
+                        }
+                    } catch (_err) {
+                        this.error = 'Failed to provision school.';
+                    } finally {
+                        this.submitting = false;
+                    }
+                },
+
+                generatePassword() {
+                    const length = 12;
+                    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+                    let password = '';
+                    for (let i = 0; i < length; i++) {
+                        password += charset.charAt(Math.floor(Math.random() * charset.length));
+                    }
+                    this.form.password = password;
+                    this.showPassword = true;
+                },
+
+                getSchoolTypeSettingsTitle() {
+                    const titles = {
+                        primary: 'Primary School Settings',
+                        secondary: 'Secondary School Settings',
+                        tertiary: 'Tertiary Institution Settings',
+                        technical: 'Technical School Settings',
+                        special: 'Special Education Settings',
+                        international: 'International School Settings'
+                    };
+                    return titles[this.form.schoolType] || 'School Settings';
+                }
+            };
+        }
+    </script>
+
+    <script>
+        // Register Alpine.js component
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('provisionSchoolData', provisionSchoolData);
+        });
+    </script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola Demo - School Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="/frontend/assets/images/favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="frontend/js/security.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1' },
+                        accent: '#0ea5e9'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #e0f2fe 100%); }
+        .portal-card { transition: all 0.3s ease; }
+        .portal-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(14, 165, 233, 0.2); }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-12 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Shikola Demo</h1>
+            <p class="text-xl text-gray-600">School Management System - Frontend Demo</p>
+            <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                <i class="fas fa-check-circle"></i>
+                All portals accessible - no login required
+            </div>
+        </div>
+
+        <!-- Portals Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <!-- Super Admin -->
+            <a href="frontend/portals/super-admin/dashboard.html" class="portal-card block p-6 bg-white rounded-xl border border-gray-200">
+                <div class="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-user-cog text-2xl text-purple-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Super Admin</h3>
+                <p class="text-sm text-gray-600">System-wide management, schools, users, subscriptions</p>
+            </a>
+
+            <!-- School Admin -->
+            <a href="frontend/portals/school-admin/dashboard.html" class="portal-card block p-6 bg-white rounded-xl border border-gray-200">
+                <div class="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-user-shield text-2xl text-blue-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">School Admin</h3>
+                <p class="text-sm text-gray-600">School management, pupils, teachers, classes, fees</p>
+            </a>
+
+            <!-- Teacher Portal -->
+            <a href="frontend/portals/teacher-portal/dashboard.html" class="portal-card block p-6 bg-white rounded-xl border border-gray-200">
+                <div class="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-chalkboard-teacher text-2xl text-green-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Teacher Portal</h3>
+                <p class="text-sm text-gray-600">Attendance, grading, exams, messaging, timetables</p>
+            </a>
+
+            <!-- Pupil Portal -->
+            <a href="frontend/portals/pupil-portal/dashboard.html" class="portal-card block p-6 bg-white rounded-xl border border-gray-200">
+                <div class="w-14 h-14 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-user-graduate text-2xl text-orange-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Pupil Portal</h3>
+                <p class="text-sm text-gray-600">Assignments, results, timetable, messaging</p>
+            </a>
+
+            <!-- Accountant Portal -->
+            <a href="frontend/portals/accountant-portal/dashboard.html" class="portal-card block p-6 bg-white rounded-xl border border-gray-200">
+                <div class="w-14 h-14 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-user-tie text-2xl text-teal-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Accountant Portal</h3>
+                <p class="text-sm text-gray-600">Fees, expenses, reports, budget management</p>
+            </a>
+
+            <!-- Public Site -->
+            <a href="frontend/public/index.html" class="portal-card block p-6 bg-white rounded-xl border border-gray-200">
+                <div class="w-14 h-14 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-globe text-2xl text-gray-600"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Public Website</h3>
+                <p class="text-sm text-gray-600">Landing page, features, pricing, contact</p>
+            </a>
+        </div>
+
+        <!-- Note -->
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-3xl mx-auto">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-info-circle text-amber-600 mt-1"></i>
+                <div>
+                    <h4 class="font-semibold text-amber-800 mb-1">Demo Mode</h4>
+                    <p class="text-sm text-amber-700">
+                        This is a frontend-only demo. All data is mocked and no backend server is required. 
+                        Changes will not be persisted. API calls are simulated for demonstration purposes.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

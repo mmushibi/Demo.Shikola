@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Shikola Operations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="operations-api.js"></script>
+    <script src="operations-core.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="/shared-assets/js/shared-auth.js" defer></script>
+    <script src="/shared-assets/js/shared-notifications.js" defer></script>
+    <script src="/shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/frontend/assets/css/styles.css">
+    <style>
+        /* Custom scrollbar to match ocean theme */
+        body.operations-page, body.operations-page * {
+            -webkit-scrollbar-width: thin;
+            scrollbar-width: thin;
+            -webkit-scrollbar-color: #0ea5e9 #f0f9ff;
+            scrollbar-color: #0ea5e9 #f0f9ff;
+        }
+
+        body.operations-page::-webkit-scrollbar,
+        body.operations-page *::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        body.operations-page::-webkit-scrollbar-track,
+        body.operations-page *::-webkit-scrollbar-track {
+            background: #f0f9ff;
+            border-radius: 9999px;
+        }
+
+        body.operations-page::-webkit-scrollbar-thumb,
+        body.operations-page *::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #0ea5e9, #0284c7);
+            border-radius: 9999px;
+        }
+
+        body.operations-page::-webkit-scrollbar-thumb:hover,
+        body.operations-page *::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #0284c7, #0369a1);
+        }
+
+        /* Card hover effects */
+        .ocean-card {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(14, 165, 233, 0.1);
+        }
+
+        .ocean-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        /* Navigation styling */
+        .nav-active {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+        }
+
+        .nav-item:hover {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(2, 132, 199, 0.1));
+        }
+
+        /* Animation keyframes */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slide-in {
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        .animate-delay-1 { animation-delay: 0.1s; }
+        .animate-delay-2 { animation-delay: 0.2s; }
+        .animate-delay-3 { animation-delay: 0.3s; }
+        .animate-delay-4 { animation-delay: 0.4s; }
+        .animate-delay-5 { animation-delay: 0.5s; }
+    </style>
+</head>
+<body class="operations-page">
+    <div x-data="{
+        sidebarOpen: false,
+        chatOpen: false,
+        mobileSearchOpen: false,
+        mobileNotificationsOpen: false,
+        mobileProfileOpen: false,
+        mobileSearchQuery: '',
+        mobileHeader: true,
+        pageTitle: 'Reports & Analytics',
+        pageSubtitle: 'Cross-School Data Analysis & Compliance Reports',
+        activeReportTab: 'subscription',
+        auditTab: 'all-activities',
+        reportType: 'overview',
+        complianceType: 'all',
+        auditType: 'all',
+        dateRange: '30days',
+        customReportConfig: {
+            name: '',
+            description: '',
+            metrics: [],
+            schools: [],
+            dateRange: '30days'
+        },
+        availableReports: [],
+        reportData: null,
+        previewData: null,
+        currentUser: null,
+        loading: false,
+        previewLoading: false,
+        showPreview: false,
+        exportFormats: ['pdf'],
+        selectedExportFormat: 'pdf',
+        async loadReports() {
+            try {
+                this.loading = true;
+                const response = await window.ShikolaAPI.get('/api/operations/reports/available');
+                if (response.success) {
+                    this.availableReports = response.data;
+                }
+            } catch (error) {
+                console.error('Failed to load reports:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async loadPreview() {
+            try {
+                this.previewLoading = true;
+                this.showPreview = true;
+                
+                // Generate preview data based on active tab and selections using real backend
+                let previewResponse;
+                switch(this.activeReportTab) {
+                    case 'subscription':
+                        previewResponse = await window.operationsAPI.getSubscriptionReports(this.reportType, this.dateRange);
+                        break;
+                    case 'users':
+                        previewResponse = await window.operationsAPI.getUserReports(this.reportType, this.dateRange);
+                        break;
+                    case 'tickets':
+                        previewResponse = await window.operationsAPI.getTicketReports(this.reportType, this.dateRange);
+                        break;
+                    case 'schools':
+                        previewResponse = await window.operationsAPI.getSchoolReports(this.reportType, this.dateRange);
+                        break;
+                    case 'cross-school':
+                        previewResponse = await window.operationsAPI.getCrossSchoolReports(this.reportType, {
+                            dateRange: this.dateRange
+                        });
+                        break;
+                    case 'compliance':
+                        previewResponse = await window.operationsAPI.getComplianceReports(this.complianceType, {
+                            dateRange: this.dateRange
+                        });
+                        break;
+                    case 'audit':
+                        previewResponse = await window.operationsAPI.getAuditReports(this.auditType, {
+                            dateRange: this.dateRange
+                        });
+                        break;
+                    case 'custom':
+                        previewResponse = await window.operationsAPI.generateCustomReport(this.customReportConfig);
+                        break;
+                    default:
+                        previewResponse = { success: false, message: 'Invalid report type' };
+                }
+                
+                if (previewResponse.success) {
+                    this.previewData = previewResponse.data;
+                    this.currentUser = previewResponse.user;
+                }
+            } catch (error) {
+                console.error('Failed to load preview:', error);
+                // Show error message if backend fails
+                this.showNotification('Failed to load preview data. Please try again.', 'error');
+                this.previewData = null;
+                this.currentUser = null;
+            } finally {
+                this.previewLoading = false;
+            }
+        },
+        async generateSubscriptionReport() {
+            try {
+                this.loading = true;
+                const response = await window.operationsAPI.getSubscriptionReports(this.reportType, this.dateRange);
+                if (response.success) {
+                    this.reportData = response.data;
+                    this.currentUser = response.user;
+                }
+            } catch (error) {
+                console.error('Failed to generate subscription report:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async generateUserReport() {
+            try {
+                this.loading = true;
+                const response = await window.operationsAPI.getUserReports(this.reportType, this.dateRange);
+                if (response.success) {
+                    this.reportData = response.data;
+                    this.currentUser = response.user;
+                }
+            } catch (error) {
+                console.error('Failed to generate user report:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async generateTicketReport() {
+            try {
+                this.loading = true;
+                const response = await window.operationsAPI.getTicketReports(this.reportType, this.dateRange);
+                if (response.success) {
+                    this.reportData = response.data;
+                    this.currentUser = response.user;
+                }
+            } catch (error) {
+                console.error('Failed to generate ticket report:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async generateSchoolReport() {
+            try {
+                this.loading = true;
+                const response = await window.operationsAPI.getSchoolReports(this.reportType, this.dateRange);
+                if (response.success) {
+                    this.reportData = response.data;
+                    this.currentUser = response.user;
+                }
+            } catch (error) {
+                console.error('Failed to generate school report:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async generateCrossSchoolReport() {
+            try {
+                this.loading = true;
+                const response = await window.operationsAPI.getCrossSchoolReports(this.reportType, {
+                    dateRange: this.dateRange
+                });
+                if (response.success) {
+                    this.reportData = response.data;
+                    this.currentUser = response.user;
+                }
+            } catch (error) {
+                console.error('Failed to generate cross-school report:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async generateComplianceReport() {
+            try {
+                this.loading = true;
+                const response = await window.operationsAPI.getComplianceReports(this.complianceType, {
+                    dateRange: this.dateRange
+                });
+                if (response.success) {
+                    this.reportData = response.data;
+                    this.currentUser = response.user;
+                }
+            } catch (error) {
+                console.error('Failed to generate compliance report:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async generateAuditReport() {
+            try {
+                this.loading = true;
+                const response = await window.operationsAPI.getAuditReports(this.auditType, {
+                    dateRange: this.dateRange
+                });
+                if (response.success) {
+                    this.reportData = response.data;
+                    this.currentUser = response.user;
+                }
+            } catch (error) {
+                console.error('Failed to generate audit report:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async generateCustomReport() {
+            try {
+                this.loading = true;
+                const response = await window.operationsAPI.generateCustomReport(this.customReportConfig);
+                if (response.success) {
+                    this.reportData = response.data;
+                    this.currentUser = response.user;
+                }
+            } catch (error) {
+                console.error('Failed to generate custom report:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+        async exportReport() {
+            if (!this.reportData) return;
+            
+            try {
+                const response = await window.operationsAPI.exportReport(this.reportData.id || 'default', this.selectedExportFormat);
+                if (response.success) {
+                    // Download the file
+                    const link = document.createElement('a');
+                    link.href = response.data.downloadUrl;
+                    link.download = response.data.filename;
+                    link.click();
+                }
+            } catch (error) {
+                console.error('Failed to export report:', error);
+            }
+        },
+        async init() {
+            await this.loadReports();
+            // Load initial preview
+            await this.loadPreview();
+        },
+        async watchReportType() {
+            await this.loadPreview();
+        },
+        async watchDateRange() {
+            await this.loadPreview();
+        },
+        async watchAuditType() {
+            await this.loadPreview();
+        },
+        async watchComplianceType() {
+            await this.loadPreview();
+        },
+        async watchActiveTab() {
+            await this.loadPreview();
+        }
+    }" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <!-- Sidebar Navigation -->
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="nav-menu space-y-1 text-sm">
+                    <a href="dashboard.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-chart-line"></i>
+                        </span>
+                        <span class="flex-1">Dashboard</span>
+                    </a>
+                    <a href="schools-management.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-school"></i>
+                        </span>
+                        <span class="flex-1">Schools Management</span>
+                    </a>
+                    <a href="subscriptions.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-credit-card"></i>
+                        </span>
+                        <span class="flex-1">Subscriptions</span>
+                    </a>
+                    <a href="user-management.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-users-cog"></i>
+                        </span>
+                        <span class="flex-1">User Management</span>
+                    </a>
+                    <a href="tickets-support.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-ticket-alt"></i>
+                        </span>
+                        <span class="flex-1">Tickets & Support</span>
+                    </a>
+                    <a href="system-monitoring.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-server"></i>
+                        </span>
+                        <span class="flex-1">System Monitoring</span>
+                    </a>
+                    <a href="reports.html" class="nav-active flex items-center gap-3 px-4 py-3 rounded-xl text-white shadow-md">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-file-alt"></i>
+                        </span>
+                        <span class="font-medium flex-1">Reports</span>
+                    </a>
+                    <a href="profile.html" class="nav-item flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:text-slate-900 transition">
+                        <span class="w-6 flex justify-center">
+                            <i class="fas fa-user-circle"></i>
+                        </span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 lg:ml-64">
+                <!-- Mobile Header -->
+                <header class="lg:hidden bg-white shadow-sm border-b border-slate-200 sticky top-0 z-30">
+                    <div class="px-4 py-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <button @click="sidebarOpen = !sidebarOpen" class="text-slate-600 hover:text-slate-900" title="Toggle sidebar">
+                                    <i class="fas fa-bars text-lg"></i>
+                                </button>
+                                <h1 class="text-lg font-semibold text-slate-900">Reports</h1>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button @click="mobileNotificationsOpen = !mobileNotificationsOpen" class="text-slate-600 hover:text-slate-900" title="Notifications">
+                                    <i class="fas fa-bell text-lg"></i>
+                                </button>
+                                <button @click="mobileProfileOpen = !mobileProfileOpen" class="text-slate-600 hover:text-slate-900" title="User profile">
+                                    <i class="fas fa-user-circle text-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Desktop Header -->
+                <header class="hidden lg:block bg-white shadow-sm border-b border-slate-200 sticky top-0 z-30">
+                    <div class="px-8 py-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-2xl font-bold text-slate-900" x-text="pageTitle"></h1>
+                                <p class="text-sm text-slate-500 mt-1" x-text="pageSubtitle"></p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="relative">
+                                    <input type="text" x-model="mobileSearchQuery" placeholder="Search reports..." class="pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                                </div>
+                                <button class="text-slate-600 hover:text-slate-900" title="Notifications">
+                                    <i class="fas fa-bell text-lg"></i>
+                                </button>
+                                <button class="text-slate-600 hover:text-slate-900" title="User profile">
+                                    <i class="fas fa-user-circle text-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Page Content -->
+                <div class="flex-1 overflow-y-auto">
+                    <div class="p-4 lg:p-8">
+                        <!-- Report Type Tabs -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-1 mb-6">
+                            <div class="flex flex-wrap gap-1">
+                                <button @click="activeReportTab = 'subscription'; watchActiveTab()" 
+                                        :class="activeReportTab === 'subscription' ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                                        class="flex-1 min-w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                                    <i class="fas fa-credit-card mr-2"></i>Subscriptions
+                                </button>
+                                <button @click="activeReportTab = 'users'; watchActiveTab()" 
+                                        :class="activeReportTab === 'users' ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                                        class="flex-1 min-w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                                    <i class="fas fa-users mr-2"></i>Users
+                                </button>
+                                <button @click="activeReportTab = 'tickets'; watchActiveTab()" 
+                                        :class="activeReportTab === 'tickets' ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                                        class="flex-1 min-w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                                    <i class="fas fa-ticket-alt mr-2"></i>Tickets
+                                </button>
+                                <button @click="activeReportTab = 'schools'; watchActiveTab()" 
+                                        :class="activeReportTab === 'schools' ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                                        class="flex-1 min-w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                                    <i class="fas fa-school mr-2"></i>Schools
+                                </button>
+                                <button @click="activeReportTab = 'cross-school'; watchActiveTab()" 
+                                        :class="activeReportTab === 'cross-school' ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                                        class="flex-1 min-w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                                    <i class="fas fa-chart-bar mr-2"></i>Cross-School
+                                </button>
+                                <button @click="activeReportTab = 'compliance'; watchActiveTab()" 
+                                        :class="activeReportTab === 'compliance' ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                                        class="flex-1 min-w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                                    <i class="fas fa-shield-alt mr-2"></i>Compliance
+                                </button>
+                                <button @click="activeReportTab = 'audit'; watchActiveTab()" 
+                                        :class="activeReportTab === 'audit' ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                                        class="flex-1 min-w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                                    <i class="fas fa-history mr-2"></i>Audit Trail
+                                </button>
+                                <button @click="activeReportTab = 'custom'; watchActiveTab()" 
+                                        :class="activeReportTab === 'custom' ? 'bg-orange-500 text-white' : 'text-slate-600 hover:bg-slate-100'"
+                                        class="flex-1 min-w-[120px] px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                                    <i class="fas fa-cog mr-2"></i>Custom
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Report Preview Section -->
+                        <div x-show="showPreview && previewData" x-cloak class="space-y-6">
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-900" x-text="previewData?.title"></h3>
+                                        <p class="text-sm text-slate-500" x-text="previewData?.subtitle"></p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                                            <i class="fas fa-eye mr-1"></i>Preview
+                                        </span>
+                                        <button @click="showPreview = false" class="text-slate-400 hover:text-slate-600" title="Close preview">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Summary Cards -->
+                                <div x-show="previewData?.summary" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-blue-600 font-medium">Total</p>
+                                                <p class="text-2xl font-bold text-blue-900" x-text="previewData?.summary?.total"></p>
+                                            </div>
+                                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-chart-line text-blue-600"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-green-600 font-medium">Performance</p>
+                                                <p class="text-2xl font-bold text-green-900" x-text="previewData?.summary?.percentage + '%'"></p>
+                                            </div>
+                                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-percentage text-green-600"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <p class="text-sm text-purple-600 font-medium">Trend</p>
+                                                <p class="text-2xl font-bold text-purple-900">
+                                                    <i class="fas fa-arrow-up" x-show="previewData?.summary?.trend === 'up'"></i>
+                                                    <i class="fas fa-arrow-down" x-show="previewData?.summary?.trend === 'down'"></i>
+                                                </p>
+                                            </div>
+                                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-trending-up text-purple-600"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Mock Chart -->
+                                <div x-show="previewData?.chartData" class="mb-6">
+                                    <h4 class="text-sm font-medium text-slate-700 mb-3">Trend Overview</h4>
+                                    <div class="bg-slate-50 p-4 rounded-lg">
+                                        <div class="flex items-end justify-between h-32 gap-2">
+                                            <template x-for="item in previewData?.chartData || []">
+                                                <div class="flex-1 bg-orange-400 rounded-t" 
+                                                     :style="`height: ${(item.value / 120) * 100}%`"
+                                                     :title="`${item.label}: ${item.value}`">
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div class="flex justify-between mt-2 text-xs text-slate-500">
+                                            <template x-for="item in previewData?.chartData || []">
+                                                <span x-text="item.label"></span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Data Table -->
+                                <div x-show="previewData?.tableData">
+                                    <h4 class="text-sm font-medium text-slate-700 mb-3">Report Data</h4>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-slate-200">
+                                            <thead class="bg-slate-50">
+                                                <tr>
+                                                    <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">ID</th>
+                                                    <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
+                                                    <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                                                    <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Value</th>
+                                                    <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="bg-white divide-y divide-slate-200">
+                                                <template x-for="item in previewData?.tableData || []">
+                                                    <tr class="hover:bg-slate-50">
+                                                        <td class="px-4 py-2 text-sm text-slate-900" x-text="item.id"></td>
+                                                        <td class="px-4 py-2 text-sm text-slate-900" x-text="item.name"></td>
+                                                        <td class="px-4 py-2 text-sm">
+                                                            <span class="px-2 py-1 text-xs rounded-full"
+                                                                  :class="item.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                                                                  x-text="item.status"></span>
+                                                        </td>
+                                                        <td class="px-4 py-2 text-sm text-slate-900" x-text="item.value.toLocaleString()"></td>
+                                                        <td class="px-4 py-2 text-sm text-slate-500" x-text="item.date"></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <p class="text-sm text-amber-800">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        This is a preview. Click "Generate Report" to get the full report with complete data.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cross-School Reports -->
+                        <div x-show="activeReportTab === 'cross-school'" x-cloak class="space-y-6">
+                            <!-- Report Configuration -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h2 class="text-lg font-semibold text-slate-900 mb-4">Cross-School Analytics</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Report Type</label>
+                                        <select x-model="reportType" @change="watchReportType()" title="Select report type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="overview">Overview</option>
+                                            <option value="performance">Performance Analytics</option>
+                                            <option value="enrollment">Enrollment Trends</option>
+                                            <option value="financial">Financial Summary</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Date Range</label>
+                                        <select x-model="dateRange" @change="watchDateRange()" title="Select date range" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="7days">Last 7 Days</option>
+                                            <option value="30days">Last 30 Days</option>
+                                            <option value="90days">Last 90 Days</option>
+                                            <option value="1year">Last Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button @click="generateCrossSchoolReport()" 
+                                                :disabled="loading"
+                                                class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                            <i class="fas fa-chart-line mr-2"></i>
+                                            <span x-show="!loading">Generate Report</span>
+                                            <span x-show="loading">Generating...</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Report Results -->
+                            <div x-show="reportData" x-cloak class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-900" x-text="reportData?.title"></h3>
+                                        <p class="text-sm text-slate-500" x-text="reportData?.dateRange"></p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">
+                                            <i class="fas fa-download mr-1"></i>Export PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Information -->
+                                <div x-show="currentUser" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-blue-900" x-text="currentUser?.name"></p>
+                                                <p class="text-xs text-blue-600" x-text="currentUser?.email"></p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-blue-600">Generated by</p>
+                                            <p class="text-xs text-blue-500" x-text="currentUser?.role"></p>
+                                            <p class="text-xs text-blue-500" x-text="new Date(currentUser?.generatedAt).toLocaleString()"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <!-- Summary Cards -->
+                                    <div x-show="reportData?.summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                        <template x-for="[key, value] in Object.entries(reportData?.summary || {})">
+                                            <div class="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
+                                                <p class="text-sm text-orange-600 font-medium capitalize" x-text="key.replace(/([A-Z])/g, ' $1').trim()"></p>
+                                                <p class="text-2xl font-bold text-orange-900" x-text="typeof value === 'number' ? value.toLocaleString() : value"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Chart Data -->
+                                    <div x-show="reportData?.chartData" class="mb-6">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Trend Overview</h4>
+                                        <div class="bg-slate-50 p-4 rounded-lg">
+                                            <div class="flex items-end justify-between h-32 gap-2">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <div class="flex-1 bg-orange-400 rounded-t" 
+                                                         :style="`height: ${(item.value / 120) * 100}%`"
+                                                         :title="`${item.label}: ${item.value}`">
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="flex justify-between mt-2 text-xs text-slate-500">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <span x-text="item.label"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Table Data -->
+                                    <div x-show="reportData?.tableData">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Detailed Data</h4>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-slate-200">
+                                                <thead class="bg-slate-50">
+                                                    <tr>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">ID</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Value</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    <template x-for="item in reportData?.tableData || []">
+                                                        <tr class="hover:bg-slate-50">
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.id"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.name"></td>
+                                                            <td class="px-4 py-2 text-sm">
+                                                                <span class="px-2 py-1 text-xs rounded-full"
+                                                                      :class="item.status === 'Active' || item.status === 'Compliant' || item.status === 'Resolved' ? 'bg-green-100 text-green-800' : 
+                                                                               item.status === 'Inactive' || item.status === 'Non-Compliant' ? 'bg-red-100 text-red-800' : 
+                                                                               'bg-yellow-100 text-yellow-800'"
+                                                                      x-text="item.status"></span>
+                                                            </td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="typeof item.value === 'number' ? item.value.toLocaleString() : item.value"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-500" x-text="item.date"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Compliance Reports -->
+                        <div x-show="activeReportTab === 'compliance'" x-cloak class="space-y-6">
+                            <!-- Compliance Configuration -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h2 class="text-lg font-semibold text-slate-900 mb-4">Compliance Reports</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Compliance Type</label>
+                                        <select x-model="complianceType" @change="watchComplianceType()" title="Select compliance type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="all">All Compliance</option>
+                                            <option value="data-protection">Data Protection</option>
+                                            <option value="academic">Academic Standards</option>
+                                            <option value="financial">Financial Regulations</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Date Range</label>
+                                        <select x-model="dateRange" @change="watchDateRange()" title="Select date range" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="30days">Last 30 Days</option>
+                                            <option value="90days">Last 90 Days</option>
+                                            <option value="1year">Last Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button @click="generateComplianceReport()" 
+                                                :disabled="loading"
+                                                class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                            <i class="fas fa-shield-alt mr-2"></i>
+                                            <span x-show="!loading">Generate Report</span>
+                                            <span x-show="loading">Generating...</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Compliance Results -->
+                            <div x-show="reportData" x-cloak class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-900" x-text="reportData?.title"></h3>
+                                        <p class="text-sm text-slate-500" x-text="reportData?.dateRange"></p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button @click="exportReport()" class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">
+                                            <i class="fas fa-download mr-1"></i>Export PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Information -->
+                                <div x-show="currentUser" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-blue-900" x-text="currentUser?.name"></p>
+                                                <p class="text-xs text-blue-600" x-text="currentUser?.email"></p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-blue-600">Generated by</p>
+                                            <p class="text-xs text-blue-500" x-text="currentUser?.role"></p>
+                                            <p class="text-xs text-blue-500" x-text="new Date(currentUser?.generatedAt).toLocaleString()"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <!-- Summary Cards -->
+                                    <div x-show="reportData?.summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                        <template x-for="[key, value] in Object.entries(reportData?.summary || {})">
+                                            <div class="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
+                                                <p class="text-sm text-orange-600 font-medium capitalize" x-text="key.replace(/([A-Z])/g, ' $1').trim()"></p>
+                                                <p class="text-2xl font-bold text-orange-900" x-text="typeof value === 'number' ? value.toLocaleString() : value"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Chart Data -->
+                                    <div x-show="reportData?.chartData" class="mb-6">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Trend Overview</h4>
+                                        <div class="bg-slate-50 p-4 rounded-lg">
+                                            <div class="flex items-end justify-between h-32 gap-2">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <div class="flex-1 bg-orange-400 rounded-t" 
+                                                         :style="`height: ${(item.value / 120) * 100}%`"
+                                                         :title="`${item.label}: ${item.value}`">
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="flex justify-between mt-2 text-xs text-slate-500">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <span x-text="item.label"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Table Data -->
+                                    <div x-show="reportData?.tableData">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Detailed Data</h4>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-slate-200">
+                                                <thead class="bg-slate-50">
+                                                    <tr>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">ID</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Value</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    <template x-for="item in reportData?.tableData || []">
+                                                        <tr class="hover:bg-slate-50">
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.id"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.name"></td>
+                                                            <td class="px-4 py-2 text-sm">
+                                                                <span class="px-2 py-1 text-xs rounded-full"
+                                                                      :class="item.status === 'Active' || item.status === 'Compliant' || item.status === 'Resolved' ? 'bg-green-100 text-green-800' : 
+                                                                               item.status === 'Inactive' || item.status === 'Non-Compliant' ? 'bg-red-100 text-red-800' : 
+                                                                               'bg-yellow-100 text-yellow-800'"
+                                                                      x-text="item.status"></span>
+                                                            </td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="typeof item.value === 'number' ? item.value.toLocaleString() : item.value"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-500" x-text="item.date"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Audit Trail Reports -->
+                        <div x-show="activeReportTab === 'audit'" x-cloak class="space-y-6">
+                            <!-- Audit Configuration -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h2 class="text-lg font-semibold text-slate-900 mb-4">Operations Audit Trail</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Audit Type</label>
+                                        <select x-model="auditType" @change="watchAuditType()" title="Select audit type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="all">All Activities</option>
+                                            <option value="user_management">User Management</option>
+                                            <option value="school_operations">School Operations</option>
+                                            <option value="subscription_changes">Subscription Changes</option>
+                                            <option value="system_changes">System Changes</option>
+                                            <option value="data_modifications">Data Modifications</option>
+                                            <option value="deletions">Record Deletions</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Date Range</label>
+                                        <select x-model="dateRange" @change="watchDateRange()" title="Select date range" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="7days">Last 7 Days</option>
+                                            <option value="30days">Last 30 Days</option>
+                                            <option value="90days">Last 90 Days</option>
+                                            <option value="1year">Last Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button @click="generateAuditReport()" 
+                                                :disabled="loading"
+                                                class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                            <i class="fas fa-history mr-2"></i>
+                                            <span x-show="!loading">Generate Audit Report</span>
+                                            <span x-show="loading">Generating...</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Audit Results -->
+                            <div x-show="reportData" x-cloak class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-900" x-text="reportData?.title"></h3>
+                                        <p class="text-sm text-slate-500" x-text="reportData?.dateRange"></p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button @click="exportReport()" class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">
+                                            <i class="fas fa-download mr-1"></i>Export PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Information -->
+                                <div x-show="currentUser" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-blue-900" x-text="currentUser?.name"></p>
+                                                <p class="text-xs text-blue-600" x-text="currentUser?.email"></p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-blue-600">Generated by</p>
+                                            <p class="text-xs text-blue-500" x-text="currentUser?.role"></p>
+                                            <p class="text-xs text-blue-500" x-text="new Date(currentUser?.generatedAt).toLocaleString()"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <!-- Summary Cards -->
+                                    <div x-show="reportData?.summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                        <template x-for="[key, value] in Object.entries(reportData?.summary || {})">
+                                            <div class="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
+                                                <p class="text-sm text-orange-600 font-medium capitalize" x-text="key.replace(/([A-Z])/g, ' $1').trim()"></p>
+                                                <p class="text-2xl font-bold text-orange-900" x-text="typeof value === 'number' ? value.toLocaleString() : value"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Chart Data -->
+                                    <div x-show="reportData?.chartData" class="mb-6">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Trend Overview</h4>
+                                        <div class="bg-slate-50 p-4 rounded-lg">
+                                            <div class="flex items-end justify-between h-32 gap-2">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <div class="flex-1 bg-orange-400 rounded-t" 
+                                                         :style="`height: ${(item.value / 120) * 100}%`"
+                                                         :title="`${item.label}: ${item.value}`">
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="flex justify-between mt-2 text-xs text-slate-500">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <span x-text="item.label"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Table Data -->
+                                    <div x-show="reportData?.tableData">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Detailed Data</h4>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-slate-200">
+                                                <thead class="bg-slate-50">
+                                                    <tr>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">ID</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Value</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    <template x-for="item in reportData?.tableData || []">
+                                                        <tr class="hover:bg-slate-50">
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.id"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.name"></td>
+                                                            <td class="px-4 py-2 text-sm">
+                                                                <span class="px-2 py-1 text-xs rounded-full"
+                                                                      :class="item.status === 'Active' || item.status === 'Compliant' || item.status === 'Resolved' ? 'bg-green-100 text-green-800' : 
+                                                                               item.status === 'Inactive' || item.status === 'Non-Compliant' ? 'bg-red-100 text-red-800' : 
+                                                                               'bg-yellow-100 text-yellow-800'"
+                                                                      x-text="item.status"></span>
+                                                            </td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="typeof item.value === 'number' ? item.value.toLocaleString() : item.value"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-500" x-text="item.date"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Subscription Reports -->
+                        <div x-show="activeReportTab === 'subscription'" x-cloak class="space-y-6">
+                            <!-- Subscription Configuration -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h2 class="text-lg font-semibold text-slate-900 mb-4">Subscription & Billing Reports</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Report Type</label>
+                                        <select x-model="reportType" @change="watchReportType()" title="Select subscription report type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="overview">Revenue Overview</option>
+                                            <option value="expiring">Expiring Subscriptions</option>
+                                            <option value="payment_history">Payment History</option>
+                                            <option value="plan_changes">Plan Changes</option>
+                                            <option value="grace_periods">Grace Period Usage</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Date Range</label>
+                                        <select x-model="dateRange" @change="watchDateRange()" title="Select date range" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="7days">Last 7 Days</option>
+                                            <option value="30days">Last 30 Days</option>
+                                            <option value="90days">Last 90 Days</option>
+                                            <option value="1year">Last Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button @click="generateSubscriptionReport()" 
+                                                :disabled="loading"
+                                                class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                            <i class="fas fa-credit-card mr-2"></i>
+                                            <span x-show="!loading">Generate Subscription Report</span>
+                                            <span x-show="loading">Generating...</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subscription Results -->
+                            <div x-show="reportData" x-cloak class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-900" x-text="reportData?.title"></h3>
+                                        <p class="text-sm text-slate-500" x-text="reportData?.dateRange"></p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button @click="exportReport()" class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">
+                                            <i class="fas fa-download mr-1"></i>Export PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Information -->
+                                <div x-show="currentUser" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-blue-900" x-text="currentUser?.name"></p>
+                                                <p class="text-xs text-blue-600" x-text="currentUser?.email"></p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-blue-600">Generated by</p>
+                                            <p class="text-xs text-blue-500" x-text="currentUser?.role"></p>
+                                            <p class="text-xs text-blue-500" x-text="new Date(currentUser?.generatedAt).toLocaleString()"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <!-- Summary Cards -->
+                                    <div x-show="reportData?.summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                        <template x-for="[key, value] in Object.entries(reportData?.summary || {})">
+                                            <div class="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
+                                                <p class="text-sm text-orange-600 font-medium capitalize" x-text="key.replace(/([A-Z])/g, ' $1').trim()"></p>
+                                                <p class="text-2xl font-bold text-orange-900" x-text="typeof value === 'number' ? value.toLocaleString() : value"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Chart Data -->
+                                    <div x-show="reportData?.chartData" class="mb-6">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Trend Overview</h4>
+                                        <div class="bg-slate-50 p-4 rounded-lg">
+                                            <div class="flex items-end justify-between h-32 gap-2">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <div class="flex-1 bg-orange-400 rounded-t" 
+                                                         :style="`height: ${(item.value / 120) * 100}%`"
+                                                         :title="`${item.label}: ${item.value}`">
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="flex justify-between mt-2 text-xs text-slate-500">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <span x-text="item.label"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Table Data -->
+                                    <div x-show="reportData?.tableData">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Detailed Data</h4>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-slate-200">
+                                                <thead class="bg-slate-50">
+                                                    <tr>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">ID</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Value</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    <template x-for="item in reportData?.tableData || []">
+                                                        <tr class="hover:bg-slate-50">
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.id"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.name"></td>
+                                                            <td class="px-4 py-2 text-sm">
+                                                                <span class="px-2 py-1 text-xs rounded-full"
+                                                                      :class="item.status === 'Active' || item.status === 'Compliant' || item.status === 'Resolved' ? 'bg-green-100 text-green-800' : 
+                                                                               item.status === 'Inactive' || item.status === 'Non-Compliant' ? 'bg-red-100 text-red-800' : 
+                                                                               'bg-yellow-100 text-yellow-800'"
+                                                                      x-text="item.status"></span>
+                                                            </td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="typeof item.value === 'number' ? item.value.toLocaleString() : item.value"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-500" x-text="item.date"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Management Reports -->
+                        <div x-show="activeReportTab === 'users'" x-cloak class="space-y-6">
+                            <!-- User Management Configuration -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h2 class="text-lg font-semibold text-slate-900 mb-4">User Management Reports</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">User Report Type</label>
+                                        <select x-model="reportType" @change="watchReportType()" title="Select user report type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="overview">User Overview</option>
+                                            <option value="admin_users">Admin Users</option>
+                                            <option value="operations_staff">Operations Staff</option>
+                                            <option value="user_activity">User Activity</option>
+                                            <option value="role_changes">Role Changes</option>
+                                            <option value="deactivated_users">Deactivated Users</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Date Range</label>
+                                        <select x-model="dateRange" @change="watchDateRange()" title="Select date range" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="7days">Last 7 Days</option>
+                                            <option value="30days">Last 30 Days</option>
+                                            <option value="90days">Last 90 Days</option>
+                                            <option value="1year">Last Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button @click="generateUserReport()" 
+                                                :disabled="loading"
+                                                class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                            <i class="fas fa-users mr-2"></i>
+                                            <span x-show="!loading">Generate User Report</span>
+                                            <span x-show="loading">Generating...</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- User Results -->
+                            <div x-show="reportData" x-cloak class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-900" x-text="reportData?.title"></h3>
+                                        <p class="text-sm text-slate-500" x-text="reportData?.dateRange"></p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button @click="exportReport()" class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">
+                                            <i class="fas fa-download mr-1"></i>Export PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Information -->
+                                <div x-show="currentUser" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-blue-900" x-text="currentUser?.name"></p>
+                                                <p class="text-xs text-blue-600" x-text="currentUser?.email"></p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-blue-600">Generated by</p>
+                                            <p class="text-xs text-blue-500" x-text="currentUser?.role"></p>
+                                            <p class="text-xs text-blue-500" x-text="new Date(currentUser?.generatedAt).toLocaleString()"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <!-- Summary Cards -->
+                                    <div x-show="reportData?.summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                        <template x-for="[key, value] in Object.entries(reportData?.summary || {})">
+                                            <div class="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
+                                                <p class="text-sm text-orange-600 font-medium capitalize" x-text="key.replace(/([A-Z])/g, ' $1').trim()"></p>
+                                                <p class="text-2xl font-bold text-orange-900" x-text="typeof value === 'number' ? value.toLocaleString() : value"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Chart Data -->
+                                    <div x-show="reportData?.chartData" class="mb-6">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Trend Overview</h4>
+                                        <div class="bg-slate-50 p-4 rounded-lg">
+                                            <div class="flex items-end justify-between h-32 gap-2">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <div class="flex-1 bg-orange-400 rounded-t" 
+                                                         :style="`height: ${(item.value / 120) * 100}%`"
+                                                         :title="`${item.label}: ${item.value}`">
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="flex justify-between mt-2 text-xs text-slate-500">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <span x-text="item.label"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Table Data -->
+                                    <div x-show="reportData?.tableData">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Detailed Data</h4>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-slate-200">
+                                                <thead class="bg-slate-50">
+                                                    <tr>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">ID</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Value</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    <template x-for="item in reportData?.tableData || []">
+                                                        <tr class="hover:bg-slate-50">
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.id"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.name"></td>
+                                                            <td class="px-4 py-2 text-sm">
+                                                                <span class="px-2 py-1 text-xs rounded-full"
+                                                                      :class="item.status === 'Active' || item.status === 'Compliant' || item.status === 'Resolved' ? 'bg-green-100 text-green-800' : 
+                                                                               item.status === 'Inactive' || item.status === 'Non-Compliant' ? 'bg-red-100 text-red-800' : 
+                                                                               'bg-yellow-100 text-yellow-800'"
+                                                                      x-text="item.status"></span>
+                                                            </td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="typeof item.value === 'number' ? item.value.toLocaleString() : item.value"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-500" x-text="item.date"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Support Tickets Reports -->
+                        <div x-show="activeReportTab === 'tickets'" x-cloak class="space-y-6">
+                            <!-- Tickets Configuration -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h2 class="text-lg font-semibold text-slate-900 mb-4">Support Tickets Reports</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Ticket Report Type</label>
+                                        <select x-model="reportType" @change="watchReportType()" title="Select ticket report type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="overview">Ticket Overview</option>
+                                            <option value="open_tickets">Open Tickets</option>
+                                            <option value="resolved_tickets">Resolved Tickets</option>
+                                            <option value="escalation_queue">Escalation Queue</option>
+                                            <option value="response_times">Response Times</option>
+                                            <option value="satisfaction_scores">Satisfaction Scores</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Date Range</label>
+                                        <select x-model="dateRange" @change="watchDateRange()" title="Select date range" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="7days">Last 7 Days</option>
+                                            <option value="30days">Last 30 Days</option>
+                                            <option value="90days">Last 90 Days</option>
+                                            <option value="1year">Last Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button @click="generateTicketReport()" 
+                                                :disabled="loading"
+                                                class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                            <i class="fas fa-ticket-alt mr-2"></i>
+                                            <span x-show="!loading">Generate Ticket Report</span>
+                                            <span x-show="loading">Generating...</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tickets Results -->
+                            <div x-show="reportData" x-cloak class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-900" x-text="reportData?.title"></h3>
+                                        <p class="text-sm text-slate-500" x-text="reportData?.dateRange"></p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button @click="exportReport()" class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">
+                                            <i class="fas fa-download mr-1"></i>Export PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Information -->
+                                <div x-show="currentUser" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-blue-900" x-text="currentUser?.name"></p>
+                                                <p class="text-xs text-blue-600" x-text="currentUser?.email"></p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-blue-600">Generated by</p>
+                                            <p class="text-xs text-blue-500" x-text="currentUser?.role"></p>
+                                            <p class="text-xs text-blue-500" x-text="new Date(currentUser?.generatedAt).toLocaleString()"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <!-- Summary Cards -->
+                                    <div x-show="reportData?.summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                        <template x-for="[key, value] in Object.entries(reportData?.summary || {})">
+                                            <div class="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
+                                                <p class="text-sm text-orange-600 font-medium capitalize" x-text="key.replace(/([A-Z])/g, ' $1').trim()"></p>
+                                                <p class="text-2xl font-bold text-orange-900" x-text="typeof value === 'number' ? value.toLocaleString() : value"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Chart Data -->
+                                    <div x-show="reportData?.chartData" class="mb-6">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Trend Overview</h4>
+                                        <div class="bg-slate-50 p-4 rounded-lg">
+                                            <div class="flex items-end justify-between h-32 gap-2">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <div class="flex-1 bg-orange-400 rounded-t" 
+                                                         :style="`height: ${(item.value / 120) * 100}%`"
+                                                         :title="`${item.label}: ${item.value}`">
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="flex justify-between mt-2 text-xs text-slate-500">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <span x-text="item.label"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Table Data -->
+                                    <div x-show="reportData?.tableData">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Detailed Data</h4>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-slate-200">
+                                                <thead class="bg-slate-50">
+                                                    <tr>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">ID</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Value</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    <template x-for="item in reportData?.tableData || []">
+                                                        <tr class="hover:bg-slate-50">
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.id"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.name"></td>
+                                                            <td class="px-4 py-2 text-sm">
+                                                                <span class="px-2 py-1 text-xs rounded-full"
+                                                                      :class="item.status === 'Active' || item.status === 'Compliant' || item.status === 'Resolved' ? 'bg-green-100 text-green-800' : 
+                                                                               item.status === 'Inactive' || item.status === 'Non-Compliant' ? 'bg-red-100 text-red-800' : 
+                                                                               'bg-yellow-100 text-yellow-800'"
+                                                                      x-text="item.status"></span>
+                                                            </td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="typeof item.value === 'number' ? item.value.toLocaleString() : item.value"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-500" x-text="item.date"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Schools Reports -->
+                        <div x-show="activeReportTab === 'schools'" x-cloak class="space-y-6">
+                            <!-- Schools Configuration -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h2 class="text-lg font-semibold text-slate-900 mb-4">School Management Reports</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">School Report Type</label>
+                                        <select x-model="reportType" @change="watchReportType()" title="Select school report type" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="overview">School Overview</option>
+                                            <option value="active_schools">Active Schools</option>
+                                            <option value="inactive_schools">Inactive Schools</option>
+                                            <option value="new_onboarding">New Onboarding</option>
+                                            <option value="feature_usage">Feature Usage</option>
+                                            <option value="storage_usage">Storage Usage</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Date Range</label>
+                                        <select x-model="dateRange" @change="watchDateRange()" title="Select date range" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="7days">Last 7 Days</option>
+                                            <option value="30days">Last 30 Days</option>
+                                            <option value="90days">Last 90 Days</option>
+                                            <option value="1year">Last Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button @click="generateSchoolReport()" 
+                                                :disabled="loading"
+                                                class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                            <i class="fas fa-school mr-2"></i>
+                                            <span x-show="!loading">Generate School Report</span>
+                                            <span x-show="loading">Generating...</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Schools Results -->
+                            <div x-show="reportData" x-cloak class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-900" x-text="reportData?.title"></h3>
+                                        <p class="text-sm text-slate-500" x-text="reportData?.dateRange"></p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button @click="exportReport()" class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">
+                                            <i class="fas fa-download mr-1"></i>Export PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Information -->
+                                <div x-show="currentUser" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-blue-900" x-text="currentUser?.name"></p>
+                                                <p class="text-xs text-blue-600" x-text="currentUser?.email"></p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-blue-600">Generated by</p>
+                                            <p class="text-xs text-blue-500" x-text="currentUser?.role"></p>
+                                            <p class="text-xs text-blue-500" x-text="new Date(currentUser?.generatedAt).toLocaleString()"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <!-- Summary Cards -->
+                                    <div x-show="reportData?.summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                        <template x-for="[key, value] in Object.entries(reportData?.summary || {})">
+                                            <div class="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
+                                                <p class="text-sm text-orange-600 font-medium capitalize" x-text="key.replace(/([A-Z])/g, ' $1').trim()"></p>
+                                                <p class="text-2xl font-bold text-orange-900" x-text="typeof value === 'number' ? value.toLocaleString() : value"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Chart Data -->
+                                    <div x-show="reportData?.chartData" class="mb-6">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Trend Overview</h4>
+                                        <div class="bg-slate-50 p-4 rounded-lg">
+                                            <div class="flex items-end justify-between h-32 gap-2">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <div class="flex-1 bg-orange-400 rounded-t" 
+                                                         :style="`height: ${(item.value / 120) * 100}%`"
+                                                         :title="`${item.label}: ${item.value}`">
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="flex justify-between mt-2 text-xs text-slate-500">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <span x-text="item.label"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Table Data -->
+                                    <div x-show="reportData?.tableData">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Detailed Data</h4>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-slate-200">
+                                                <thead class="bg-slate-50">
+                                                    <tr>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">ID</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Value</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    <template x-for="item in reportData?.tableData || []">
+                                                        <tr class="hover:bg-slate-50">
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.id"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.name"></td>
+                                                            <td class="px-4 py-2 text-sm">
+                                                                <span class="px-2 py-1 text-xs rounded-full"
+                                                                      :class="item.status === 'Active' || item.status === 'Compliant' || item.status === 'Resolved' ? 'bg-green-100 text-green-800' : 
+                                                                               item.status === 'Inactive' || item.status === 'Non-Compliant' ? 'bg-red-100 text-red-800' : 
+                                                                               'bg-yellow-100 text-yellow-800'"
+                                                                      x-text="item.status"></span>
+                                                            </td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="typeof item.value === 'number' ? item.value.toLocaleString() : item.value"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-500" x-text="item.date"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Reports -->
+                        <div x-show="activeReportTab === 'custom'" x-cloak class="space-y-6">
+                            <!-- Custom Report Configuration -->
+                            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <h2 class="text-lg font-semibold text-slate-900 mb-4">Custom Report Builder</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Report Name</label>
+                                        <input type="text" x-model="customReportConfig.name" placeholder="Enter report name" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Description</label>
+                                        <input type="text" x-model="customReportConfig.description" placeholder="Enter report description" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Date Range</label>
+                                        <select x-model="customReportConfig.dateRange" @change="watchDateRange()" title="Select date range" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="7days">Last 7 Days</option>
+                                            <option value="30days">Last 30 Days</option>
+                                            <option value="90days">Last 90 Days</option>
+                                            <option value="1year">Last Year</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-2">Target Schools</label>
+                                        <select multiple title="Select target schools" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                            <option value="all">All Schools</option>
+                                            <!-- School options would be populated dynamically -->
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-6">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Select Metrics</label>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        <label class="flex items-center gap-2">
+                                            <input type="checkbox" class="rounded text-orange-500">
+                                            <span class="text-sm">Enrollment</span>
+                                        </label>
+                                        <label class="flex items-center gap-2">
+                                            <input type="checkbox" class="rounded text-orange-500">
+                                            <span class="text-sm">Performance</span>
+                                        </label>
+                                        <label class="flex items-center gap-2">
+                                            <input type="checkbox" class="rounded text-orange-500">
+                                            <span class="text-sm">Attendance</span>
+                                        </label>
+                                        <label class="flex items-center gap-2">
+                                            <input type="checkbox" class="rounded text-orange-500">
+                                            <span class="text-sm">Financial</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="mt-6">
+                                    <button @click="generateCustomReport()" 
+                                            :disabled="loading"
+                                            class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                        <i class="fas fa-cog mr-2"></i>
+                                        <span x-show="!loading">Generate Custom Report</span>
+                                        <span x-show="loading">Generating...</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Custom Report Results -->
+                            <div x-show="reportData" x-cloak class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-slate-900" x-text="reportData?.title"></h3>
+                                        <p class="text-sm text-slate-500" x-text="reportData?.dateRange"></p>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button @click="exportReport()" class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">
+                                            <i class="fas fa-download mr-1"></i>Export PDF
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- User Information -->
+                                <div x-show="currentUser" class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-medium text-blue-900" x-text="currentUser?.name"></p>
+                                                <p class="text-xs text-blue-600" x-text="currentUser?.email"></p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-blue-600">Generated by</p>
+                                            <p class="text-xs text-blue-500" x-text="currentUser?.role"></p>
+                                            <p class="text-xs text-blue-500" x-text="new Date(currentUser?.generatedAt).toLocaleString()"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <!-- Summary Cards -->
+                                    <div x-show="reportData?.summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                        <template x-for="[key, value] in Object.entries(reportData?.summary || {})">
+                                            <div class="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
+                                                <p class="text-sm text-orange-600 font-medium capitalize" x-text="key.replace(/([A-Z])/g, ' $1').trim()"></p>
+                                                <p class="text-2xl font-bold text-orange-900" x-text="typeof value === 'number' ? value.toLocaleString() : value"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Chart Data -->
+                                    <div x-show="reportData?.chartData" class="mb-6">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Trend Overview</h4>
+                                        <div class="bg-slate-50 p-4 rounded-lg">
+                                            <div class="flex items-end justify-between h-32 gap-2">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <div class="flex-1 bg-orange-400 rounded-t" 
+                                                         :style="`height: ${(item.value / 120) * 100}%`"
+                                                         :title="`${item.label}: ${item.value}`">
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="flex justify-between mt-2 text-xs text-slate-500">
+                                                <template x-for="item in reportData?.chartData || []">
+                                                    <span x-text="item.label"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Table Data -->
+                                    <div x-show="reportData?.tableData">
+                                        <h4 class="text-sm font-medium text-slate-700 mb-3">Detailed Data</h4>
+                                        <div class="overflow-x-auto">
+                                            <table class="min-w-full divide-y divide-slate-200">
+                                                <thead class="bg-slate-50">
+                                                    <tr>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">ID</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Name</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Value</th>
+                                                        <th class="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="bg-white divide-y divide-slate-200">
+                                                    <template x-for="item in reportData?.tableData || []">
+                                                        <tr class="hover:bg-slate-50">
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.id"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="item.name"></td>
+                                                            <td class="px-4 py-2 text-sm">
+                                                                <span class="px-2 py-1 text-xs rounded-full"
+                                                                      :class="item.status === 'Active' || item.status === 'Compliant' || item.status === 'Resolved' ? 'bg-green-100 text-green-800' : 
+                                                                               item.status === 'Inactive' || item.status === 'Non-Compliant' ? 'bg-red-100 text-red-800' : 
+                                                                               'bg-yellow-100 text-yellow-800'"
+                                                                      x-text="item.status"></span>
+                                                            </td>
+                                                            <td class="px-4 py-2 text-sm text-slate-900" x-text="typeof item.value === 'number' ? item.value.toLocaleString() : item.value"></td>
+                                                            <td class="px-4 py-2 text-sm text-slate-500" x-text="item.date"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1734 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - Teacher Attendance</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/config/config.js"></script>
+    <script src="/frontend/portals/school-admin/classes-api.js" defer></script>
+    <script src="/frontend/portals/school-admin/pupils-api.js" defer></script>
+    <script src="/shared-assets/js/shared-attendance.js" defer></script>
+    <script src="teacher-attendance-api.js" defer></script>
+    <script src="teacher-api.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="/shared-assets/js/shared-auth.js" defer></script>
+    <script src="/shared-assets/js/shared-teacher-api.js" defer></script>
+    <script src="/shared-assets/js/shared-portal-integration.js" defer></script>
+    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="/shared-assets/js/shared-admin-notifications.js" defer></script>
+    <script src="/shared-assets/js/shared-export-print.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.29/dist/jspdf.plugin.autotable.min.js" defer></script>
+    <script src="/shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/frontend/shared-assets/css/styles.css">
+</head>
+<body class="dashboard-page">
+    <div x-data="{
+            sidebarOpen: false, 
+            chatOpen: false, 
+            activeTab: 'students-attendance',
+            selectedDate: new Date().toISOString().split('T')[0],
+            selectedClass: '',
+            loadingPupils: false,
+            attendanceData: {},
+            showUpdateDialog: false,
+            selectedStudentForReport: null,
+            showStudentReportModal: false,
+            students: {},
+            allStudents: [],
+            classWeekMatrix: [],
+            loadingWeekData: false,
+            get currentStudents() {
+                return this.students[this.selectedClass] || [];
+            },
+            get weekDaysForReport() {
+                var ref = this.selectedDate || new Date().toISOString().slice(0, 10);
+                var base = new Date(ref + 'T00:00:00');
+                if (isNaN(base.getTime())) {
+                    base = new Date();
+                }
+                var day = base.getDay();
+                var diff = (day === 0 ? -6 : 1 - day);
+                var labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+                var days = [];
+                for (var i = 0; i < 5; i++) {
+                    var d = new Date(base);
+                    d.setDate(base.getDate() + diff + i);
+                    var iso = d.toISOString().slice(0, 10);
+                    days.push({
+                        iso: iso,
+                        label: labels[i] + ' ' + iso
+                    });
+                }
+                return days;
+            },
+            async loadClassWeekMatrix() {
+                var className = this.selectedClass;
+                var students = (this.students && this.students[className]) || [];
+                var days = this.weekDaysForReport;
+                if (!className || className === 'all' || !days.length || !students.length) {
+                    this.classWeekMatrix = [];
+                    return;
+                }
+
+                this.loadingWeekData = true;
+                var perDay = {};
+
+                try {
+                    // Try to load data from backend API for each day
+                    for (var i = 0; i < days.length; i++) {
+                        var iso = days[i].iso;
+                        try {
+                            if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.loadClassAttendance === 'function') {
+                                const result = await window.ShikolaTeacherApi.loadClassAttendance(className, iso);
+                                perDay[iso] = result && result.attendance ? result.attendance : {};
+                            } else {
+                                // Fallback to localStorage
+                                if (window.ShikolaAttendanceStore && typeof window.ShikolaAttendanceStore.loadStudentAttendanceForClass === 'function') {
+                                    var payload = window.ShikolaAttendanceStore.loadStudentAttendanceForClass(iso, className);
+                                    perDay[iso] = payload && payload.attendance ? payload.attendance : {};
+                                } else {
+                                    perDay[iso] = {};
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Failed to load attendance for', iso, ':', e);
+                            perDay[iso] = {};
+                        }
+                    }
+
+                    this.classWeekMatrix = students.map(function (s) {
+                        var statuses = days.map(function (d) {
+                            var att = perDay[d.iso] || {};
+                            return att[s.id] || '';
+                        });
+                        return {
+                            id: s.id,
+                            name: s.name,
+                            statuses: statuses
+                        };
+                    });
+                } catch (error) {
+                    console.error('Failed to load class week matrix:', error);
+                    this.classWeekMatrix = [];
+                } finally {
+                    this.loadingWeekData = false;
+                }
+            },
+            get classWeekSummary() {
+                var rows = this.classWeekMatrix || [];
+                var days = this.weekDaysForReport || [];
+                if (!rows.length || !days.length) {
+                    return { hasData: false, bestDayLabel: '-', bestPct: 0, worstDayLabel: '-', worstPct: 0, avgPct: 0 };
+                }
+                var perDayPresent = new Array(days.length).fill(0);
+                var perDayTotal = new Array(days.length).fill(0);
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    var statuses = row && row.statuses ? row.statuses : [];
+                    for (var j = 0; j < statuses.length; j++) {
+                        var st = statuses[j];
+                        if (!st) continue;
+                        perDayTotal[j] += 1;
+                        // Count P, L, S, E as present
+                        if (st === 'P' || st === 'L' || st === 'S' || st === 'E') perDayPresent[j] += 1;
+                    }
+                }
+                var bestIdx = -1;
+                var worstIdx = -1;
+                var bestPct = null;
+                var worstPct = null;
+                var sumPct = 0;
+                var countPct = 0;
+                for (var k = 0; k < days.length; k++) {
+                    if (!perDayTotal[k]) continue;
+                    var pct = Math.round((perDayPresent[k] * 100) / perDayTotal[k]);
+                    sumPct += pct;
+                    countPct += 1;
+                    if (bestPct === null || pct > bestPct) {
+                        bestPct = pct;
+                        bestIdx = k;
+                    }
+                    if (worstPct === null || pct < worstPct) {
+                        worstPct = pct;
+                        worstIdx = k;
+                    }
+                }
+                if (countPct === 0) {
+                    return { hasData: false, bestDayLabel: '-', bestPct: 0, worstDayLabel: '-', worstPct: 0, avgPct: 0 };
+                }
+                var avgPct = Math.round(sumPct / countPct);
+                return {
+                    hasData: true,
+                    bestDayLabel: bestIdx >= 0 ? days[bestIdx].label : '-',
+                    bestPct: bestPct || 0,
+                    worstDayLabel: worstIdx >= 0 ? days[worstIdx].label : '-',
+                    worstPct: worstPct || 0,
+                    avgPct: avgPct
+                };
+            },
+            get classOptions() {
+                // Base list from pupils currently loaded in this view
+                var defaults = Object.keys(this.students || {});
+                var baseNames = defaults.slice();
+                // Enrich with classes from the shared classes UI store when available
+                try {
+                    if (window.ShikolaClassesUi && typeof window.ShikolaClassesUi.getClassOptions === 'function') {
+                        var names = window.ShikolaClassesUi.getClassOptions(defaults);
+                        if (Array.isArray(names) && names.length) {
+                            baseNames = names;
+                        }
+                    }
+                } catch (e) {
+                }
+                // Restrict to classes assigned to the logged-in teacher
+                try {
+                    var auth = window.shikolaAuth;
+                    var store = window.ShikolaClassesStore;
+                    if (auth && store && typeof auth.getCurrentUser === 'function' && typeof store.listClasses === 'function') {
+                        var user = auth.getCurrentUser();
+                        if (user && user.role === 'teacher') {
+                            var teacherName = (user.name || '').toLowerCase();
+                            var allClasses = store.listClasses() || [];
+                            var allowed = [];
+                            for (var i = 0; i < allClasses.length; i++) {
+                                var c = allClasses[i];
+                                if (!c || !c.name) continue;
+                                var t = (c.classTeacher || '').toLowerCase();
+                                if (teacherName && t.indexOf(teacherName) === -1) continue;
+                                if (baseNames.indexOf(c.name) !== -1 && allowed.indexOf(c.name) === -1) {
+                                    allowed.push(c.name);
+                                }
+                            }
+                            if (allowed.length) {
+                                return allowed;
+                            }
+                        }
+                    }
+                } catch (e) {
+                }
+                return baseNames;
+            },
+            get attendanceStats() {
+                const students = this.currentStudents;
+                const present = students.filter(s => s.status === 'P').length;
+                const late = students.filter(s => s.status === 'L').length;
+                const sick = students.filter(s => s.status === 'S').length;
+                const excused = students.filter(s => s.status === 'E').length;
+                const absent = students.filter(s => s.status === 'A').length;
+                const total = students.length;
+                // Count P, L, S, E as present for attendance percentage
+                const attendedCount = present + late + sick + excused;
+                return { present, late, sick, excused, absent, total, attendedCount, percentage: total > 0 ? Math.round((attendedCount / total) * 100) : 0 };
+            },
+            get hasRemarks() {
+                return this.currentStudents.some(s => s.remark.trim() !== '');
+            },
+            async loadPupilsFromStore() {
+                this.loadingPupils = true;
+                try {
+                    var list = [];
+                    if (window.ShikolaPupilsApi && typeof window.ShikolaPupilsApi.listPupils === 'function') {
+                        list = await window.ShikolaPupilsApi.listPupils();
+                    } else if (window.ShikolaPupilsApi && typeof window.ShikolaPupilsApi.getLocalPupils === 'function') {
+                        list = window.ShikolaPupilsApi.getLocalPupils() || [];
+                    }
+                    if (Array.isArray(list) && list.length) {
+                        var grouped = null;
+                        var namesForAll = null;
+                        try {
+                            if (window.ShikolaPupilsHelpers && typeof window.ShikolaPupilsHelpers.groupByClassForAttendance === 'function') {
+                                var result = window.ShikolaPupilsHelpers.groupByClassForAttendance(list);
+                                if (result && result.studentsByClass) {
+                                    grouped = result.studentsByClass;
+                                    namesForAll = result.allStudents || [];
+                                }
+                            }
+                        } catch (e) {
+                        }
+                        if (!grouped) {
+                            grouped = {};
+                            namesForAll = [];
+                            list.forEach(function (p) {
+                                if (!p) return;
+                                var cls = p.classLabel || p.classGrade || p.className || 'Unassigned';
+                                var fullName = (p.fullName || ((p.firstName || '') + ' ' + (p.lastName || ''))).trim();
+                                if (!fullName) {
+                                    fullName = p.admissionNo || p.id || 'Pupil';
+                                }
+                                if (!grouped[cls]) {
+                                    grouped[cls] = [];
+                                }
+                                grouped[cls].push({
+                                    id: p.id || p.studentId || p.admissionNo || p.registrationNo || fullName,
+                                    name: fullName,
+                                    status: 'P',
+                                    remark: ''
+                                });
+                                namesForAll.push(fullName + ' - ' + cls);
+                            });
+                        }
+                        if (Object.keys(grouped).length) {
+                            this.students = grouped;
+                            this.allStudents = namesForAll;
+                            if (!this.selectedClass) {
+                                var keys = Object.keys(grouped);
+                                if (keys.length) {
+                                    this.selectedClass = keys[0];
+                                }
+                            }
+                            // Load existing attendance after pupils are loaded
+                            await this.checkExistingAttendance();
+                        }
+                    }
+                } catch (e) {
+                    this.showNotification('Failed to load pupils: ' + e.message);
+                } finally {
+                    this.loadingPupils = false;
+                }
+            },
+            initializeAttendance() {
+                const key = `${this.selectedDate}-${this.selectedClass}`;
+                if (!this.attendanceData[key]) {
+                    this.attendanceData[key] = JSON.parse(JSON.stringify(this.currentStudents));
+                }
+                return this.attendanceData[key];
+            },
+            validateAttendanceData() {
+                const students = this.currentStudents || [];
+                const errors = [];
+                const warnings = [];
+
+                // Check if all students have attendance marked
+                const unmarkedStudents = students.filter(s => !s.status || s.status === '');
+                if (unmarkedStudents.length > 0) {
+                    warnings.push(`${unmarkedStudents.length} students without attendance status`);
+                }
+
+                // Check for invalid status codes
+                const validStatuses = ['P', 'A', 'L', 'S', 'E', 'Lv'];
+                const invalidStatuses = students.filter(s => s.status && !validStatuses.includes(s.status));
+                if (invalidStatuses.length > 0) {
+                    errors.push(`Invalid attendance status for ${invalidStatuses.length} students`);
+                }
+
+                // Check for remarks that are too long
+                const longRemarks = students.filter(s => s.remark && s.remark.length > 200);
+                if (longRemarks.length > 0) {
+                    warnings.push(`${longRemarks.length} students have remarks longer than 200 characters`);
+                }
+
+                // Check if date is in the future
+                const selectedDate = new Date(this.selectedDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (selectedDate > today) {
+                    warnings.push('Attendance date is in the future');
+                }
+
+                // Check if date is too old (more than 30 days)
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+                if (selectedDate < thirtyDaysAgo) {
+                    warnings.push('Attendance date is more than 30 days old');
+                }
+
+                return {
+                    isValid: errors.length === 0,
+                    errors,
+                    warnings,
+                    canProceed: errors.length === 0
+                };
+            },
+
+            async resolveAttendanceConflicts() {
+                // Check for existing attendance and handle conflicts
+                try {
+                    const existingData = await this.checkExistingAttendance();
+                    if (existingData) {
+                        // Attendance already exists, ask user what to do
+                        const overwrite = confirm(`Attendance already exists for ${this.selectedClass} on ${this.selectedDate}. Do you want to overwrite it?`);
+                        if (!overwrite) {
+                            return false; // User cancelled
+                        }
+                    }
+                    return true; // Proceed with saving
+                } catch (error) {
+                    console.error('Error checking for conflicts:', error);
+                    return true; // Proceed anyway on error
+                }
+            },
+            async saveAttendance() {
+                // Validate attendance data first
+                const validation = this.validateAttendanceData();
+                if (!validation.isValid) {
+                    this.showNotification('Cannot save: ' + validation.errors.join(', '), 'error');
+                    return;
+                }
+
+                // Show warnings if any
+                if (validation.warnings.length > 0) {
+                    const proceed = confirm('Warnings: ' + validation.warnings.join(', ') + '\n\nProceed anyway?');
+                    if (!proceed) {
+                        return;
+                    }
+                }
+
+                // Check for conflicts
+                const canProceed = await this.resolveAttendanceConflicts();
+                if (!canProceed) {
+                    return;
+                }
+
+                const key = `${this.selectedDate}-${this.selectedClass}`;
+                this.attendanceData[key] = JSON.parse(JSON.stringify(this.currentStudents));
+
+                // Show loading state
+                const originalButtonText = event.target ? event.target.textContent : '';
+                if (event.target) {
+                    event.target.textContent = 'Saving...';
+                    event.target.disabled = true;
+                }
+
+                try {
+                    // Use real backend API
+                    if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.saveClassAttendance === 'function') {
+                        const result = await window.ShikolaTeacherApi.saveClassAttendance(
+                            this.selectedClass,
+                            this.selectedDate,
+                            this.currentStudents,
+                            { notes: 'Teacher portal attendance' }
+                        );
+
+                        if (result.success) {
+                            this.showNotification('Attendance saved successfully to database!', 'success');
+                            this.syncRemarksToPortals();
+                            
+                            // Update local storage as backup
+                            this.saveToLocalStorage();
+                        } else {
+                            throw new Error(result.error || 'Failed to save attendance');
+                        }
+                    } else {
+                        throw new Error('Attendance API not available');
+                    }
+                } catch (error) {
+                    console.error('Backend save failed, using local storage:', error);
+                    this.showNotification('Backend unavailable. Attendance saved locally.', 'warning');
+                    
+                    // Fallback to local storage
+                    this.saveToLocalStorage();
+                } finally {
+                    // Reset button state
+                    if (event.target) {
+                        event.target.textContent = originalButtonText;
+                        event.target.disabled = false;
+                    }
+                }
+            },
+
+            saveToLocalStorage() {
+                const key = `${this.selectedDate}-${this.selectedClass}`;
+                this.attendanceData[key] = JSON.parse(JSON.stringify(this.currentStudents));
+
+                // Build attendance object with status by student ID
+                const attendanceObj = {};
+                (this.currentStudents || []).forEach(function (s) {
+                    attendanceObj[s.id] = s.status || 'P';
+                });
+
+                // Save to local storage as backup
+                try {
+                    if (window.ShikolaAttendanceStore && typeof window.ShikolaAttendanceStore.saveStudentAttendanceForClass === 'function') {
+                        const entries = (this.currentStudents || []).map(function (s) {
+                            return {
+                                id: s.id,
+                                status: s.status || 'P',
+                                remark: s.remark || ''
+                            };
+                        });
+                        window.ShikolaAttendanceStore.saveStudentAttendanceForClass(this.selectedDate, this.selectedClass, entries);
+                    }
+                } catch (e) {
+                    console.warn('Failed to save to local storage:', e);
+                }
+            },
+            async checkExistingAttendance() {
+                const key = `${this.selectedDate}-${this.selectedClass}`;
+                if (this.attendanceData[key]) {
+                    return this.attendanceData[key];
+                }
+
+                // Try to load from backend API first
+                try {
+                    if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.loadClassAttendance === 'function') {
+                        const result = await window.ShikolaTeacherApi.loadClassAttendance(this.selectedClass, this.selectedDate);
+                        
+                        if (result.hasData) {
+                            const students = this.currentStudents || [];
+                            students.forEach(function (s) {
+                                const status = result.attendance[s.id];
+                                if (status) {
+                                    s.status = status;
+                                }
+                                if (result.remarks[s.id]) {
+                                    s.remark = result.remarks[s.id];
+                                }
+                            });
+                            this.attendanceData[key] = JSON.parse(JSON.stringify(this.currentStudents));
+                            return this.attendanceData[key];
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Failed to load attendance from backend:', error);
+                }
+
+                // Fallback to local storage
+                try {
+                    if (window.ShikolaAttendanceStore && typeof window.ShikolaAttendanceStore.loadStudentAttendanceForClass === 'function') {
+                        const payload = window.ShikolaAttendanceStore.loadStudentAttendanceForClass(this.selectedDate, this.selectedClass);
+                        if (payload && payload.attendance && typeof payload.attendance === 'object') {
+                            const students = this.currentStudents || [];
+                            const remarks = payload.remarks || {};
+                            students.forEach(function (s) {
+                                const status = payload.attendance[s.id];
+                                if (status) {
+                                    s.status = status;
+                                }
+                                if (remarks[s.id]) {
+                                    s.remark = remarks[s.id];
+                                }
+                            });
+                            this.attendanceData[key] = JSON.parse(JSON.stringify(this.currentStudents));
+                            return this.attendanceData[key];
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Failed to load from local storage:', e);
+                }
+
+                return null;
+            },
+            updateAttendance() {
+                this.saveAttendance();
+                this.showUpdateDialog = false;
+            },
+            async syncRemarksToPortals() {
+                // Real-time sync of remarks to other portals
+                const remarks = this.currentStudents.filter(s => s.remark && s.remark.trim() !== '');
+                if (remarks.length > 0) {
+                    try {
+                        // Dispatch real-time event for other portals
+                        window.dispatchEvent(new CustomEvent('shikola:attendance-remarks-updated', {
+                            detail: {
+                                className: this.selectedClass,
+                                date: this.selectedDate,
+                                remarks: remarks.map(s => ({
+                                    pupilId: s.id,
+                                    pupilName: s.name,
+                                    remark: s.remark,
+                                    status: s.status
+                                })),
+                                timestamp: new Date().toISOString(),
+                                updatedBy: 'teacher'
+                            }
+                        }));
+
+                        // Save remarks to backend for cross-portal access
+                        if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.saveAttendanceRemarks === 'function') {
+                            await window.ShikolaTeacherApi.saveAttendanceRemarks(
+                                this.selectedClass,
+                                this.selectedDate,
+                                remarks
+                            );
+                        }
+
+                        console.log('Remarks synced to portals:', remarks.length, 'students');
+                    } catch (error) {
+                        console.error('Failed to sync remarks to portals:', error);
+                    }
+                }
+            },
+            async generatePDFReport(type) {
+                if (type === 'class') {
+                    this.generateClassPDF();
+                } else if (type === 'student' && this.selectedStudentForReport) {
+                    await this.generateStudentPDF();
+                }
+            },
+            generateClassPDF() {
+                var className = this.selectedClass;
+                if (!className || className === 'all') {
+                    this.showNotification('Select a specific class to generate the report.');
+                    return;
+                }
+                var days = this.weekDaysForReport || [];
+                var rows = this.classWeekMatrix || [];
+                if (!days.length || !rows.length) {
+                    this.showNotification('No attendance data found for this class and week.');
+                    return;
+                }
+                try {
+                    if (!window.jspdf || !window.jspdf.jsPDF || !window.jspdf.jsPDF.prototype.autoTable) {
+                        this.showNotification('PDF export is not available in this browser.');
+                        return;
+                    }
+                    var jsPDF = window.jspdf.jsPDF;
+                    var doc = new jsPDF('l', 'pt', 'a4');
+                    var head = ['Pupil'].concat(days.map(function (d) { return d.label; }));
+                    var body = rows.map(function (row) {
+                        return [row.name].concat(row.statuses);
+                    });
+                    doc.setFontSize(12);
+                    doc.text('Class Attendance Report', 40, 40);
+                    doc.setFontSize(10);
+                    doc.text('Class: ' + className, 40, 58);
+                    doc.text('Week: ' + days[0].iso + ' to ' + days[days.length - 1].iso, 40, 74);
+                    doc.autoTable({
+                        head: [head],
+                        body: body,
+                        startY: 90,
+                        styles: { fontSize: 8, cellPadding: 3 },
+                        headStyles: { fillColor: [15, 23, 42], textColor: 255 }
+                    });
+                    var fileName = 'attendance-' + String(className).replace(/\s+/g, '_') + '-' + days[0].iso + '.pdf';
+                    doc.save(fileName);
+                    this.showNotification('Class attendance PDF downloaded.');
+                } catch (e) {
+                    console.error('Class PDF generation failed', e);
+                    this.showNotification('Failed to generate class PDF.');
+                }
+            },
+            exportClassCsv() {
+                var className = this.selectedClass;
+                if (!className || className === 'all') {
+                    this.showNotification('Select a specific class to export.');
+                    return;
+                }
+                if (!this.classWeekMatrix || !this.classWeekMatrix.length) {
+                    this.showNotification('No attendance data found for this class and week.');
+                    return;
+                }
+                try {
+                    if (window.ShikolaExportPrint && typeof window.ShikolaExportPrint.exportTableAsCsv === 'function') {
+                        var days = this.weekDaysForReport || [];
+                        var startIso = days.length ? days[0].iso : '';
+                        var fileName = 'attendance-' + String(className).replace(/\s+/g, '_') + (startIso ? '-' + startIso : '') + '.csv';
+                        window.ShikolaExportPrint.exportTableAsCsv('#class-wise-report-section table', fileName);
+                    } else {
+                        this.showNotification('CSV export is not available in this browser.');
+                    }
+                } catch (e) {
+                    console.error('Class CSV export failed', e);
+                    this.showNotification('Failed to export CSV.');
+                }
+            },
+            async generateStudentPDF() {
+                if (!this.selectedStudentForReport) {
+                    this.showNotification('Select a pupil first.');
+                    return;
+                }
+                var history = await this.getStudentAttendanceHistory();
+                var records = history && Array.isArray(history.records) ? history.records : [];
+                if (!records.length) {
+                    this.showNotification('No attendance history found for this pupil.');
+                    return;
+                }
+                try {
+                    if (!window.jspdf || !window.jspdf.jsPDF || !window.jspdf.jsPDF.prototype.autoTable) {
+                        this.showNotification('PDF export is not available in this browser.');
+                        return;
+                    }
+                    var label = String(this.selectedStudentForReport);
+                    var parts = label.split(' - ');
+                    var pupilName = parts[0] || '';
+                    var pupilClass = parts[1] || '';
+                    var jsPDF = window.jspdf.jsPDF;
+                    var doc = new jsPDF('p', 'pt', 'a4');
+                    var head = ['Date', 'Class', 'Status', 'Remark'];
+                    var body = records.map(function (r) {
+                        return [r.date || '', r.className || '', r.status || '', r.remark || ''];
+                    });
+                    doc.setFontSize(12);
+                    doc.text('Pupil Attendance Report', 40, 40);
+                    doc.setFontSize(10);
+                    if (pupilName) doc.text('Pupil: ' + pupilName, 40, 58);
+                    if (pupilClass) doc.text('Class: ' + pupilClass, 40, 74);
+                    doc.autoTable({
+                        head: [head],
+                        body: body,
+                        startY: 90,
+                        styles: { fontSize: 8, cellPadding: 3 },
+                        headStyles: { fillColor: [15, 23, 42], textColor: 255 }
+                    });
+                    var fileName = 'pupil-attendance-' + (pupilName || 'report').replace(/\s+/g, '_') + '.pdf';
+                    doc.save(fileName);
+                    this.showNotification('Pupil attendance PDF downloaded.');
+                } catch (e) {
+                    console.error('Pupil PDF generation failed', e);
+                    this.showNotification('Failed to generate pupil PDF.');
+                }
+            },
+            async getStudentAttendanceHistory() {
+                var label = this.selectedStudentForReport;
+                if (!label || !this.students) {
+                    return { totalDays: 0, present: 0, late: 0, absent: 0, percentage: 0, records: [] };
+                }
+                var parts = String(label).split(' - ');
+                var fullName = (parts[0] || '').trim();
+                var classLabel = (parts[1] || '').trim();
+                var pupilId = null;
+                try {
+                    if (classLabel && this.students[classLabel]) {
+                        var list = this.students[classLabel] || [];
+                        for (var i = 0; i < list.length; i++) {
+                            var s = list[i];
+                            if (!s) continue;
+                            if (String(s.name).trim() === fullName) {
+                                pupilId = s.id;
+                                break;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    pupilId = null;
+                }
+                if (!pupilId) {
+                    return { totalDays: 0, present: 0, late: 0, absent: 0, percentage: 0, records: [] };
+                }
+
+                // Try to get data from backend API first
+                try {
+                    if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.getAttendance === 'function') {
+                        const result = await window.ShikolaTeacherApi.getAttendance({
+                            className: classLabel,
+                            startDate: this.getStartDateForTerm(),
+                            endDate: new Date().toISOString().split('T')[0]
+                        });
+                        
+                        if (result.success && result.data) {
+                            const studentRecords = result.data.filter(record => 
+                                (record.pupilId || record.pupil_id) === pupilId
+                            );
+                            
+                            var present = 0;
+                            var absent = 0;
+                            var late = 0;
+                            var records = [];
+                            
+                            studentRecords.forEach(record => {
+                                var status = record.status;
+                                var date = record.date;
+                                var className = record.className || record.class_name || classLabel;
+                                var remark = record.notes || record.remark || '';
+                                
+                                if (status === 'P') present += 1;
+                                else if (status === 'A') absent += 1;
+                                else if (status === 'L') late += 1;
+                                
+                                var label = 'Not marked';
+                                if (status === 'P') label = 'Present';
+                                else if (status === 'A') label = 'Absent';
+                                else if (status === 'Lv') label = 'On leave';
+                                else if (status === 'L') label = 'Late';
+                                
+                                records.push({
+                                    date: date,
+                                    className: className,
+                                    status: status,
+                                    label: label,
+                                    remark: remark
+                                });
+                            });
+                            
+                            var totalDays = records.length;
+                            var percentage = totalDays ? Math.round((present * 100) / totalDays) : 0;
+                            
+                            return {
+                                totalDays: totalDays,
+                                present: present,
+                                late: late,
+                                absent: absent,
+                                percentage: percentage,
+                                records: records
+                            };
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Failed to get attendance history from backend:', error);
+                }
+
+                // Fallback to localStorage
+                if (!window.ShikolaAttendanceStore) {
+                    return { totalDays: 0, present: 0, late: 0, absent: 0, percentage: 0, records: [] };
+                }
+                var PREFIX = window.ShikolaAttendanceStore.PREFIX || 'shikola_attendance_v1';
+                var basePrefix = PREFIX + ':students:';
+                var present = 0;
+                var absent = 0;
+                var late = 0;
+                var records = [];
+                try {
+                    for (var idx = 0; idx < localStorage.length; idx++) {
+                        var key = localStorage.key(idx);
+                        if (!key || key.indexOf(basePrefix) !== 0) continue;
+                        var raw = localStorage.getItem(key);
+                        if (!raw) continue;
+                        var parsed;
+                        try {
+                            parsed = JSON.parse(raw) || {};
+                        } catch (e) {
+                            continue;
+                        }
+                        var attendance = parsed.attendance || {};
+                        var remarks = parsed.remarks || {};
+                        var idStr = String(pupilId);
+                        if (!Object.prototype.hasOwnProperty.call(attendance, idStr)) continue;
+                        var status = attendance[idStr] || '';
+                        var remark = remarks[idStr] || '';
+                        var partsKey = key.split(':');
+                        // key format: PREFIX:students:DATE:CLASS...
+                        var dateIso = partsKey[2] || '';
+                        var className = partsKey.slice(3).join(':') || '';
+                        if (status === 'P') present += 1;
+                        else if (status === 'A') absent += 1;
+                        else if (status === 'L') late += 1;
+                        records.push({
+                            date: dateIso,
+                            className: className,
+                            status: status,
+                            remark: remark
+                        });
+                    }
+                } catch (e) {
+                    records = [];
+                    present = 0;
+                    absent = 0;
+                    late = 0;
+                }
+                // Sort by date descending
+                try {
+                    records.sort(function (a, b) {
+                        return String(b.date || '').localeCompare(String(a.date || ''));
+                    });
+                } catch (e) {}
+                var totalDays = records.length;
+                var percentage = totalDays ? Math.round((present * 100) / totalDays) : 0;
+                return {
+                    totalDays: totalDays,
+                    present: present,
+                    late: late,
+                    absent: absent,
+                    percentage: percentage,
+                    records: records
+                };
+            },
+
+            getStartDateForTerm() {
+                // Return start date for current term (simplified - could be made dynamic)
+                var now = new Date();
+                var startOfYear = new Date(now.getFullYear(), 0, 1);
+                return startOfYear.toISOString().split('T')[0];
+            },
+            showStudentReport(student) {
+                this.selectedStudentForReport = student;
+                this.showStudentReportModal = true;
+            },
+            closeStudentReport() {
+                this.showStudentReportModal = false;
+                this.selectedStudentForReport = null;
+            },
+            showNotification(message, type = 'info') {
+                // Enhanced notification system with different types
+                console.log(message);
+                
+                // Create notification element if it doesn't exist
+                let notification = document.getElementById('attendance-notification');
+                if (!notification) {
+                    notification = document.createElement('div');
+                    notification.id = 'attendance-notification';
+                    notification.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full';
+                    document.body.appendChild(notification);
+                }
+
+                // Set content and styling based on type
+                notification.textContent = message;
+                notification.className = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform';
+                
+                switch(type) {
+                    case 'success':
+                        notification.className += ' bg-green-500 text-white';
+                        break;
+                    case 'error':
+                        notification.className += ' bg-red-500 text-white';
+                        break;
+                    case 'warning':
+                        notification.className += ' bg-yellow-500 text-white';
+                        break;
+                    default:
+                        notification.className += ' bg-blue-500 text-white';
+                }
+
+                // Show notification
+                setTimeout(() => {
+                    notification.classList.remove('translate-x-full');
+                }, 100);
+
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    notification.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 300);
+                }, 3000);
+            },
+
+            async onClassOrDateChange() {
+                // Load existing attendance when class or date changes
+                if (this.selectedClass && this.selectedDate) {
+                    await this.checkExistingAttendance();
+                    // Also load week matrix for reports
+                    await this.loadClassWeekMatrix();
+                }
+            },
+            printReport(type) {
+                var target = '#class-wise-report-section';
+                if (type === 'pupil') {
+                    target = '#pupil-attendance-report';
+                }
+                try {
+                    if (window.ShikolaExportPrint && typeof window.ShikolaExportPrint.printSection === 'function') {
+                        window.ShikolaExportPrint.printSection(target);
+                    } else {
+                        window.print();
+                    }
+                } catch (e) {
+                    window.print();
+                }
+            },
+            getClassAttendanceHistory() {
+                // Get attendance history for selected class
+                if (!this.selectedClass) return [];
+                
+                try {
+                    // Try to get history from backend API
+                    if (window.ShikolaTeacherApi && window.ShikolaTeacherApi.getClassAttendanceHistory) {
+                        return window.ShikolaTeacherApi.getClassAttendanceHistory(this.selectedClass);
+                    }
+                    
+                    // Fallback to attendance store
+                    if (window.ShikolaAttendanceStore && window.ShikolaAttendanceStore.getClassHistory) {
+                        return window.ShikolaAttendanceStore.getClassHistory(this.selectedClass);
+                    }
+                    
+                    return [];
+                } catch (error) {
+                    console.error('Failed to load class attendance history:', error);
+                    return [];
+                }
+            },
+            init() {
+                this.loadPupilsFromStore();
+                
+                // Set up real-time attendance updates
+                try {
+                    window.addEventListener('shikola:attendance-saved', (event) => {
+                        const { className, date, timestamp } = event.detail;
+                        if (className === this.selectedClass && date === this.selectedDate) {
+                            this.showNotification('Attendance updated in real-time', 'info');
+                            // Refresh week matrix when attendance is saved
+                            this.loadClassWeekMatrix();
+                        }
+                    });
+                } catch (e) {
+                    console.warn('Failed to set up real-time listeners:', e);
+                }
+
+                // Normalise selectedClass to one of the allowed options for this teacher
+                try {
+                    var opts = this.classOptions;
+                    if (Array.isArray(opts) && opts.length) {
+                        if (!this.selectedClass || opts.indexOf(this.selectedClass) === -1) {
+                            this.selectedClass = opts[0];
+                        }
+                    }
+                } catch (e) {
+                }
+
+                // Watch for class and date changes
+                this.$watch('selectedClass', () => this.onClassOrDateChange());
+                this.$watch('selectedDate', () => this.onClassOrDateChange());
+                
+                // Load initial week matrix after pupils are loaded
+                this.$watch('students', () => {
+                    if (this.selectedClass && this.students[this.selectedClass]) {
+                        this.loadClassWeekMatrix();
+                    }
+                });
+            },
+            // Chat state (empty by default, to be wired to real messaging later)
+            chatView: 'chat-list',
+            newChatType: 'admin',
+            newChatMessage: '',
+            selectedChatId: null,
+            chats: [],
+            availableContacts: { admin: [], teacher: [], class: [], parent: [] },
+            get selectedChat() {
+                return this.chats.find(chat => chat.id === this.selectedChatId);
+            },
+            get filteredChats() {
+                return this.chats;
+            },
+            get currentContacts() {
+                return this.availableContacts[this.newChatType] || [];
+            },
+            getTypeIcon(type) {
+                const icons = {
+                    admin: 'fas fa-user-shield',
+                    teacher: 'fas fa-chalkboard-teacher',
+                    class: 'fas fa-users',
+                    parent: 'fas fa-user-friends'
+                };
+                return icons[type] || 'fas fa-user';
+            },
+            getTypeColor(type) {
+                const colors = {
+                    admin: 'text-purple-600 bg-purple-100',
+                    teacher: 'text-blue-600 bg-blue-100',
+                    class: 'text-green-600 bg-green-100',
+                    parent: 'text-orange-600 bg-orange-100'
+                };
+                return colors[type] || 'text-slate-600 bg-slate-100';
+            },
+            startNewChat(contact) {
+                // placeholder for future real-time chat wiring
+            },
+            sendMessage() {
+                // placeholder for future real-time chat wiring
+            },
+            openChat(chatId) {
+                this.selectedChatId = chatId;
+                this.chatView = 'conversation';
+            },
+            backToChatList() {
+                this.chatView = 'chat-list';
+                this.selectedChatId = null;
+            }
+        }" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
+                <div class="flex justify-center mb-10">
+                    <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                        <span class="flex-1">Attendance</span>
+                    </a>
+                    <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">My Timetable</span>
+                    </a>
+                    <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                        <span class="flex-1">Classes</span>
+                    </a>
+                    <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                        <span class="flex-1">Exams</span>
+                    </a>
+                    <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                        <span class="flex-1">Class Tests</span>
+                    </a>
+                    <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div x-show="sidebarOpen" x-cloak x-transition:enter="transition ease-in-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in-out duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    </div>
+
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                            <span class="flex-1">Attendance</span>
+                        </a>
+                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                            <span class="flex-1">My Timetable</span>
+                        </a>
+                        <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                            <span class="flex-1">Classes</span>
+                        </a>
+                        <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                            <span class="flex-1">Exams</span>
+                        </a>
+                        <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                            <span class="flex-1">Class Tests</span>
+                        </a>
+                        <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                            <span class="flex-1">Reports</span>
+                        </a>
+                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                            <span class="flex-1">Messaging</span>
+                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                            <span class="flex-1">Profile</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center justify-center px-2">
+                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-10 w-auto rounded-2xl lg:hidden ml-16 pl-9" x-show="!sidebarOpen">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Attendance</h1>
+                                <p class="text-xs sm:text-sm text-slate-400 mt-1 hidden sm:block">Mark and review attendance for your classes.</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-3">
+                            <!-- Enhanced Search Bar -->
+                            <div
+                                x-data="{
+                                    query: '',
+                                    focus: false,
+                                    suggestions: ['Students Attendance', 'Class wise Report', 'Students Attendance Report'],
+                                    get allSuggestions() {
+                                        if (!this.query) return this.suggestions.slice(0, 5);
+                                        const q = this.query.toLowerCase();
+                                        return this.suggestions.filter(s => s.toLowerCase().includes(q)).slice(0, 5);
+                                    },
+                                    selectSuggestion(item) {
+                                        this.query = item;
+                                        this.focus = false;
+                                    }
+                                }"
+                                class="relative hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-64"
+                                @click.outside="focus = false">
+                                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search students, classes..."
+                                    class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1"
+                                    x-model="query"
+                                    @focus="focus = true"
+                                    @input="focus = true">
+                                <div
+                                    x-show="focus && allSuggestions.length"
+                                    x-cloak
+                                    class="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-20">
+                                    <template x-for="(item, index) in allSuggestions" :key="item">
+                                        <button
+                                            type="button"
+                                            class="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors"
+                                            @mousedown.prevent="selectSuggestion(item)">
+                                            <div x-text="item"></div>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            
+                            <!-- Enhanced Notifications -->
+                            <div class="relative" x-data="window.ShikolaAdminNotifications ? window.ShikolaAdminNotifications.dropdown({ links: { pupilCreated: 'classes.html#students', employeeCreated: '', feesPaymentRecorded: '', attendanceUpdated: 'attendance.html' } }) : { open: false, notifications: [], unreadCount() { return 0; }, loadServerNotifications() {}, markAllRead() {} }" @click.outside="open = false">
+                                <button type="button" class="relative h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" @click="open = !open; if (open) { loadServerNotifications(); }" aria-label="Notifications">
+                                    <i class="far fa-bell"></i>
+                                    <span x-show="unreadCount() > 0" x-cloak class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center" x-text="unreadCount()"></span>
+                                </button>
+                                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-80 rounded-xl bg-white shadow-lg border border-slate-100 z-30 overflow-hidden">
+                                    <div class="p-4 border-b border-slate-100">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="text-sm font-semibold text-slate-800">Notifications</div>
+                                            <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                                                <button type="button" class="hover:text-slate-600" @click="markAllRead()">Mark all read</button>
+                                                <button type="button" class="hover:text-slate-600" @click="clearAll()">Clear</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="max-h-96 overflow-y-auto">
+                                        <template x-for="notification in notifications" :key="notification.id">
+                                            <div class="p-4 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 cursor-pointer" @click="handleClick(notification)">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <div class="text-sm break-words" :class="notification.read ? 'font-normal text-slate-700' : 'font-semibold text-slate-800'" x-text="notification.title"></div>
+                                                        <div class="text-xs text-slate-600 mt-1 break-words max-h-10 overflow-hidden" x-text="notification.message"></div>
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-400 mt-0.5" x-text="notification.time"></div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <div class="p-4 text-[11px] text-slate-400 text-center" x-show="!notifications.length" x-cloak>
+                                            No notifications yet.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- User Profile -->
+                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <div class="text-xs font-medium text-slate-700">Shikola</div>
+                                        <div class="text-[10px] text-slate-400">Teacher</div>
+                                    </div>
+                                </button>
+                                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-lg border border-slate-100 py-2 z-50">
+                                    <a href="profile.html" class="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 transition">
+                                        <span class="w-5 flex justify-center text-slate-400">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                        <span class="text-sm text-slate-700">Profile</span>
+                                    </a>
+                                    <a href="settings.html" class="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 transition">
+                                        <span class="w-5 flex justify-center text-slate-400">
+                                            <i class="fas fa-cog"></i>
+                                        </span>
+                                        <span class="text-sm text-slate-700">Settings</span>
+                                    </a>
+                                    <div class="border-t border-slate-100 my-1"></div>
+                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500"> transition">
+                                        <span class="w-5 flex justify-center text-slate-400">
+                                            <i class="fas fa-right-from-bracket"></i>
+                                        </span>
+                                        <span>Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex flex-wrap gap-2 text-[11px]">
+                        <button type="button" @click="activeTab = 'students-attendance'" :class="activeTab === 'students-attendance' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-user-check"></i>
+                            <span>Students Attendance</span>
+                        </button>
+                        <button type="button" @click="activeTab = 'class-wise-report'" :class="activeTab === 'class-wise-report' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Class wise Report</span>
+                        </button>
+                        <button type="button" @click="activeTab = 'students-attendance-report'" :class="activeTab === 'students-attendance-report' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600'" class="px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-1.5">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Pupil Attendance Report</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-6 space-y-6 text-xs flex-1">
+                        <section x-show="activeTab === 'students-attendance'" x-cloak>
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+                                <!-- Attendance Controls -->
+                                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto">
+                                        <div>
+                                            <label class="block text-[11px] font-medium text-slate-600 mb-1" for="att-date">Date</label>
+                                            <input id="att-date" type="date" x-model="selectedDate" @change="checkExistingAttendance()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-medium text-slate-600 mb-1" for="att-class">Class</label>
+                                            <select id="att-class" x-model="selectedClass" @change="checkExistingAttendance()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                                <template x-for="cls in classOptions" :key="'att-main-' + cls">
+                                                    <option :value="cls" x-text="cls"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-2 justify-end">
+                                        <button type="button" @click="selectedDate = new Date().toISOString().split('T')[0]; selectedClass = classOptions[0] || ''" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100">Reset</button>
+                                        <template x-if="checkExistingAttendance()">
+                                            <button type="button" @click="showUpdateDialog = true" class="px-3 py-1.5 rounded-xl bg-orange-500 text-white font-medium hover:bg-orange-600">Update Attendance</button>
+                                        </template>
+                                        <template x-if="!checkExistingAttendance()">
+                                            <button type="button" @click="saveAttendance()" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800">Save Attendance</button>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Attendance Statistics -->
+                                <div class="grid grid-cols-3 md:grid-cols-6 gap-2" x-show="currentStudents.length > 0">
+                                    <div class="text-center p-2 bg-emerald-50 rounded-xl border border-emerald-100">
+                                        <div class="text-sm font-bold text-emerald-600" x-text="attendanceStats.present"></div>
+                                        <div class="text-[9px] text-emerald-700">Present</div>
+                                    </div>
+                                    <div class="text-center p-2 bg-sky-50 rounded-xl border border-sky-100">
+                                        <div class="text-sm font-bold text-sky-600" x-text="attendanceStats.late"></div>
+                                        <div class="text-[9px] text-sky-700">Late</div>
+                                    </div>
+                                    <div class="text-center p-2 bg-amber-50 rounded-xl border border-amber-100">
+                                        <div class="text-sm font-bold text-amber-600" x-text="attendanceStats.sick"></div>
+                                        <div class="text-[9px] text-amber-700">Sick</div>
+                                    </div>
+                                    <div class="text-center p-2 bg-purple-50 rounded-xl border border-purple-100">
+                                        <div class="text-sm font-bold text-purple-600" x-text="attendanceStats.excused"></div>
+                                        <div class="text-[9px] text-purple-700">Excused</div>
+                                    </div>
+                                    <div class="text-center p-2 bg-rose-50 rounded-xl border border-rose-100">
+                                        <div class="text-sm font-bold text-rose-600" x-text="attendanceStats.absent"></div>
+                                        <div class="text-[9px] text-rose-700">Absent</div>
+                                    </div>
+                                    <div class="text-center p-2 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-100">
+                                        <div class="text-sm font-bold text-orange-600" x-text="attendanceStats.percentage + '%'"></div>
+                                        <div class="text-[9px] text-orange-700">Attendance</div>
+                                    </div>
+                                </div>
+
+                                <!-- Attendance Register -->
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/60 overflow-hidden">
+                                    <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-50 text-[11px] font-medium text-slate-500">
+                                        <div class="col-span-5">Pupil</div>
+                                        <div class="col-span-3">Status</div>
+                                        <div class="col-span-4">Remarks</div>
+                                    </div>
+                                    <div class="divide-y divide-slate-100 bg-white text-[11px]">
+                                        <template x-for="student in currentStudents" :key="student.id">
+                                            <div class="grid grid-cols-12 gap-2 px-4 py-2 items-center hover:bg-slate-50">
+                                                <div class="col-span-5 text-slate-800 font-medium" x-text="student.name"></div>
+                                                <div class="col-span-3 flex gap-1 flex-wrap">
+                                                    <button type="button" @click="student.status = 'P'" :class="student.status === 'P' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : 'bg-slate-50 text-slate-500 border-slate-200'" class="px-2 py-0.5 rounded-full border text-[10px] font-medium hover:bg-emerald-50 focus:outline-none focus:ring-1 focus:ring-emerald-400" aria-label="Mark as Present">
+                                                        P
+                                                    </button>
+                                                    <button type="button" @click="student.status = 'L'" :class="student.status === 'L' ? 'bg-sky-100 text-sky-700 border-sky-300' : 'bg-slate-50 text-slate-500 border-slate-200'" class="px-2 py-0.5 rounded-full border text-[10px] font-medium hover:bg-sky-50 focus:outline-none focus:ring-1 focus:ring-sky-400" aria-label="Mark as Late">
+                                                        L
+                                                    </button>
+                                                    <button type="button" @click="student.status = 'A'" :class="student.status === 'A' ? 'bg-rose-100 text-rose-700 border-rose-300' : 'bg-slate-50 text-slate-500 border-slate-200'" class="px-2 py-0.5 rounded-full border text-[10px] font-medium hover:bg-rose-50 focus:outline-none focus:ring-1 focus:ring-rose-400" aria-label="Mark as Absent">
+                                                        A
+                                                    </button>
+                                                    <button type="button" @click="student.status = 'S'" :class="student.status === 'S' ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-slate-50 text-slate-500 border-slate-200'" class="px-2 py-0.5 rounded-full border text-[10px] font-medium hover:bg-amber-50 focus:outline-none focus:ring-1 focus:ring-amber-400" aria-label="Mark as Sick">
+                                                        S
+                                                    </button>
+                                                    <button type="button" @click="student.status = 'E'" :class="student.status === 'E' ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-slate-50 text-slate-500 border-slate-200'" class="px-2 py-0.5 rounded-full border text-[10px] font-medium hover:bg-purple-50 focus:outline-none focus:ring-1 focus:ring-purple-400" aria-label="Mark as Excused">
+                                                        E
+                                                    </button>
+                                                </div>
+                                                <div class="col-span-4">
+                                                    <input type="text" x-model="student.remark" @input="syncRemarksToPortals()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400" placeholder="Add remark (appears in portals)">
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Remarks Summary -->
+                                <div x-show="hasRemarks" x-cloak class="p-4 rounded-2xl bg-amber-50 border border-amber-100">
+                                    <div class="text-sm font-semibold text-amber-800 mb-2">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                        Remarks Summary
+                                    </div>
+                                    <div class="space-y-1 text-xs text-amber-700">
+                                        <template x-for="student in currentStudents.filter(s => s.remark.trim() !== '')" :key="student.id">
+                                            <div class="flex justify-between">
+                                                <span x-text="student.name + ':'"></span>
+                                                <span x-text="student.remark" class="font-medium"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="text-[10px] text-amber-600 mt-2">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Remarks will appear in pupil, admin, and parent portals
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Update Confirmation Dialog -->
+                        <div x-show="showUpdateDialog" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showUpdateDialog = false">
+                            <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+                                <div class="text-lg font-semibold text-slate-800 mb-2">Update Existing Attendance?</div>
+                                <div class="text-sm text-slate-600 mb-4">
+                                    Attendance for <span x-text="selectedClass" class="font-medium"></span> on <span x-text="selectedDate" class="font-medium"></span> has already been marked. Do you want to update it?
+                                </div>
+                                <div class="flex gap-3 justify-end">
+                                    <button type="button" @click="showUpdateDialog = false" class="px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100">Cancel</button>
+                                    <button type="button" @click="updateAttendance()" class="px-4 py-2 rounded-xl bg-orange-500 text-white hover:bg-orange-600">Update Attendance</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <section x-show="activeTab === 'students-attendance-report'" x-cloak>
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Pupil Attendance Report</div>
+                                        <div class="text-xs text-slate-400 mt-1">Search and generate individual pupil attendance reports.</div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col sm:flex-row gap-3">
+                                    <div
+                                        x-data="{
+                                            query: '',
+                                            focus: false,
+                                            selectedStudent: null,
+                                            get filteredStudents() {
+                                                if (!this.query) return $root.allStudents.slice(0, 10);
+                                                const q = this.query.toLowerCase();
+                                                return $root.allStudents.filter(s => s.toLowerCase().includes(q)).slice(0, 10);
+                                            },
+                                            selectStudent(student) {
+                                                this.selectedStudent = student;
+                                                this.query = student;
+                                                this.focus = false;
+                                            }
+                                        }"
+                                        class="relative flex-1">
+                                        <label for="student-search" class="block text-[11px] font-medium text-slate-600 mb-1">Search Pupil</label>
+                                        <div class="relative">
+                                            <input
+                                                id="student-search"
+                                                type="text"
+                                                placeholder="Type pupil name or class..."
+                                                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                                                x-model="query"
+                                                @focus="focus = true"
+                                                @input="focus = true">
+                                            <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                            <div
+                                                x-show="focus && filteredStudents.length"
+                                                x-cloak
+                                                class="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-20 max-h-48 overflow-y-auto">
+                                                <template x-for="student in filteredStudents" :key="student">
+                                                    <button
+                                                        type="button"
+                                                        class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2"
+                                                        @mousedown.prevent="selectStudent(student)">
+                                                        <i class="fas fa-user text-[10px] text-slate-400"></i>
+                                                        <span x-text="student"></span>
+                                                    </button>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-end gap-2">
+                                        <button type="button" @click="$root.showStudentReport(selectedStudent)" :disabled="!selectedStudent" class="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <i class="fas fa-eye text-[10px]"></i>
+                                            <span>View Report</span>
+                                        </button>
+                                        <button type="button" @click="$root.generatePDFReport('student')" :disabled="!selectedStudent" class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-xs font-medium hover:bg-slate-100 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <i class="fas fa-download text-[10px]"></i>
+                                            <span>PDF</span>
+                                        </button>
+                                        <button type="button" @click="$root.printReport('pupil')" :disabled="!selectedStudent" class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-xs font-medium hover:bg-slate-100 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <i class="fas fa-print text-[10px]"></i>
+                                            <span>Print</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Pupil Report Modal -->
+                                <div x-show="$root.showStudentReportModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="$root.closeStudentReport()">
+                                    <div id="pupil-attendance-report" class="bg-white rounded-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-slate-800">Pupil Attendance Report</h3>
+                                                <p class="text-sm text-slate-600" x-text="$root.selectedStudentForReport"></p>
+                                            </div>
+                                            <button type="button" @click="$root.closeStudentReport()" class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200" title="Close student report">
+                                                <i class="fas fa-times text-sm"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <template x-if="$root.selectedStudentForReport">
+                                            <div class="space-y-4">
+                                                <!-- Attendance Statistics -->
+                                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                    <div class="text-center p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                                                        <div class="text-lg font-bold text-emerald-600" x-text="$root.getStudentAttendanceHistory($root.selectedStudentForReport.split(' - ')[0]).present"></div>
+                                                        <div class="text-[10px] text-emerald-700">Present Days</div>
+                                                    </div>
+                                                    <div class="text-center p-3 bg-sky-50 rounded-xl border border-sky-100">
+                                                        <div class="text-lg font-bold text-sky-600" x-text="$root.getStudentAttendanceHistory($root.selectedStudentForReport.split(' - ')[0]).late"></div>
+                                                        <div class="text-[10px] text-sky-700">Late Days</div>
+                                                    </div>
+                                                    <div class="text-center p-3 bg-rose-50 rounded-xl border border-rose-100">
+                                                        <div class="text-lg font-bold text-rose-600" x-text="$root.getStudentAttendanceHistory($root.selectedStudentForReport.split(' - ')[0]).absent"></div>
+                                                        <div class="text-[10px] text-rose-700">Absent Days</div>
+                                                    </div>
+                                                    <div class="text-center p-3 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-100">
+                                                        <div class="text-lg font-bold text-orange-600" x-text="$root.getStudentAttendanceHistory($root.selectedStudentForReport.split(' - ')[0]).percentage + '%'"></div>
+                                                        <div class="text-[10px] text-orange-700">Attendance Rate</div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Attendance Chart -->
+                                                <div class="bg-slate-50 rounded-xl p-4">
+                                                    <h4 class="text-sm font-semibold text-slate-800 mb-3">Monthly Attendance Trend</h4>
+                                                    <div class="h-32 flex items-end justify-between gap-2">
+                                                        <div class="flex-1 bg-emerald-200 rounded-t" style="height: 85%"></div>
+                                                        <div class="flex-1 bg-emerald-200 rounded-t" style="height: 92%"></div>
+                                                        <div class="flex-1 bg-sky-200 rounded-t" style="height: 78%"></div>
+                                                        <div class="flex-1 bg-emerald-200 rounded-t" style="height: 95%"></div>
+                                                        <div class="flex-1 bg-emerald-200 rounded-t" style="height: 88%"></div>
+                                                        <div class="flex-1 bg-rose-200 rounded-t" style="height: 70%"></div>
+                                                    </div>
+                                                    <div class="flex justify-between text-[10px] text-slate-500 mt-2">
+                                                        <span>Jan</span>
+                                                        <span>Feb</span>
+                                                        <span>Mar</span>
+                                                        <span>Apr</span>
+                                                        <span>May</span>
+                                                        <span>Jun</span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Recent Attendance -->
+                                                <div class="bg-white rounded-xl border border-slate-100">
+                                                    <h4 class="text-sm font-semibold text-slate-800 p-3 border-b border-slate-100">Recent Attendance</h4>
+                                                    <div class="divide-y divide-slate-100 text-xs">
+                                                        <div class="flex justify-between p-3">
+                                                            <span class="text-slate-600">Today</span>
+                                                            <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">Present</span>
+                                                        </div>
+                                                        <div class="flex justify-between p-3">
+                                                            <span class="text-slate-600">Yesterday</span>
+                                                            <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">Present</span>
+                                                        </div>
+                                                        <div class="flex justify-between p-3">
+                                                            <span class="text-slate-600">Nov 23</span>
+                                                            <span class="px-2 py-1 rounded-full bg-sky-100 text-sky-700 font-medium">Late</span>
+                                                        </div>
+                                                        <div class="flex justify-between p-3">
+                                                            <span class="text-slate-600">Nov 22</span>
+                                                            <span class="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">Present</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Action Buttons -->
+                                                <div class="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                                                    <button type="button" @click="$root.generatePDFReport('student')" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 flex items-center gap-2">
+                                                        <i class="fas fa-download"></i>
+                                                        <span>Download PDF</span>
+                                                    </button>
+                                                    <button type="button" @click="$root.printReport()" class="px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-sm font-medium hover:bg-slate-100 flex items-center gap-2">
+                                                        <i class="fas fa-print"></i>
+                                                        <span>Print Report</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/60 overflow-hidden text-[11px]">
+                                    <table class="min-w-full">
+                                        <thead class="bg-slate-50 text-slate-500">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left font-medium">Student</th>
+                                                <th class="px-4 py-2 text-left font-medium">Class</th>
+                                                <th class="px-4 py-2 text-left font-medium">Present %</th>
+                                                <th class="px-4 py-2 text-left font-medium">Absent %</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-slate-100 text-slate-700">
+                                            <tr>
+                                                <td class="px-4 py-3 text-center text-slate-400" colspan="4">No summary data available yet.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section x-show="activeTab === 'class-wise-report'" x-cloak>
+                            <div id="class-wise-report-section" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Class wise Report</div>
+                                        <div class="text-xs text-slate-400 mt-1">Generate attendance reports by class.</div>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <div>
+                                            <label for="cwr-class" class="block text-[11px] font-medium text-slate-600 mb-1">Select Class</label>
+                                            <select id="cwr-class" x-model="selectedClass" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                                <option value="all">All Classes</option>
+                                                <template x-for="cls in classOptions" :key="'att-cwr-' + cls">
+                                                    <option :value="cls" x-text="cls"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-end gap-2">
+                                            <button type="button" @click="generatePDFReport('class')" class="px-3 py-2 rounded-xl bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 flex items-center gap-2">
+                                                <i class="fas fa-file-pdf text-[10px]"></i>
+                                                <span>Generate PDF</span>
+                                            </button>
+                                            <button type="button" @click="exportClassCsv()" class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-xs font-medium hover:bg-slate-100 flex items-center gap-2">
+                                                <i class="fas fa-file-csv text-[10px]"></i>
+                                                <span>CSV</span>
+                                            </button>
+                                            <button type="button" @click="printReport()" class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-xs font-medium hover:bg-slate-100 flex items-center gap-2">
+                                                <i class="fas fa-print text-[10px]"></i>
+                                                <span>Print</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Class Statistics -->
+                                <div x-show="selectedClass !== 'all'" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div class="text-center p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                                        <div class="text-lg font-bold text-emerald-600" x-text="attendanceStats.present"></div>
+                                        <div class="text-[10px] text-emerald-700">Present Today</div>
+                                    </div>
+                                    <div class="text-center p-3 bg-sky-50 rounded-xl border border-sky-100">
+                                        <div class="text-lg font-bold text-sky-600" x-text="attendanceStats.late"></div>
+                                        <div class="text-[10px] text-sky-700">Late Today</div>
+                                    </div>
+                                    <div class="text-center p-3 bg-rose-50 rounded-xl border border-rose-100">
+                                        <div class="text-lg font-bold text-rose-600" x-text="attendanceStats.absent"></div>
+                                        <div class="text-[10px] text-rose-700">Absent Today</div>
+                                    </div>
+                                    <div class="text-center p-3 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-100">
+                                        <div class="text-lg font-bold text-orange-600" x-text="attendanceStats.percentage + '%'"></div>
+                                        <div class="text-[10px] text-orange-700">Attendance Rate</div>
+                                    </div>
+                                </div>
+
+                                <!-- Weekly Class Attendance Matrix (Pupil vs Monday–Friday) -->
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/60 overflow-hidden text-[11px]">
+                                    <table class="min-w-full">
+                                        <thead class="bg-slate-50 text-slate-500">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left font-medium">Pupil</th>
+                                                <template x-for="day in weekDaysForReport" :key="day.iso">
+                                                    <th class="px-4 py-2 text-left font-medium" x-text="day.label"></th>
+                                                </template>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-slate-100 text-slate-700">
+                                            <template x-if="selectedClass !== 'all' && classWeekMatrix.length">
+                                                <template x-for="row in classWeekMatrix" :key="row.id">
+                                                    <tr class="hover:bg-slate-50">
+                                                        <td class="px-4 py-2 font-medium" x-text="row.name"></td>
+                                                        <template x-for="(status, idx) in row.statuses" :key="row.id + '-' + idx">
+                                                            <td class="px-4 py-2">
+                                                                <span
+                                                                    class="inline-flex items-center justify-center min-w-[1.5rem] px-2 py-1 rounded-full text-[10px] font-medium border"
+                                                                    :class="status === 'P' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                                                            status === 'A' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                                                            status === 'L' ? 'bg-sky-50 text-sky-700 border-sky-200' :
+                                                                            'bg-slate-50 text-slate-400 border-slate-200'"
+                                                                    x-text="status || '-'">
+                                                                </span>
+                                                            </td>
+                                                        </template>
+                                                    </tr>
+                                                </template>
+                                            </template>
+                                            <tr x-show="selectedClass === 'all' || !classWeekMatrix.length">
+                                                <td class="px-4 py-3 text-center text-slate-400" :colspan="1 + weekDaysForReport.length">
+                                                    <span x-show="selectedClass === 'all'">Select a class to view weekly attendance.</span>
+                                                    <span x-show="selectedClass !== 'all' && !classWeekMatrix.length">No attendance data available for this class and week.</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Weekly Summary (derived from current matrix) -->
+                                <div x-show="selectedClass !== 'all'" class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4">
+                                    <h4 class="text-sm font-semibold text-slate-800 mb-3">Weekly Summary - <span x-text="selectedClass"></span></h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                                        <div class="bg-white rounded-xl p-3">
+                                            <div class="text-[10px] text-slate-500 mb-1">Best Attendance Day</div>
+                                            <div class="font-semibold text-emerald-600" x-text="classWeekSummary.hasData ? (classWeekSummary.bestDayLabel + ' - ' + classWeekSummary.bestPct + '%') : 'No data'"></div>
+                                        </div>
+                                        <div class="bg-white rounded-xl p-3">
+                                            <div class="text-[10px] text-slate-500 mb-1">Worst Attendance Day</div>
+                                            <div class="font-semibold text-rose-600" x-text="classWeekSummary.hasData ? (classWeekSummary.worstDayLabel + ' - ' + classWeekSummary.worstPct + '%') : 'No data'"></div>
+                                        </div>
+                                        <div class="bg-white rounded-xl p-3">
+                                            <div class="text-[10px] text-slate-500 mb-1">Average Attendance</div>
+                                            <div class="font-semibold text-orange-600" x-text="classWeekSummary.hasData ? (classWeekSummary.avgPct + '%') : 'No data'"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+    <div id="custom-cursor"></div>
+    <script src="../shared-assets/js/script.js"></script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>
