@@ -1,0 +1,55 @@
+{
+  "school": {
+    "name": "Shikola Academy",
+    "tagline": "Excellence in Zambian Education",
+    "address": "123 Education Street, Lusaka, Zambia",
+    "phone": "+260 123 456 789",
+    "email": "info@shikola.edu.zm",
+    "website": "www.shikola.edu.zm",
+    "logo": "/frontend/assets/images/logo.png",
+    "favicon": "/frontend/assets/images/favicon.png",
+    "established": "2015",
+    "school_code": "SHA001",
+    "principal": "Kalaba Nkhata",
+    "vice_principal": "Mwale Chanda",
+    "motto": "Education for National Development",
+    "vision": "To be a leading center of academic excellence in Zambia",
+    "mission": "To provide quality education that nurtures holistic development and produces responsible citizens",
+    "colors": {
+      "primary": "#F97316",
+      "secondary": "#0F172A",
+      "accent": "#10B981"
+    },
+    "social_media": {
+      "facebook": "https://facebook.com/shikolaacademy",
+      "twitter": "https://twitter.com/shikolaacademy",
+      "instagram": "https://instagram.com/shikolaacademy"
+    },
+    "bank_details": {
+      "bank_name": "Zanaco",
+      "account_name": "Shikola Academy",
+      "account_number": "1234567890",
+      "branch": "Lusaka Main Branch"
+    },
+    "examination_council": "Examinations Council of Zambia (ECZ)",
+    "curriculum": "Zambian Curriculum",
+    "academic_year": "2026",
+    "terms": [
+      {
+        "name": "Term 1",
+        "start_date": "2026-01-12",
+        "end_date": "2026-04-09"
+      },
+      {
+        "name": "Term 2",
+        "start_date": "2026-05-10",
+        "end_date": "2026-08-06"
+      },
+      {
+        "name": "Term 3",
+        "start_date": "2026-09-06",
+        "end_date": "2026-12-03"
+      }
+    ]
+  }
+}

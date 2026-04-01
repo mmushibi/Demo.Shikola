@@ -1,0 +1,1320 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - Teacher Class Tests</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../config.js"></script>
+    <script src="../school-admin/pupils-api.js" defer></script>
+    <script src="../school-admin/classes-api.js" defer></script>
+    <script src="teacher-api.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../shared-assets/js/shared-realtime-sync.js" defer></script>
+    <script src="../../shared-assets/js/shared-class-tests-sync.js" defer></script>
+    <script src="../../shared-assets/js/shared-universal-notifications.js" defer></script>
+    <script src="../../shared-assets/js/shared-messages.js" defer></script>
+    <script src="../../shared-assets/js/shared-class-tests.js" defer></script>
+    <script src="../../shared-assets/js/button-functions.js" defer></script>
+    <script src="../../shared-assets/js/shared-admin-notifications.js" defer></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page">
+    <div x-data="{ sidebarOpen: false, chatOpen: false, activeTab: 'manage-test-marks' }" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                        <span class="flex-1">Attendance</span>
+                    </a>
+                    <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">My Timetable</span>
+                    </a>
+                    <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                        <span class="flex-1">Classes</span>
+                    </a>
+                    <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                        <span class="flex-1">Exams</span>
+                    </a>
+                    <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                        <span class="flex-1">Class Tests</span>
+                    </a>
+                    <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div x-show="sidebarOpen" x-cloak x-transition:enter="transition ease-in-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in-out duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    </div>
+
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                            <span class="flex-1">Attendance</span>
+                        </a>
+                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                            <span class="flex-1">My Timetable</span>
+                        </a>
+                        <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                            <span class="flex-1">Classes</span>
+                        </a>
+                        <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                            <span class="flex-1">Exams</span>
+                        </a>
+                        <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                            <span class="flex-1">Class Tests</span>
+                        </a>
+                        <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                            <span class="flex-1">Reports</span>
+                        </a>
+                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                            <span class="flex-1">Messaging</span>
+                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                            <span class="flex-1">Profile</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center justify-center px-2">
+                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-10 w-auto rounded-2xl lg:hidden ml-16 pl-9" x-show="!sidebarOpen">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Class Tests</h1>
+                                <p class="text-xs sm:text-sm text-slate-400 mt-1 hidden sm:block">Enter test/quiz marks and view test results for your classes.</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-3">
+                            <div
+                                x-data="{
+                                    query: '',
+                                    focus: false,
+                                    suggestions: ['Test Marks', 'Test Results', 'Assessment Summary', 'Student Performance'],
+                                    get filtered() {
+                                        if (!this.query) return this.suggestions;
+                                        const q = this.query.toLowerCase();
+                                        return this.suggestions.filter(s => s.toLowerCase().includes(q));
+                                    }
+                                }"
+                                class="relative hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-56"
+                                @click.outside="focus = false">
+                                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search"
+                                    class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1"
+                                    x-model="query"
+                                    @focus="focus = true"
+                                    @input="focus = true">
+                                <div
+                                    x-show="focus && filtered.length"
+                                    x-cloak
+                                    class="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-20">
+                                    <template x-for="suggestion in filtered" :key="suggestion">
+                                        <button
+                                            type="button"
+                                            class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2"
+                                            @mousedown.prevent="query = suggestion">
+                                            <i class="fas fa-search text-[10px] text-slate-400"></i>
+                                            <span x-text="suggestion"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="relative" x-data="window.ShikolaAdminNotifications ? window.ShikolaAdminNotifications.dropdown({ links: { pupilCreated: 'classes.html#students', employeeCreated: '', feesPaymentRecorded: '', attendanceUpdated: 'attendance.html' } }) : { open: false, notifications: [], unreadCount() { return 0; }, loadServerNotifications() {}, markAllRead() {} }" @click.outside="open = false">
+                                <button type="button" class="relative h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" @click="open = !open; if (open) { loadServerNotifications(); }" aria-label="Notifications">
+                                    <i class="far fa-bell"></i>
+                                    <span x-show="unreadCount() > 0" x-cloak class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center" x-text="unreadCount()"></span>
+                                </button>
+                                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-80 rounded-xl bg-white shadow-lg border border-slate-100 z-30 overflow-hidden">
+                                    <div class="p-4 border-b border-slate-100">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="text-sm font-semibold text-slate-800">Notifications</div>
+                                            <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                                                <button type="button" class="hover:text-slate-600" @click="markAllRead()">Mark all read</button>
+                                                <button type="button" class="hover:text-slate-600" @click="clearAll()">Clear</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="max-h-96 overflow-y-auto">
+                                        <template x-for="notification in notifications" :key="notification.id">
+                                            <div class="p-4 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 cursor-pointer" @click="handleClick(notification)">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <div class="text-sm break-words" :class="notification.read ? 'font-normal text-slate-700' : 'font-semibold text-slate-800'" x-text="notification.title"></div>
+                                                        <div class="text-xs text-slate-600 mt-1 break-words max-h-10 overflow-hidden" x-text="notification.message"></div>
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-400 mt-0.5" x-text="notification.time"></div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <div class="p-4 text-[11px] text-slate-400 text-center" x-show="!notifications.length" x-cloak>
+                                            No notifications yet.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <div class="text-xs font-medium text-slate-700">Shikola</div>
+                                        <div class="text-[10px] text-slate-400">Teacher</div>
+                                    </div>
+                                </button>
+                                <div
+                                    x-show="open"
+                                    x-cloak
+                                    class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
+                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
+                                        <span class="w-4 flex justify-center text-slate-400">
+                                            <i class="fas fa-id-badge"></i>
+                                        </span>
+                                        <span>Profile</span>
+                                    </a>
+                                    <div class="my-1 border-t border-slate-100"></div>
+                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                        <span class="w-4 flex justify-center">
+                                            <i class="fas fa-right-from-bracket"></i>
+                                        </span>
+                                        <span>Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex-1 space-y-6 text-sm">
+                        <section x-show="activeTab === 'manage-test-marks'" x-cloak x-data="{
+                            selectedClass: '',
+                            selectedSubject: '',
+                            selectedTest: '',
+                            selectedTerm: '',
+                            totalMarks: 20,
+                            classOptions: [],
+                            pupils: [],
+                            loading: false,
+                            error: null,
+                            async apiCall(endpoint, options = {}) {
+                                this.loading = true;
+                                this.error = null;
+                                try {
+                                    const base = window.SHIKOLA_API_BASE || '';
+                                    if (!base) return null;
+                                    const response = await fetch(`${base}${endpoint}`, {
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            ...(options.headers || {})
+                                        },
+                                        ...options
+                                    });
+                                    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                    return await response.json();
+                                } catch (e) {
+                                    console.error('API error:', e);
+                                    this.error = e.message || 'Failed to contact server';
+                                    throw e;
+                                } finally {
+                                    this.loading = false;
+                                }
+                            },
+                            async loadPupils() {
+                                this.error = null;
+                                this.pupils = [];
+                                if (!(this.selectedClass && this.selectedSubject && this.selectedTest && this.selectedTerm)) {
+                                    return;
+                                }
+
+                                let basePupils = [];
+                                try {
+                                    if (window.ShikolaPupilsApi && typeof window.ShikolaPupilsApi.listPupils === 'function') {
+                                        const all = await window.ShikolaPupilsApi.listPupils();
+                                        if (Array.isArray(all)) {
+                                            const targetClass = this.selectedClass;
+                                            basePupils = all.filter(function (p) {
+                                                const cls = p && (p.classGrade || p.classLabel || p.className);
+                                                return cls && String(cls) === String(targetClass);
+                                            });
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to load pupils list', e);
+                                    basePupils = [];
+                                }
+
+                                let existing = null;
+                                try {
+                                    if (window.ShikolaClassTestsStore && typeof window.ShikolaClassTestsStore.getTest === 'function') {
+                                        existing = window.ShikolaClassTestsStore.getTest({
+                                            className: this.selectedClass,
+                                            subject: this.selectedSubject,
+                                            test: this.selectedTest,
+                                            term: this.selectedTerm
+                                        });
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to load existing class test marks', e);
+                                }
+
+                                const marksById = {};
+                                if (existing && Array.isArray(existing.marks)) {
+                                    existing.marks.forEach(function (m) {
+                                        if (!m || !m.pupilId) return;
+                                        marksById[String(m.pupilId)] = m;
+                                    });
+                                }
+
+                                const rows = [];
+                                basePupils.forEach(function (p, idx) {
+                                    const id = p.pupilId || p.id || p.admissionNo || ('P' + (idx + 1));
+                                    const name = p.fullName || p.name || ('Student ' + (idx + 1));
+                                    const existingMark = marksById[id];
+                                    rows.push({
+                                        id: id,
+                                        name: name,
+                                        marks: existingMark && existingMark.marks != null ? existingMark.marks : null
+                                    });
+                                });
+
+                                if (existing && Array.isArray(existing.marks)) {
+                                    existing.marks.forEach(function (m) {
+                                        if (!m || !m.pupilId) return;
+                                        const id = String(m.pupilId);
+                                        if (rows.some(function (r) { return r.id === id; })) return;
+                                        rows.push({
+                                            id: id,
+                                            name: m.name || ('Student ' + (rows.length + 1)),
+                                            marks: m.marks != null ? m.marks : null
+                                        });
+                                    });
+                                }
+
+                                this.pupils = rows;
+                            },
+                            async saveMarks() {
+                                if (!(this.selectedClass && this.selectedSubject && this.selectedTest && this.selectedTerm)) {
+                                    return;
+                                }
+                                this.error = null;
+                                this.loading = true;
+                                const payload = {
+                                    className: this.selectedClass,
+                                    subject: this.selectedSubject,
+                                    test: this.selectedTest,
+                                    term: this.selectedTerm,
+                                    totalMarks: this.totalMarks,
+                                    pupils: this.pupils
+                                };
+                                
+                                // Try Teacher API first
+                                try {
+                                    if (window.ShikolaTeacherApi) {
+                                        // Create or find test
+                                        let testId = null;
+                                        const tests = await window.ShikolaTeacherApi.getClassTests({
+                                            className: this.selectedClass,
+                                            subject: this.selectedSubject,
+                                            term: this.selectedTerm
+                                        });
+                                        const existingTest = tests.find(t => t.test_name === this.selectedTest);
+                                        if (existingTest) {
+                                            testId = existingTest.id;
+                                        } else {
+                                            const newTest = await window.ShikolaTeacherApi.createClassTest({
+                                                className: this.selectedClass,
+                                                subject: this.selectedSubject,
+                                                testName: this.selectedTest,
+                                                term: this.selectedTerm,
+                                                totalMarks: this.totalMarks
+                                            });
+                                            testId = newTest.id;
+                                        }
+                                        // Save marks
+                                        if (testId) {
+                                            await window.ShikolaTeacherApi.saveClassTestMarks(testId, this.pupils.map(p => ({
+                                                id: p.id,
+                                                name: p.name,
+                                                marks: p.marks
+                                            })));
+                                            this.loading = false;
+                                            
+                                            // Trigger real-time sync
+                                            if (window.shikolaRealtimeSync && window.shikolaRealtimeSync.broadcast) {
+                                                window.shikolaRealtimeSync.broadcast('class-test-marks-saved', {
+                                                    action: 'saved',
+                                                    testId: testId,
+                                                    className: this.selectedClass,
+                                                    subject: this.selectedSubject,
+                                                    test: this.selectedTest,
+                                                    term: this.selectedTerm,
+                                                    pupilCount: this.pupils.length,
+                                                    timestamp: new Date().toISOString()
+                                                });
+                                            }
+                                            
+                                            // Trigger local refresh events
+                                            if (window.refreshClassTests) {
+                                                window.refreshClassTests();
+                                            }
+                                            if (window.refreshClassTestMarks) {
+                                                window.refreshClassTestMarks();
+                                            }
+                                            
+                                            alert('Marks saved successfully!');
+                                            console.log('Marks saved successfully!');
+                                            return;
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.warn('Teacher API save failed, using local fallback', e);
+                                }
+
+                                // Fallback to local store
+                                try {
+                                    if (window.ShikolaClassTestsStore && typeof window.ShikolaClassTestsStore.saveMarks === 'function') {
+                                        window.ShikolaClassTestsStore.saveMarks(payload);
+                                    }
+                                    try {
+                                        await this.apiCall('/api/teacher/class-tests/marks', {
+                                            method: 'POST',
+                                            body: JSON.stringify({
+                                                classId: this.selectedClass,
+                                                subject: this.selectedSubject,
+                                                test: this.selectedTest,
+                                                term: this.selectedTerm,
+                                                marks: this.pupils.map(p => ({
+                                                    id: p.id,
+                                                    name: p.name,
+                                                    marks: p.marks
+                                                }))
+                                            })
+                                        });
+                                    } catch (e) {
+                                        console.warn('Class test backend sync failed', e);
+                                    }
+                                    this.loading = false;
+                                    alert('Marks saved.');
+                                } catch (e) {
+                                    console.error('Failed to save marks locally', e);
+                                    this.loading = false;
+                                    alert('Failed to save marks locally. Please try again.');
+                                }
+                            },
+                            async init() {
+                                var self = this;
+                                
+                                // Load teacher's assigned classes first
+                                try {
+                                    if (window.ShikolaTeacherApi) {
+                                        var classData = await window.ShikolaTeacherApi.getMyClasses();
+                                        console.log('Classes API response:', classData);
+                                        
+                                        // Handle different response structures
+                                        if (classData && classData.success && classData.data) {
+                                            if (Array.isArray(classData.data)) {
+                                                // Direct array response
+                                                this.classOptions = classData.data.map(function(c) { 
+                                                    return c.name || c.Name || c; 
+                                                });
+                                            } else if (classData.data.classes && Array.isArray(classData.data.classes)) {
+                                                // Nested classes array
+                                                this.classOptions = classData.data.classes.map(function(c) { 
+                                                    return c.name || c.Name || c; 
+                                                });
+                                            }
+                                        } else if (Array.isArray(classData)) {
+                                            // Fallback for direct array response
+                                            this.classOptions = classData.map(function(c) { 
+                                                return c.name || c.Name || c; 
+                                            });
+                                        }
+                                        
+                                        console.log('Loaded class options:', this.classOptions);
+                                    }
+                                } catch (e) {
+                                    console.warn('Failed to load classes from API', e);
+                                    // Fallback to defaults
+                                    this.classOptions = ['Grade 1A', 'Grade 2A', 'Grade 3A'];
+                                }
+                            },
+                            async loadSubjectsForClass() {
+                                this.selectedSubject = '';
+                                var subjectSelect = document.getElementById('manage-subject-select');
+                                if (!subjectSelect) return;
+                                
+                                // Clear existing options except the first one
+                                while (subjectSelect.children.length > 1) {
+                                    subjectSelect.removeChild(subjectSelect.lastChild);
+                                }
+                                
+                                if (!this.selectedClass) return;
+                                
+                                try {
+                                    // Load subjects for this class and teacher
+                                    if (window.ShikolaTeacherApi) {
+                                        var subjectsData = await window.ShikolaTeacherApi.getMySubjectsForClass(this.selectedClass);
+                                        var subjects = [];
+                                        
+                                        if (subjectsData && subjectsData.success && subjectsData.data) {
+                                            subjects = Array.isArray(subjectsData.data) ? subjectsData.data : [];
+                                        } else if (Array.isArray(subjectsData)) {
+                                            subjects = subjectsData;
+                                        }
+                                        
+                                        // Add subject options
+                                        subjects.forEach(function(subject) {
+                                            var option = document.createElement('option');
+                                            option.value = subject.name || subject.Name || subject;
+                                            option.textContent = subject.name || subject.Name || subject;
+                                            subjectSelect.appendChild(option);
+                                        });
+                                    }
+                                } catch (e) {
+                                    console.warn('Failed to load subjects for class', e);
+                                    // Fallback to default subjects
+                                    var defaultSubjects = ['Mathematics', 'English', 'Science'];
+                                    defaultSubjects.forEach(function(subject) {
+                                        var option = document.createElement('option');
+                                        option.value = subject;
+                                        option.textContent = subject;
+                                        subjectSelect.appendChild(option);
+                                    });
+                                }
+                            },
+                            async loadPupils() {
+                                this.error = null;
+                                this.pupils = [];
+                                if (!(this.selectedClass && this.selectedSubject && this.selectedTest && this.selectedTerm)) {
+                                    return;
+                                }
+
+                                try {
+                                    // Load pupils for this class using the real API
+                                    if (window.ShikolaTeacherApi) {
+                                        var pupilsData = await window.ShikolaTeacherApi.getPupils(this.selectedClass, this.selectedSubject);
+                                        var pupils = [];
+                                        
+                                        if (pupilsData && pupilsData.success && pupilsData.data) {
+                                            pupils = Array.isArray(pupilsData.data) ? pupilsData.data : [];
+                                        } else if (Array.isArray(pupilsData)) {
+                                            pupils = pupilsData;
+                                        }
+                                        
+                                        // Transform to expected format
+                                        this.pupils = pupils.map(function(p, idx) {
+                                            return {
+                                                id: p.id || p.pupilId || p.PupilId || ('P' + (idx + 1)),
+                                                name: p.fullName || p.name || p.Name || ('Student ' + (idx + 1)),
+                                                marks: null
+                                            };
+                                        });
+                                        
+                                        // Try to load existing marks
+                                        await this.loadExistingMarks();
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to load pupils', e);
+                                    this.error = 'Failed to load pupils. Please try again.';
+                                }
+                            },
+                            async loadExistingMarks() {
+                                try {
+                                    // Try to find existing test
+                                    var testsData = await window.ShikolaTeacherApi.getClassTests({
+                                        className: this.selectedClass,
+                                        subject: this.selectedSubject,
+                                        term: this.selectedTerm
+                                    });
+                                    
+                                    if (testsData && testsData.success && testsData.data) {
+                                        var existingTest = testsData.data.find(function(t) {
+                                            return t.testName === this.selectedTest;
+                                        }.bind(this));
+                                        
+                                        if (existingTest) {
+                                            var marksData = await window.ShikolaTeacherApi.getClassTestMarks(existingTest.id);
+                                            if (marksData && marksData.success && marksData.data) {
+                                                // Update pupils with existing marks
+                                                marksData.data.forEach(function(mark) {
+                                                    var pupil = this.pupils.find(function(p) { return p.id === mark.id; });
+                                                    if (pupil) {
+                                                        pupil.marks = mark.marks;
+                                                    }
+                                                }.bind(this));
+                                            }
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.warn('Failed to load existing marks', e);
+                                }
+                            },
+                            async saveMarks() {
+                                console.log('Starting saveMarks process...');
+                                console.log('Selected values:', {
+                                    class: this.selectedClass,
+                                    subject: this.selectedSubject,
+                                    test: this.selectedTest,
+                                    term: this.selectedTerm,
+                                    totalMarks: this.totalMarks,
+                                    pupilsCount: this.pupils ? this.pupils.length : 0
+                                });
+                                
+                                if (!(this.selectedClass && this.selectedSubject && this.selectedTest && this.selectedTerm)) {
+                                    this.error = 'Please select class, subject, test, and term';
+                                    console.error('Missing required fields');
+                                    return;
+                                }
+                                
+                                if (!this.pupils || this.pupils.length === 0) {
+                                    this.error = 'No pupils loaded to save marks for';
+                                    console.error('No pupils available');
+                                    return;
+                                }
+                                
+                                this.error = null;
+                                this.loading = true;
+                                
+                                try {
+                                    // First, create or find the test
+                                    var testId = null;
+                                    
+                                    console.log('Looking for existing test...');
+                                    var testsData = await window.ShikolaTeacherApi.getClassTests({
+                                        className: this.selectedClass,
+                                        subject: this.selectedSubject,
+                                        term: this.selectedTerm
+                                    });
+                                    
+                                    console.log('Existing tests response:', testsData);
+                                    
+                                    if (testsData && testsData.success && testsData.data) {
+                                        var existingTest = testsData.data.find(function(t) {
+                                            return t.testName === this.selectedTest;
+                                        }.bind(this));
+                                        
+                                        if (existingTest) {
+                                            testId = existingTest.id;
+                                            console.log('Found existing test:', testId);
+                                        }
+                                    }
+                                    
+                                    // Create new test if not found
+                                    if (!testId) {
+                                        console.log('Creating new test...');
+                                        
+                                        // Get class and subject IDs
+                                        var classData = await window.ShikolaTeacherApi.getMyClasses();
+                                        var subjectData = await window.ShikolaTeacherApi.getMySubjects();
+                                        
+                                        console.log('Class data for ID resolution:', classData);
+                                        console.log('Subject data for ID resolution:', subjectData);
+                                        
+                                        var classId = null;
+                                        var subjectId = null;
+                                        
+                                        // Find class ID by name
+                                        if (classData && classData.success && classData.data) {
+                                            var classes = Array.isArray(classData.data) ? classData.data : classData.data.classes || [];
+                                            var foundClass = classes.find(function(c) { 
+                                                return c.name === this.selectedClass || c.Name === this.selectedClass; 
+                                            }.bind(this));
+                                            if (foundClass) {
+                                                classId = foundClass.id || foundClass.Id;
+                                                console.log('Found class ID:', classId);
+                                            }
+                                        }
+                                        
+                                        // Find subject ID by name
+                                        if (subjectData && subjectData.success && subjectData.data) {
+                                            var subjects = Array.isArray(subjectData.data) ? subjectData.data : [];
+                                            var foundSubject = subjects.find(function(s) { 
+                                                return s.name === this.selectedSubject || s.Name === this.selectedSubject; 
+                                            }.bind(this));
+                                            if (foundSubject) {
+                                                subjectId = foundSubject.id || foundSubject.Id;
+                                                console.log('Found subject ID:', subjectId);
+                                            }
+                                        }
+                                        
+                                        if (!classId || !subjectId) {
+                                            throw new Error('Could not resolve class and subject IDs. Make sure you have access to this class and subject.');
+                                        }
+                                        
+                                        var newTestData = {
+                                            classId: classId,
+                                            subjectId: subjectId,
+                                            testName: this.selectedTest,
+                                            term: this.selectedTerm,
+                                            totalMarks: this.totalMarks
+                                        };
+                                        
+                                        console.log('Creating test with data:', newTestData);
+                                        
+                                        var newTest = await window.ShikolaTeacherApi.createClassTest(newTestData);
+                                        
+                                        console.log('Create test response:', newTest);
+                                        
+                                        if (newTest && newTest.success && newTest.data) {
+                                            testId = newTest.data.id;
+                                            console.log('Created new test with ID:', testId);
+                                        } else {
+                                            throw new Error(newTest?.error || 'Failed to create test');
+                                        }
+                                    }
+                                    
+                                    // Save marks if we have a test ID
+                                    if (testId) {
+                                        console.log('Saving marks for test:', testId);
+                                        
+                                        var marksData = this.pupils.map(function(p) {
+                                            return {
+                                                id: p.id,
+                                                name: p.name,
+                                                marks: p.marks || 0
+                                            };
+                                        });
+                                        
+                                        console.log('Marks to save:', marksData);
+                                        
+                                        var marksResult = await window.ShikolaTeacherApi.saveClassTestMarks(testId, marksData);
+                                        
+                                        console.log('Save marks response:', marksResult);
+                                        
+                                        if (marksResult && marksResult.success) {
+                                            this.loading = false;
+                                            
+                                            // Broadcast real-time update
+                                            if (window.ShikolaRealtimeSync && window.ShikolaRealtimeSync.broadcast) {
+                                                window.ShikolaRealtimeSync.broadcast('classTestMarks', {
+                                                    action: 'saved',
+                                                    testId: testId,
+                                                    className: this.selectedClass,
+                                                    subject: this.selectedSubject,
+                                                    test: this.selectedTest,
+                                                    term: this.selectedTerm,
+                                                    pupilCount: this.pupils.length,
+                                                    timestamp: new Date().toISOString()
+                                                });
+                                            }
+                                            
+                                            // Trigger local refresh events
+                                            if (window.refreshClassTests) {
+                                                window.refreshClassTests();
+                                            }
+                                            if (window.refreshClassTestMarks) {
+                                                window.refreshClassTestMarks();
+                                            }
+                                            
+                                            alert('Marks saved successfully!');
+                                            console.log('Marks saved successfully!');
+                                            return;
+                                        } else {
+                                            throw new Error(marksResult?.error || 'Failed to save marks');
+                                        }
+                                    } else {
+                                        throw new Error('Could not create or find test');
+                                    }
+                                    
+                                } catch (e) {
+                                    console.error('Failed to save marks:', e);
+                                    this.error = e.message || 'Failed to save marks. Please try again.';
+                                } finally {
+                                    this.loading = false;
+                                }
+                            }
+                        }">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Add / Update Test Marks</div>
+                                        <div class="text-xs text-slate-400 mt-1">Enter and update test/quiz marks for each pupil in the selected class and subject.</div>
+                                    </div>
+                                    <button type="button" class="px-3 py-1.5 rounded-xl bg-orange-500 text-white text-xs font-medium hover:bg-orange-600 flex items-center gap-2" @click="saveMarks" :disabled="loading">
+                                        <i class="fas fa-save text-[11px]"></i>
+                                        <span x-show="!loading">Save marks</span>
+                                        <span x-show="loading">Saving...</span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Error display -->
+                                <div x-show="error" x-cloak class="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span x-text="error"></span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 text-xs mb-4">
+                                    <div>
+                                        <label for="manage-class-select" class="block text-[11px] font-medium text-slate-600 mb-1">Class</label>
+                                        <select id="manage-class-select" x-model="selectedClass" @change="loadSubjectsForClass(); if (selectedClass && selectedSubject && selectedTest && selectedTerm) loadPupils()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select class</option>
+                                            <template x-for="cls in classOptions" :key="'ct-manage-' + cls">
+                                                <option x-text="cls"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="manage-subject-select" class="block text-[11px] font-medium text-slate-600 mb-1">Subject</label>
+                                        <select id="manage-subject-select" x-model="selectedSubject" @change="if (selectedClass && selectedSubject && selectedTest && selectedTerm) loadPupils()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select subject</option>
+                                            <!-- Subjects will be loaded dynamically via loadSubjectsForClass() -->
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="manage-test-select" class="block text-[11px] font-medium text-slate-600 mb-1">Test</label>
+                                        <select id="manage-test-select" x-model="selectedTest" @change="if (selectedClass && selectedSubject && selectedTest && selectedTerm) loadPupils()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select test</option>
+                                            <option value="Test 1">Test 1</option>
+                                            <option value="Test 2">Test 2</option>
+                                            <option value="Test 3">Test 3</option>
+                                            <option value="Quiz 1">Quiz 1</option>
+                                            <option value="Quiz 2">Quiz 2</option>
+                                            <option value="Assignment 1">Assignment 1</option>
+                                            <option value="Assignment 2">Assignment 2</option>
+                                            <option value="Assignment 3">Assignment 3</option>
+                                            <option value="Mid-term">Mid-term</option>
+                                            <option value="End of Term">End of Term</option>
+                                            <option value="Final Exam">Final Exam</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="manage-term-select" class="block text-[11px] font-medium text-slate-600 mb-1">Term</label>
+                                        <select id="manage-term-select" x-model="selectedTerm" @change="if (selectedClass && selectedSubject && selectedTest && selectedTerm) loadPupils()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select term</option>
+                                            <option>Term 1</option>
+                                            <option>Term 2</option>
+                                            <option>Term 3</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="total-marks-input" class="block text-[11px] font-medium text-slate-600 mb-1">Total Test Marks</label>
+                                        <input id="total-marks-input" type="number" min="1" x-model="totalMarks" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400" placeholder="e.g. 20">
+                                    </div>
+                                </div>
+                                <div class="mb-3 text-[11px] text-slate-400" x-show="!(selectedClass && selectedSubject && selectedTest && selectedTerm)" x-cloak>
+                                    Select class, subject, test and term to generate the marks spreadsheet.
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/60 overflow-hidden text-xs" x-show="selectedClass && selectedSubject && selectedTest && selectedTerm" x-cloak>
+                                    <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-50 text-[11px] font-medium text-slate-500">
+                                        <div class="col-span-3 md:col-span-3">ID</div>
+                                        <div class="col-span-5 md:col-span-5">Student Name</div>
+                                        <div class="col-span-4 md:col-span-4">Obtained Marks</div>
+                                    </div>
+                                    <template x-for="pupil in pupils" :key="pupil.id">
+                                        <div class="grid grid-cols-12 gap-2 px-4 py-2 items-center border-t border-slate-100 bg-white">
+                                            <div class="col-span-3 md:col-span-3 text-slate-500" x-text="pupil.id"></div>
+                                            <div class="col-span-5 md:col-span-5 text-slate-800" x-text="pupil.name"></div>
+                                            <div class="col-span-4 md:col-span-4">
+                                                <input type="number" min="0" :max="totalMarks" x-model="pupil.marks" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" :placeholder="'0 / ' + totalMarks.toString()">
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section x-show="activeTab === 'test-results'" x-cloak x-data="{
+                            filterMode: 'class-wise',
+                            selectedClass: '',
+                            selectedSubject: '',
+                            selectedTest: '',
+                            selectedTerm: '',
+                            summary: {
+                                average: null,
+                                highest: null,
+                                lowest: null,
+                                passRate: 0,
+                                passCount: 0,
+                                totalCount: 0
+                            },
+                            rows: [],
+                            get classOptions() {
+                                if (window.ShikolaClassesUi && typeof window.ShikolaClassesUi.getClassOptions === 'function') {
+                                    return window.ShikolaClassesUi.getClassOptions(['Grade 1A', 'Grade 2A', 'Grade 3A']);
+                                }
+                                return ['Grade 1A', 'Grade 2A', 'Grade 3A'];
+                            },
+                            get hasSelection() {
+                                return this.selectedClass && this.selectedSubject && this.selectedTest && this.selectedTerm;
+                            },
+                            async loadResults() {
+                                if (!this.hasSelection) {
+                                    this.rows = [];
+                                    this.summary = {
+                                        average: null,
+                                        highest: null,
+                                        lowest: null,
+                                        passRate: 0,
+                                        passCount: 0,
+                                        totalCount: 0
+                                    };
+                                    return;
+                                }
+
+                                this.rows = [];
+                                this.summary = {
+                                    average: null,
+                                    highest: null,
+                                    lowest: null,
+                                    passRate: 0,
+                                    passCount: 0,
+                                    totalCount: 0
+                                };
+
+                                // Use real API first
+                                try {
+                                    if (window.ShikolaTeacherApi) {
+                                        var resultsData = await window.ShikolaTeacherApi.getClassTestResults({
+                                            className: this.selectedClass,
+                                            subject: this.selectedSubject,
+                                            test: this.selectedTest,
+                                            term: this.selectedTerm
+                                        });
+                                        
+                                        if (resultsData && resultsData.success && resultsData.data) {
+                                            var data = resultsData.data;
+                                            this.rows = (data.rows || []).map(function (r, idx) {
+                                                return {
+                                                    no: idx + 1,
+                                                    pupilId: r.pupilId || ('P' + (idx + 1)),
+                                                    name: r.name || ('Student ' + (idx + 1)),
+                                                    className: r.className || this.selectedClass,
+                                                    marks: r.marks != null ? r.marks : null,
+                                                    totalMarks: r.totalMarks != null ? r.totalMarks : null
+                                                };
+                                            }.bind(this));
+                                            
+                                            if (data.summary && typeof data.summary === 'object') {
+                                                this.summary = {
+                                                    average: data.summary.average,
+                                                    highest: data.summary.highest,
+                                                    lowest: data.summary.lowest,
+                                                    passRate: data.summary.passRate,
+                                                    passCount: data.summary.passCount,
+                                                    totalCount: data.summary.totalCount
+                                                };
+                                            }
+                                            return;
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.warn('Failed to load results from API', e);
+                                }
+
+                                // Fallback to local store
+                                try {
+                                    if (window.ShikolaClassTestsStore && typeof window.ShikolaClassTestsStore.getResults === 'function') {
+                                        var local = window.ShikolaClassTestsStore.getResults({
+                                            className: this.selectedClass,
+                                            subject: this.selectedSubject,
+                                            test: this.selectedTest,
+                                            term: this.selectedTerm
+                                        });
+                                        if (local && Array.isArray(local.rows) && local.rows.length) {
+                                            this.rows = local.rows;
+                                            if (local.summary && typeof local.summary === 'object') {
+                                                this.summary = local.summary;
+                                            } else {
+                                                this.recomputeSummary();
+                                            }
+                                            return;
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Failed to load local class test results', e);
+                                }
+
+                                // Final fallback - empty results
+                                this.recomputeSummary();
+                            },
+                            recomputeSummary() {
+                                var rows = this.rows || [];
+                                if (!rows.length) {
+                                    this.summary = {
+                                        average: null,
+                                        highest: null,
+                                        lowest: null,
+                                        passRate: 0,
+                                        passCount: 0,
+                                        totalCount: 0
+                                    };
+                                    return;
+                                }
+                                var totalMarks = rows[0].totalMarks ? Number(rows[0].totalMarks) : 0;
+                                if (!totalMarks) {
+                                    this.summary = {
+                                        average: null,
+                                        highest: null,
+                                        lowest: null,
+                                        passRate: 0,
+                                        passCount: 0,
+                                        totalCount: rows.length
+                                    };
+                                    return;
+                                }
+                                var highest = null;
+                                var lowest = null;
+                                var sumMarks = 0;
+                                var countWithMarks = 0;
+                                var passCount = 0;
+                                var passThresholdPercent = 50;
+                                rows.forEach(function (row) {
+                                    if (row.marks == null) return;
+                                    var m = Number(row.marks);
+                                    if (!Number.isFinite(m)) return;
+                                    countWithMarks++;
+                                    sumMarks += m;
+                                    if (highest == null || m > highest) highest = m;
+                                    if (lowest == null || m < lowest) lowest = m;
+                                    var percent = (m / totalMarks) * 100;
+                                    if (percent >= passThresholdPercent) passCount++;
+                                });
+                                var averagePercent = totalMarks && countWithMarks ? (sumMarks / (countWithMarks * totalMarks)) * 100 : null;
+                                var totalCount = rows.length;
+                                var passRate = totalCount ? (passCount / totalCount) * 100 : 0;
+                                this.summary = {
+                                    average: averagePercent,
+                                    highest: highest,
+                                    lowest: lowest,
+                                    passRate: passRate,
+                                    passCount: passCount,
+                                    totalCount: totalCount
+                                };
+                            },
+                            gradeForRow(row) {
+                                var total = row && row.totalMarks ? Number(row.totalMarks) : 0;
+                                if (!total || row.marks == null) return '-';
+                                var m = Number(row.marks);
+                                if (!Number.isFinite(m)) return '-';
+                                var percent = (m / total) * 100;
+                                if (percent >= 80) return 'A';
+                                if (percent >= 65) return 'B';
+                                if (percent >= 50) return 'C';
+                                if (percent >= 40) return 'D';
+                                return 'E';
+                            },
+                            isPassRow(row) {
+                                var total = row && row.totalMarks ? Number(row.totalMarks) : 0;
+                                if (!total || row.marks == null) return false;
+                                var m = Number(row.marks);
+                                if (!Number.isFinite(m)) return false;
+                                var percent = (m / total) * 100;
+                                return percent >= 50;
+                            },
+                            exportResults() {
+                                var rows = this.rows || [];
+                                if (!this.hasSelection) {
+                                    alert('Select class, subject, test and term before exporting results.');
+                                    return;
+                                }
+                                if (!rows.length) {
+                                    alert('No results available to export.');
+                                    return;
+                                }
+                                var defaultFormat = 'csv';
+                                var choice = window.prompt('Export format (csv or pdf):', defaultFormat);
+                                var format = defaultFormat;
+                                if (choice && typeof choice === 'string') {
+                                    var lower = choice.toLowerCase();
+                                    if (lower === 'csv' || lower === 'pdf') {
+                                        format = lower;
+                                    }
+                                }
+                                if (format === 'pdf') {
+                                    alert('PDF export is not implemented yet. Please use CSV.');
+                                    return;
+                                }
+                                var header = ['Pupil', 'Class', 'Score', 'Grade', 'Status'];
+                                var lines = [header.join(',')];
+                                var self = this;
+                                rows.forEach(function (row) {
+                                    var total = row.totalMarks ? Number(row.totalMarks) : 0;
+                                    var scoreText = (row.marks != null && total) ? (row.marks + ' / ' + total) : '--';
+                                    var grade = self.gradeForRow(row);
+                                    var status = self.isPassRow(row) ? 'Passed' : 'Failed';
+                                    var values = [
+                                        row.name,
+                                        row.className || self.selectedClass || '',
+                                        scoreText,
+                                        grade,
+                                        status
+                                    ];
+                                    var safe = values.map(function (v) {
+                                        var s = v == null ? '' : String(v);
+                                        if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1) {
+                                            s = '"' + s.replace(/"/g, '""') + '"';
+                                        }
+                                        return s;
+                                    });
+                                    lines.push(safe.join(','));
+                                });
+                                var csv = lines.join('\n');
+                                try {
+                                    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                                    var url = URL.createObjectURL(blob);
+                                    var a = document.createElement('a');
+                                    a.href = url;
+                                    var fileName = (this.selectedClass || 'class') + '_' + (this.selectedSubject || 'subject') + '_' + (this.selectedTest || 'test') + '_results.csv';
+                                    a.download = fileName.replace(/\s+/g, '_');
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+                                } catch (e) {
+                                    console.error('Failed to export CSV', e);
+                                }
+                            }
+                        }">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Test Result</div>
+                                        <div class="text-xs text-slate-400 mt-1">View test performance, class results and pass rates for selected tests.</div>
+                                    </div>
+                                    <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 flex items-center gap-2" @click="exportResults()">
+                                        <i class="fas fa-file-export text-[11px]"></i>
+                                        <span>Export</span>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 text-xs mb-4">
+                                    <div>
+                                        <label for="result-filter-mode" class="block text-[11px] font-medium text-slate-600 mb-1">Filter</label>
+                                        <select id="result-filter-mode" x-model="filterMode" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="class-wise">Class-wise</option>
+                                            <option value="class-subject">Class &amp; Subject</option>
+                                            <option value="student-subject">Student &amp; Subject</option>
+                                            <option value="date-range">Date Range</option>
+                                            <option value="performance">Performance Report</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="result-class-select" class="block text-[11px] font-medium text-slate-600 mb-1">Select Class<span class="text-red-500">*</span></label>
+                                        <select id="result-class-select" x-model="selectedClass" @change="loadResults()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select class</option>
+                                            <template x-for="cls in classOptions" :key="'ct-result-' + cls">
+                                                <option x-text="cls"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="result-subject-select" class="block text-[11px] font-medium text-slate-600 mb-1">Subject</label>
+                                        <select id="result-subject-select" x-model="selectedSubject" @change="loadResults()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All subjects</option>
+                                            <!-- Subjects will be loaded dynamically -->
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="result-test-select" class="block text-[11px] font-medium text-slate-600 mb-1">Test</label>
+                                        <select id="result-test-select" x-model="selectedTest" @change="loadResults()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All tests</option>
+                                            <option value="Test 1">Test 1</option>
+                                            <option value="Test 2">Test 2</option>
+                                            <option value="Test 3">Test 3</option>
+                                            <option value="Quiz 1">Quiz 1</option>
+                                            <option value="Quiz 2">Quiz 2</option>
+                                            <option value="Assignment 1">Assignment 1</option>
+                                            <option value="Assignment 2">Assignment 2</option>
+                                            <option value="Assignment 3">Assignment 3</option>
+                                            <option value="Mid-term">Mid-term</option>
+                                            <option value="Final Exam">Final Exam</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="result-term-select" class="block text-[11px] font-medium text-slate-600 mb-1">Term</label>
+                                        <select id="result-term-select" x-model="selectedTerm" @change="loadResults()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="Term 1">Term 1</option>
+                                            <option value="Term 2">Term 2</option>
+                                            <option value="Term 3">Term 3</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs mb-4">
+                                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                                        <div class="text-[11px] text-slate-500 mb-1">Class Average</div>
+                                        <div class="flex items-baseline gap-2">
+                                            <div class="text-2xl font-semibold text-slate-800" x-text="summary && summary.average != null ? summary.average.toFixed(1) + '%' : '--'"></div>
+                                            <div class="text-[11px] text-emerald-500" x-text="summary && summary.totalCount ? (summary.totalCount + ' pupils') : 'No results yet'"></div>
+                                        </div>
+                                    </div>
+                                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                                        <div class="text-[11px] text-slate-500 mb-1">Highest Score</div>
+                                        <div class="text-2xl font-semibold text-slate-800" x-text="summary && summary.highest != null ? (summary.highest + ' / ' + (rows[0] && rows[0].totalMarks != null ? rows[0].totalMarks : '')) : '--'"></div>
+                                    </div>
+                                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                                        <div class="text-[11px] text-slate-500 mb-1">Pupils Passed</div>
+                                        <div class="flex items-baseline gap-2">
+                                            <div class="text-2xl font-semibold text-slate-800" x-text="summary ? summary.passCount : 0"></div>
+                                            <div class="text-[11px] text-slate-500" x-text="summary && summary.totalCount ? ('out of ' + summary.totalCount) : ''"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/60 overflow-hidden text-xs">
+                                    <div class="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-50 text-[11px] font-medium text-slate-500">
+                                        <div class="col-span-4">Pupil</div>
+                                        <div class="hidden md:block md:col-span-2">Class</div>
+                                        <div class="col-span-3 md:col-span-2">Score</div>
+                                        <div class="col-span-3 md:col-span-2">Grade</div>
+                                        <div class="hidden md:block md:col-span-2 text-right">Status</div>
+                                    </div>
+                                    <template x-if="!rows.length">
+                                        <div class="px-4 py-3 text-[11px] text-slate-500 bg-white border-t border-slate-100">
+                                            No results loaded yet. Select filters to view test results.
+                                        </div>
+                                    </template>
+                                    <template x-for="row in rows" :key="row.pupilId || row.name">
+                                        <div class="grid grid-cols-12 gap-2 px-4 py-2 items-center border-t border-slate-100 bg-white">
+                                            <div class="col-span-4 text-slate-800" x-text="row.name"></div>
+                                            <div class="hidden md:block md:col-span-2 text-slate-500" x-text="row.className || selectedClass"></div>
+                                            <div class="col-span-3 md:col-span-2 text-slate-700" x-text="(row.marks != null && row.totalMarks != null) ? (row.marks + ' / ' + row.totalMarks) : '--'"></div>
+                                            <div class="col-span-3 md:col-span-2 text-slate-600 font-medium" x-text="gradeForRow(row)"></div>
+                                            <div class="hidden md:block md:col-span-2 text-right" :class="isPassRow(row) ? 'text-emerald-600' : 'text-rose-600'">
+                                                <span x-text="isPassRow(row) ? 'Passed' : 'Failed'"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="custom-cursor"></div>
+    <script src="../shared-assets/js/script.js"></script>
+    
+    <!-- Real-time sync integration for class tests -->
+    <script>
+        // Real-time refresh functions for global sync
+        window.refreshClassTests = function() {
+            // Refresh class tests list
+            if (window.Alpine) {
+                // Find and refresh the class tests Alpine component
+                Alpine.store('classTestsManage', function() {
+                    this.loadClassTests && this.loadClassTests();
+                });
+            }
+        };
+
+        window.refreshClassTestMarks = function() {
+            // Refresh class test marks
+            if (window.Alpine) {
+                // Find and refresh the marks management component
+                const manageComponent = document.querySelector('[x-data*="manageMarks"]');
+                if (manageComponent && manageComponent._x_dataStack) {
+                    const component = manageComponent._x_dataStack[0];
+                    if (component.loadPupils) {
+                        component.loadPupils();
+                    }
+                }
+            }
+        };
+
+        // Initialize real-time sync when Alpine is ready
+        document.addEventListener('alpine:init', function() {
+            if (window.ShikolaRealtimeSync) {
+                window.ShikolaRealtimeSync.subscribe('classTests', function(data) {
+                    console.log('Class tests updated:', data);
+                    window.refreshClassTests();
+                });
+                
+                window.ShikolaRealtimeSync.subscribe('classTestMarks', function(data) {
+                    console.log('Class test marks updated:', data);
+                    window.refreshClassTestMarks();
+                });
+            }
+        });
+    </script>
+
+    <script src="../../shared-assets/js/script.js"></script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,1108 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola Teacher Messages</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../config.js"></script>
+    <script src="../../shared-assets/js/shared-api-client.js"></script>
+    <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../shared-assets/js/shared-realtime-sync.js" defer></script>
+    <script src="../../shared-assets/js/shared-messages.js" defer></script>
+    <script src="../../shared-assets/js/button-functions.js" defer></script>
+    <script src="teacher-api.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page">
+    <div x-data="teacherMessagesPage()" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                        <span class="flex-1">Attendance</span>
+                    </a>
+                    <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">My Timetable</span>
+                    </a>
+                    <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                        <span class="flex-1">Classes</span>
+                    </a>
+                    <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                        <span class="flex-1">Exams</span>
+                    </a>
+                    <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                        <span class="flex-1">Class Tests</span>
+                    </a>
+                    <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div x-show="sidebarOpen" x-cloak class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    </div>
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                            <span class="flex-1">Attendance</span>
+                        </a>
+                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                            <span class="flex-1">My Timetable</span>
+                        </a>
+                        <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                            <span class="flex-1">Classes</span>
+                        </a>
+                        <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                            <span class="flex-1">Exams</span>
+                        </a>
+                        <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                            <span class="flex-1">Class Tests</span>
+                        </a>
+                        <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                            <span class="flex-1">Reports</span>
+                        </a>
+                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                            <span class="flex-1">Messaging</span>
+                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                            <span class="flex-1">Profile</span>
+                        </a>
+                    </nav>
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center justify-center px-2">
+                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-10 w-auto rounded-2xl lg:hidden ml-16 pl-9">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Messaging</h1>
+                                <p class="text-xs sm:text-sm text-slate-400 mt-1 hidden sm:block">View and manage messages with pupils, parents and colleagues.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 text-xs">
+                        <div class="bg-slate-50 rounded-2xl border border-slate-100 p-4 flex flex-col">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="font-semibold text-slate-800 text-sm">Conversations</div>
+                            </div>
+                            <div class="mb-2 flex gap-2">
+                                <input type="text" x-model="filters.query" placeholder="Search conversations" class="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                <select x-model="filters.peerRole" aria-label="Filter conversations by role" class="rounded-xl border border-slate-200 bg-white px-2 py-2 text-[11px] text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                    <option value="">All</option>
+                                    <option value="pupil">Pupils</option>
+                                    <option value="parent">Parents</option>
+                                    <option value="admin">School Admin</option>
+                                </select>
+                            </div>
+                            <div class="flex-1 overflow-y-auto space-y-2 mt-2">
+                                <template x-if="!filteredThreads.length">
+                                    <div class="p-3 rounded-xl bg-white border border-dashed border-slate-200 text-[11px] text-slate-500 text-center">
+                                        No conversations yet. Start a new message below.
+                                    </div>
+                                </template>
+                                <template x-for="thread in filteredThreads" :key="thread.id">
+                                    <div class="relative">
+                                        <button type="button" @click="openThread(thread.id)" @contextmenu.prevent="showThreadContextMenu($event, thread)" @touchstart="handleThreadTouchStart($event, thread)" @touchend="handleThreadTouchEnd($event, thread)" class="w-full text-left p-3 rounded-xl border flex items-start gap-2 transition" :class="activeThreadId === thread.id ? 'bg-orange-50 border-orange-200' : (selectedThreads.includes(thread.id) ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100 hover:bg-slate-50')">
+                                            <div class="h-8 w-8 rounded-full flex items-center justify-center text-xs" :class="thread.peerRole === 'pupil' ? 'bg-indigo-100 text-indigo-600' : (thread.peerRole === 'parent' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-600')">
+                                                <i class="fas" :class="thread.peerRole === 'pupil' ? 'fa-user-graduate' : (thread.peerRole === 'parent' ? 'fa-user-friends' : 'fa-user-shield')"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center justify-between gap-2">
+                                                    <div class="text-xs font-medium text-slate-700 truncate" x-text="thread.peerName"></div>
+                                                    <div class="text-[10px] text-slate-400" x-text="formatTime(thread.lastAt)"></div>
+                                                </div>
+                                                <div class="text-[11px] text-slate-500 mt-0.5 truncate" x-text="thread.lastMessage"></div>
+                                            </div>
+                                        </button>
+                                        <div x-show="selectedThreads.includes(thread.id)" class="absolute top-2 right-2 h-5 w-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-check text-white text-[10px]"></i>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-slate-200 space-y-2 text-[11px]">
+                                <div class="font-semibold text-slate-700">New message</div>
+                                <div class="flex gap-2 mb-1">
+                                    <select x-model="composer.role" aria-label="New message recipient role" class="w-28 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                        <option value="pupil">Pupil</option>
+                                        <option value="parent">Parent</option>
+                                        <option value="admin">School Admin</option>
+                                    </select>
+                                    <input type="text" x-model="composer.target" placeholder="Pupil ID / name / Admin" class="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                </div>
+                                <textarea x-model="composer.body" rows="2" placeholder="Type your message..." class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400 resize-none"></textarea>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <input type="file" multiple x-ref="composerFileInput" @change="onComposerFilesSelected($event)" class="hidden" aria-label="Attach files" title="Attach files">
+                                        <button type="button" @click="triggerComposerAttach()" class="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-700" title="Attach file" aria-label="Attach file">
+                                            <i class="fas fa-paperclip text-[11px]"></i>
+                                        </button>
+                                        <template x-if="composerFiles && composerFiles.length">
+                                            <div class="text-[11px] text-slate-500">
+                                                <span x-text="composerFiles.length"></span>
+                                                <span>selected</span>
+                                                <button type="button" class="underline ml-2" @click="clearComposerFiles()">clear</button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <button type="button" @click="sendNewMessage()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white text-[11px] font-medium flex items-center gap-1.5">
+                                        <i class="fas fa-paper-plane text-[10px]"></i>
+                                        <span>Send</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col lg:col-span-2">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800" x-text="activeThreadTitle || 'Conversation'"></div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5" x-text="activeThreadSubtitle"></div>
+                                </div>
+                            </div>
+                            <div class="flex-1 rounded-2xl border border-slate-100 bg-slate-50/60 p-3 mb-3 overflow-y-auto text-[11px] text-slate-600">
+                                <div x-show="selectionMode" class="mb-2 p-2 bg-blue-50 rounded-lg flex items-center justify-between">
+                                    <div class="text-[11px] text-blue-700">
+                                        <span x-text="selectedMessages.length"></span> message(s) selected
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button @click="shareSelectedMessages()" class="px-2 py-1 bg-blue-500 text-white rounded text-[10px]">
+                                            <i class="fas fa-share mr-1"></i>Share
+                                        </button>
+                                        <button @click="deleteSelectedMessages()" class="px-2 py-1 bg-red-500 text-white rounded text-[10px]">
+                                            <i class="fas fa-trash mr-1"></i>Delete
+                                        </button>
+                                        <button @click="exitSelectionMode()" class="px-2 py-1 bg-slate-500 text-white rounded text-[10px]">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                                <template x-if="!activeMessages.length">
+                                    <div class="text-center text-slate-400 mt-10">
+                                        Select a conversation on the left or start a new message.
+                                    </div>
+                                </template>
+                                <template x-for="msg in activeMessages" :key="msg.id">
+                                    <div class="mb-3 relative group" :class="msg.isMine ? 'slide-delete-left' : 'slide-delete-right'">
+                                        <div @click="toggleMessageSelection(msg.id)" @contextmenu.prevent="showMessageContextMenu($event, msg)" @touchstart="handleMessageTouchStart($event, msg)" @touchmove="handleMessageTouchMove($event, msg)" @touchend="handleMessageTouchEnd($event, msg)" class="cursor-pointer" :class="msg.isMine ? 'text-right' : 'text-left'">
+                                            <div class="inline-block max-w-[75%] px-3 py-2 rounded-xl relative transition-all duration-300" :class="msg.isMine ? 'bg-orange-500 text-white rounded-br-none' : 'bg-white text-slate-700 rounded-bl-none border border-slate-100'">
+                                                <div x-show="selectedMessages.includes(msg.id)" class="absolute -top-1 -left-1 h-4 w-4 bg-blue-500 rounded-full flex items-center justify-center">
+                                                    <i class="fas fa-check text-white text-[8px]"></i>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <div x-text="msg.body"></div>
+                                                    <div x-show="msg.isMine" class="text-[10px] opacity-70">
+                                                        <i class="fas fa-swipe-left text-xs"></i>
+                                                    </div>
+                                                </div>
+                                                <template x-if="msg.attachments && msg.attachments.length">
+                                                    <div class="mt-2 space-y-1">
+                                                        <template x-for="att in msg.attachments" :key="att.id">
+                                                            <button type="button" @click.stop="openAttachment(att)" class="block text-[11px] underline" :class="msg.isMine ? 'text-white/90' : 'text-slate-600'">
+                                                                <span x-text="att.originalName || 'Attachment'"></span>
+                                                            </button>
+                                                        </template>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                            <div class="text-[9px] mt-0.5 text-slate-400" x-text="formatTime(msg.createdAt)"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="text" x-model="draft" @keydown.enter.prevent="sendInActiveThread()" placeholder="Type a message..." class="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                <input type="file" multiple x-ref="draftFileInput" @change="onDraftFilesSelected($event)" class="hidden" aria-label="Attach files" title="Attach files">
+                                <button type="button" @click="triggerDraftAttach()" class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-700" title="Attach file">
+                                    <i class="fas fa-paperclip text-xs"></i>
+                                </button>
+                                <button type="button" @click="sendInActiveThread()" class="h-9 px-4 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white text-xs font-medium flex items-center gap-2">
+                                    <i class="fas fa-paper-plane text-[11px]"></i>
+                                    <span>Send</span>
+                                </button>
+                            </div>
+                            <template x-if="draftFiles && draftFiles.length">
+                                <div class="mt-2 text-[11px] text-slate-500">
+                                    <span x-text="draftFiles.length"></span>
+                                    <span>attachment(s) selected</span>
+                                    <button type="button" class="underline ml-2" @click="clearDraftFiles()">clear</button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="custom-cursor"></div>
+    <script src="../../shared-assets/js/script.js"></script>
+    <script src="../../shared-assets/js/shared-realtime-messaging.js"></script>
+    <script src="../../shared-assets/js/shared-messaging-enhancements.js"></script>
+    <script>
+        window.teacherMessagesPage = function () {
+            return {
+                sidebarOpen: false,
+                threads: [],
+                filteredThreads: [],
+                activeThreadId: '',
+                activeMessages: [],
+                activeThreadTitle: 'Conversation',
+                activeThreadSubtitle: 'View and manage messages with pupils, parents and colleagues.',
+                draft: '',
+                draftFiles: [],
+                filters: {
+                    query: '',
+                    peerRole: ''
+                },
+                composer: {
+                    role: 'pupil',
+                    target: '',
+                    body: ''
+                },
+                composerFiles: [],
+                selectedThreads: [],
+                selectedMessages: [],
+                selectionMode: false,
+                touchTimer: null,
+                touchStartPos: null,
+                touchStartX: null,
+                touchStartY: null,
+                isSwiping: false,
+                swipeThreshold: 50, // Minimum swipe distance for delete
+                async init() {
+                    // Initialize messaging enhancements
+                    if (window.MessagingEnhancements) {
+                        window.MessagingEnhancements.initialize(this);
+                    }
+                    
+                    try {
+                        if (window.ShikolaMessagesStore && typeof window.ShikolaMessagesStore.flushOutbox === 'function') {
+                            window.ShikolaMessagesStore.flushOutbox();
+                        }
+                    } catch (e) {
+                    }
+                    await this.refreshThreads();
+                    var self = this;
+                    try {
+                        window.addEventListener('shikola:message-sent', function () {
+                            self.refreshThreads();
+                            if (self.activeThreadId) {
+                                self.loadMessages(self.activeThreadId);
+                            }
+                        });
+                    } catch (e) {
+                    }
+                    this.$watch('filters.query', this.applyFilters.bind(this));
+                    this.$watch('filters.peerRole', this.applyFilters.bind(this));
+                },
+                getCurrentUser: function () {
+                    try {
+                        if (window.shikolaAuth && typeof window.shikolaAuth.getCurrentUser === 'function') {
+                            return window.shikolaAuth.getCurrentUser();
+                        }
+                    } catch (e) {
+                    }
+                    return null;
+                },
+                async refreshThreads() {
+                    try {
+                        if (window.ShikolaMessagesStore && window.ShikolaMessagesStore.listThreadsForUserAsync) {
+                            var user = this.getCurrentUser();
+                            var list = await window.ShikolaMessagesStore.listThreadsForUserAsync(user || {});
+                            if (Array.isArray(list)) {
+                                this.threads = list;
+                                this.applyFilters();
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Failed to load threads from API, using local fallback', e);
+                    }
+                    // Fallback to localStorage
+                    if (!window.ShikolaMessagesStore) {
+                        this.threads = [];
+                        this.filteredThreads = [];
+                        return;
+                    }
+                    var user = this.getCurrentUser();
+                    var list = window.ShikolaMessagesStore.listThreadsForUser(user || {});
+                    this.threads = Array.isArray(list) ? list : [];
+                    this.applyFilters();
+                },
+                applyFilters: function () {
+                    var q = (this.filters.query || '').toLowerCase();
+                    var role = (this.filters.peerRole || '').toLowerCase();
+                    var src = this.threads || [];
+                    var out = [];
+                    for (var i = 0; i < src.length; i++) {
+                        var t = src[i];
+                        if (!t) continue;
+                        if (role && t.peerRole !== role) continue;
+                        if (q) {
+                            var text = ((t.peerName || '') + ' ' + (t.lastMessage || '')).toLowerCase();
+                            if (text.indexOf(q) === -1) continue;
+                        }
+                        out.push(t);
+                    }
+                    this.filteredThreads = out;
+                },
+                openThread: function (id) {
+                    this.activeThreadId = id;
+                    this.loadMessages(id);
+                    for (var i = 0; i < this.threads.length; i++) {
+                        var t = this.threads[i];
+                        if (t && t.id === id) {
+                            this.activeThreadTitle = t.peerName || 'Conversation';
+                            var roleLabel = t.peerRole === 'pupil' ? 'Pupil' : (t.peerRole === 'parent' ? 'Parent' : (t.peerRole === 'admin' ? 'School Admin' : 'Contact'));
+                            this.activeThreadSubtitle = 'Chat with ' + roleLabel.toLowerCase() + '.';
+                            break;
+                        }
+                    }
+                },
+                async loadMessages(id) {
+                    if (!id) {
+                        this.activeMessages = [];
+                        return;
+                    }
+                    var user = this.getCurrentUser();
+                    try {
+                        if (window.ShikolaMessagesStore && window.ShikolaMessagesStore.getMessagesForThreadAsync) {
+                            var list = await window.ShikolaMessagesStore.getMessagesForThreadAsync(id);
+                            if (Array.isArray(list)) {
+                                var outApi = [];
+                                for (var k = 0; k < list.length; k++) {
+                                    var m = list[k];
+                                    if (!m) continue;
+                                    var mine = false;
+                                    if (m.senderRole) {
+                                        mine = String(m.senderRole).toLowerCase() === 'teacher';
+                                    } else {
+                                        mine = user && m.from && m.from.id === user.id && m.from.role === user.role;
+                                    }
+                                    outApi.push({
+                                        id: m.id,
+                                        body: m.body || m.message,
+                                        createdAt: m.createdAt || m.sentAt,
+                                        isMine: mine,
+                                        attachments: m.attachments || []
+                                    });
+                                }
+                                this.activeMessages = outApi;
+
+                                try {
+                                    if (window.ShikolaAPI && window.ShikolaAPI.messages && window.ShikolaAPI.messages.markRead) {
+                                        for (var mi = 0; mi < list.length; mi++) {
+                                            var mm = list[mi];
+                                            if (!mm) continue;
+                                            var mine2 = (mm.senderRole && String(mm.senderRole).toLowerCase() === 'teacher') || (user && mm.from && mm.from.id === user.id && mm.from.role === user.role);
+                                            if (!mine2 && mm.isRead === false && mm.id) {
+                                                window.ShikolaAPI.messages.markRead(mm.id);
+                                            }
+                                        }
+                                    }
+                                } catch (e) {
+                                }
+
+                                try {
+                                    if (window.ShikolaMessagesStore && window.ShikolaMessagesStore.fetchAndCacheAttachment) {
+                                        setTimeout(function () {
+                                            try {
+                                                for (var ci = 0; ci < list.length; ci++) {
+                                                    var cm = list[ci];
+                                                    if (!cm || !cm.attachments || !cm.attachments.length) continue;
+                                                    for (var ai = 0; ai < cm.attachments.length; ai++) {
+                                                        var att = cm.attachments[ai];
+                                                        if (!att || !att.id) continue;
+                                                        if (att.size != null && Number(att.size) > (1024 * 1024)) continue;
+                                                        window.ShikolaMessagesStore.fetchAndCacheAttachment(user || {}, att);
+                                                    }
+                                                }
+                                            } catch (err) {
+                                            }
+                                        }, 0);
+                                    }
+                                } catch (e) {
+                                }
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Failed to load messages from API', e);
+                    }
+                    // Fallback to localStorage
+                    if (!window.ShikolaMessagesStore) {
+                        this.activeMessages = [];
+                        return;
+                    }
+                    var list = window.ShikolaMessagesStore.getMessagesForThread(id) || [];
+                    var out = [];
+                    for (var i = 0; i < list.length; i++) {
+                        var m = list[i];
+                        if (!m) continue;
+                        var isMine = user && m.from && m.from.id === user.id && m.from.role === user.role;
+                        out.push({
+                            id: m.id,
+                            body: m.body,
+                            createdAt: m.createdAt,
+                            isMine: isMine,
+                            attachments: m.attachments || []
+                        });
+                    }
+                    this.activeMessages = out;
+                },
+
+                triggerDraftAttach: function () {
+                    try {
+                        if (this.$refs && this.$refs.draftFileInput) {
+                            this.$refs.draftFileInput.click();
+                        }
+                    } catch (e) {
+                    }
+                },
+
+                onDraftFilesSelected: function (evt) {
+                    try {
+                        var files = (evt && evt.target && evt.target.files) ? Array.prototype.slice.call(evt.target.files) : [];
+                        this.draftFiles = files;
+                    } catch (e) {
+                        this.draftFiles = [];
+                    }
+                },
+
+                clearDraftFiles: function () {
+                    this.draftFiles = [];
+                    try {
+                        if (this.$refs && this.$refs.draftFileInput) {
+                            this.$refs.draftFileInput.value = '';
+                        }
+                    } catch (e) {
+                    }
+                },
+
+                triggerComposerAttach: function () {
+                    try {
+                        if (this.$refs && this.$refs.composerFileInput) {
+                            this.$refs.composerFileInput.click();
+                        }
+                    } catch (e) {
+                    }
+                },
+
+                onComposerFilesSelected: function (evt) {
+                    try {
+                        var files = (evt && evt.target && evt.target.files) ? Array.prototype.slice.call(evt.target.files) : [];
+                        this.composerFiles = files;
+                    } catch (e) {
+                        this.composerFiles = [];
+                    }
+                },
+
+                clearComposerFiles: function () {
+                    this.composerFiles = [];
+                    try {
+                        if (this.$refs && this.$refs.composerFileInput) {
+                            this.$refs.composerFileInput.value = '';
+                        }
+                    } catch (e) {
+                    }
+                },
+
+                downloadDataUrl: function (dataUrl, filename) {
+                    if (!dataUrl) return;
+                    try {
+                        var a = document.createElement('a');
+                        a.href = dataUrl;
+                        a.download = filename || 'download';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    } catch (e) {
+                    }
+                },
+
+                openAttachment: async function (att) {
+                    try {
+                        var user = this.getCurrentUser();
+                        if (window.ShikolaMessagesStore && window.ShikolaMessagesStore.loadAttachmentsCacheForUser) {
+                            var cache = window.ShikolaMessagesStore.loadAttachmentsCacheForUser(user || {});
+                            var existing = cache && att && att.id ? cache[String(att.id)] : null;
+                            if (existing && existing.dataUrl) {
+                                this.downloadDataUrl(existing.dataUrl, existing.originalName || (att && att.originalName) || 'attachment');
+                                return;
+                            }
+                        }
+
+                        if (window.ShikolaMessagesStore && window.ShikolaMessagesStore.fetchAndCacheAttachment) {
+                            var cached = await window.ShikolaMessagesStore.fetchAndCacheAttachment(user || {}, att);
+                            if (cached && cached.dataUrl) {
+                                this.downloadDataUrl(cached.dataUrl, cached.originalName || (att && att.originalName) || 'attachment');
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                    }
+
+                    try {
+                        if (window.ShikolaAPI && window.ShikolaAPI.download && att && att.url) {
+                            window.ShikolaAPI.download(att.url, att.originalName || 'attachment');
+                        }
+                    } catch (e) {
+                    }
+                },
+                async sendInActiveThread() {
+                    var text = (this.draft || '').trim();
+                    if (!this.activeThreadId || !text) return;
+
+                    // Fallback to localStorage
+                    if (!window.ShikolaMessagesStore) return;
+                    var thread = null;
+                    for (var i = 0; i < this.threads.length; i++) {
+                        if (this.threads[i] && this.threads[i].id === this.activeThreadId) {
+                            thread = this.threads[i];
+                            break;
+                        }
+                    }
+                    if (!thread) return;
+                    var user = this.getCurrentUser();
+                    var to = {
+                        id: thread.peerId,
+                        name: thread.peerName,
+                        role: thread.peerRole
+                    };
+                    try {
+                        if (window.ShikolaMessagesStore.sendMessageAsync) {
+                            await window.ShikolaMessagesStore.sendMessageAsync({
+                                from: user || {},
+                                to: to,
+                                body: text,
+                                threadId: thread.id,
+                                attachments: this.draftFiles || [],
+                                portal: 'teacher-portal'
+                            });
+                        } else {
+                            window.ShikolaMessagesStore.sendMessage({
+                                from: user || {},
+                                to: to,
+                                body: text,
+                                threadId: thread.id,
+                                portal: 'teacher-portal'
+                            });
+                        }
+                    } catch (e) {
+                        window.ShikolaMessagesStore.sendMessage({
+                            from: user || {},
+                            to: to,
+                            body: text,
+                            threadId: thread.id,
+                            portal: 'teacher-portal'
+                        });
+                    }
+                    this.draft = '';
+                    this.clearDraftFiles();
+                    this.loadMessages(this.activeThreadId);
+                    this.refreshThreads();
+                },
+                async sendNewMessage() {
+                    var role = (this.composer.role || '').toLowerCase();
+                    var target = (this.composer.target || '').trim();
+                    var body = (this.composer.body || '').trim();
+                    if (!role || !target || !body) return;
+
+                    // Fallback to localStorage
+                    if (!window.ShikolaMessagesStore) return;
+                    var user = this.getCurrentUser();
+                    var to = {
+                        id: target,
+                        name: target,
+                        role: role,
+                        email: (target.indexOf('@') !== -1) ? target : ''
+                    };
+                    var msg = null;
+                    try {
+                        if (window.ShikolaMessagesStore.sendMessageAsync) {
+                            msg = await window.ShikolaMessagesStore.sendMessageAsync({
+                                from: user || {},
+                                to: to,
+                                body: body,
+                                attachments: this.composerFiles || [],
+                                portal: 'teacher-portal'
+                            });
+                        } else {
+                            msg = window.ShikolaMessagesStore.sendMessage({
+                                from: user || {},
+                                to: to,
+                                body: body,
+                                portal: 'teacher-portal'
+                            });
+                        }
+                    } catch (e) {
+                        msg = window.ShikolaMessagesStore.sendMessage({
+                            from: user || {},
+                            to: to,
+                            body: body,
+                            portal: 'teacher-portal'
+                        });
+                    }
+                    this.composer.body = '';
+                    this.clearComposerFiles();
+                    if (msg && msg.threadId) {
+                        this.activeThreadId = msg.threadId;
+                        this.refreshThreads();
+                        this.loadMessages(msg.threadId);
+                    }
+                },
+                formatTime: function (iso) {
+                    if (!iso) return '';
+                    try {
+                        var d = new Date(iso);
+                        if (!isFinite(d.getTime())) return '';
+                        return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+                    } catch (e) {
+                        return '';
+                    }
+                },
+                // Touch and selection functions
+                handleThreadTouchStart: function(event, thread) {
+                    var self = this;
+                    this.touchStartPos = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+                    this.touchTimer = setTimeout(function() {
+                        // Long press - enter selection mode
+                        if (!self.selectionMode) {
+                            self.selectionMode = true;
+                            self.selectedThreads = [];
+                        }
+                        self.toggleThreadSelection(thread.id);
+                    }, 2000); // 2 second long press
+                },
+                handleThreadTouchEnd: function(event, thread) {
+                    clearTimeout(this.touchTimer);
+                    var touchEndPos = { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY };
+                    
+                    // Check if it was a tap (not a swipe)
+                    if (this.touchStartPos && 
+                        Math.abs(touchEndPos.x - this.touchStartPos.x) < 10 && 
+                        Math.abs(touchEndPos.y - this.touchStartPos.y) < 10) {
+                        
+                        if (this.selectionMode) {
+                            this.toggleThreadSelection(thread.id);
+                            event.preventDefault();
+                        } else {
+                            this.openThread(thread.id);
+                        }
+                    }
+                    this.touchTimer = null;
+                    this.touchStartPos = null;
+                },
+                handleMessageTouchStart: function(event, message) {
+                    var self = this;
+                    this.touchStartX = event.touches[0].clientX;
+                    this.touchStartY = event.touches[0].clientY;
+                    this.touchStartPos = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+                    this.isSwiping = false;
+                    
+                    this.touchTimer = setTimeout(function() {
+                        // Long press - enter selection mode
+                        if (!self.selectionMode) {
+                            self.selectionMode = true;
+                            self.selectedMessages = [];
+                        }
+                        self.toggleMessageSelection(message.id);
+                    }, 2000); // 2 second long press
+                },
+                handleMessageTouchMove: function(event, message) {
+                    if (!this.touchStartX || !this.touchStartY) return;
+                    
+                    var currentX = event.touches[0].clientX;
+                    var currentY = event.touches[0].clientY;
+                    var deltaX = currentX - this.touchStartX;
+                    var deltaY = currentY - this.touchStartY;
+                    
+                    // Check if it's a horizontal swipe (more horizontal than vertical movement)
+                    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+                        this.isSwiping = true;
+                        clearTimeout(this.touchTimer);
+                        
+                        // Add visual feedback for swipe
+                        var messageElement = event.target.closest('.mb-3');
+                        if (messageElement) {
+                            messageElement.style.transform = 'translateX(' + deltaX + 'px)';
+                            messageElement.style.transition = 'none';
+                            
+                            // Add delete indicator when swiped far enough
+                            if (deltaX < -this.swipeThreshold) {
+                                messageElement.style.backgroundColor = '#ef4444';
+                                messageElement.style.opacity = '0.8';
+                            } else {
+                                messageElement.style.backgroundColor = '';
+                                messageElement.style.opacity = '';
+                            }
+                        }
+                    }
+                },
+                handleMessageTouchEnd: function(event, message) {
+                    clearTimeout(this.touchTimer);
+                    
+                    var messageElement = event.target.closest('.mb-3');
+                    if (messageElement) {
+                        messageElement.style.transition = 'transform 0.3s ease, background-color 0.3s ease';
+                        messageElement.style.transform = '';
+                        
+                        if (this.isSwiping && this.touchStartX) {
+                            var endX = event.changedTouches[0].clientX;
+                            var deltaX = endX - this.touchStartX;
+                            
+                            // If swiped left beyond threshold, delete the message
+                            if (deltaX < -this.swipeThreshold && message.isMine) {
+                                this.deleteMessage(message.id);
+                            } else {
+                                // Reset styles
+                                messageElement.style.backgroundColor = '';
+                                messageElement.style.opacity = '';
+                            }
+                        }
+                    }
+                    
+                    // Handle tap if not swiping
+                    if (!this.isSwiping && this.touchStartPos) {
+                        var touchEndPos = { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY };
+                        
+                        // Check if it was a tap (not a swipe)
+                        if (Math.abs(touchEndPos.x - this.touchStartPos.x) < 10 && 
+                            Math.abs(touchEndPos.y - this.touchStartPos.y) < 10) {
+                            
+                            if (this.selectionMode) {
+                                this.toggleMessageSelection(message.id);
+                                event.preventDefault();
+                            }
+                        }
+                    }
+                    
+                    // Reset touch variables
+                    this.touchTimer = null;
+                    this.touchStartPos = null;
+                    this.touchStartX = null;
+                    this.touchStartY = null;
+                    this.isSwiping = false;
+                },
+                toggleThreadSelection: function(threadId) {
+                    var index = this.selectedThreads.indexOf(threadId);
+                    if (index > -1) {
+                        this.selectedThreads.splice(index, 1);
+                    } else {
+                        this.selectedThreads.push(threadId);
+                    }
+                },
+                toggleMessageSelection: function(messageId) {
+                    var index = this.selectedMessages.indexOf(messageId);
+                    if (index > -1) {
+                        this.selectedMessages.splice(index, 1);
+                    } else {
+                        this.selectedMessages.push(messageId);
+                    }
+                },
+                exitSelectionMode: function() {
+                    this.selectionMode = false;
+                    this.selectedThreads = [];
+                    this.selectedMessages = [];
+                },
+                // Context menu functions
+                showThreadContextMenu: function(event, thread) {
+                    var self = this;
+                    event.preventDefault();
+                    
+                    // Create context menu
+                    var menu = document.createElement('div');
+                    menu.className = 'fixed bg-white rounded-lg shadow-xl border border-slate-200 py-2 z-50';
+                    menu.style.left = event.pageX + 'px';
+                    menu.style.top = event.pageY + 'px';
+                    
+                    var items = [
+                        { text: 'Open Thread', action: function() { self.openThread(thread.id); } },
+                        { text: 'Select Thread', action: function() { 
+                            if (!self.selectionMode) {
+                                self.selectionMode = true;
+                                self.selectedThreads = [];
+                            }
+                            self.toggleThreadSelection(thread.id);
+                        }},
+                        { text: 'Archive Thread', action: function() { self.archiveThread(thread.id); } }
+                    ];
+                    
+                    items.forEach(function(item) {
+                        var menuItem = document.createElement('button');
+                        menuItem.className = 'block w-full text-left px-4 py-2 text-sm hover:bg-slate-100';
+                        menuItem.textContent = item.text;
+                        menuItem.onclick = function() {
+                            item.action();
+                            document.body.removeChild(menu);
+                        };
+                        menu.appendChild(menuItem);
+                    });
+                    
+                    document.body.appendChild(menu);
+                    
+                    // Remove menu when clicking elsewhere
+                    setTimeout(function() {
+                        document.addEventListener('click', function removeMenu() {
+                            if (document.body.contains(menu)) {
+                                document.body.removeChild(menu);
+                            }
+                            document.removeEventListener('click', removeMenu);
+                        });
+                    }, 100);
+                },
+                showMessageContextMenu: function(event, message) {
+                    var self = this;
+                    event.preventDefault();
+                    
+                    // Create context menu
+                    var menu = document.createElement('div');
+                    menu.className = 'fixed bg-white rounded-lg shadow-xl border border-slate-200 py-2 z-50';
+                    menu.style.left = event.pageX + 'px';
+                    menu.style.top = event.pageY + 'px';
+                    
+                    var items = [
+                        { text: 'Select Message', action: function() { 
+                            if (!self.selectionMode) {
+                                self.selectionMode = true;
+                                self.selectedMessages = [];
+                            }
+                            self.toggleMessageSelection(message.id);
+                        }}
+                    ];
+                    
+                    if (message.isMine) {
+                        items.push({ text: 'Delete Message', action: function() { self.deleteMessage(message.id); } });
+                    }
+                    
+                    items.push({ text: 'Share Message', action: function() { self.shareMessage(message.id); } });
+                    
+                    items.forEach(function(item) {
+                        var menuItem = document.createElement('button');
+                        menuItem.className = 'block w-full text-left px-4 py-2 text-sm hover:bg-slate-100';
+                        menuItem.textContent = item.text;
+                        menuItem.onclick = function() {
+                            item.action();
+                            document.body.removeChild(menu);
+                        };
+                        menu.appendChild(menuItem);
+                    });
+                    
+                    document.body.appendChild(menu);
+                    
+                    // Remove menu when clicking elsewhere
+                    setTimeout(function() {
+                        document.addEventListener('click', function removeMenu() {
+                            if (document.body.contains(menu)) {
+                                document.body.removeChild(menu);
+                            }
+                            document.removeEventListener('click', removeMenu);
+                        });
+                    }, 100);
+                },
+                // Action functions
+                deleteSelectedMessages: async function() {
+                    var self = this;
+                    if (this.selectedMessages.length === 0) return;
+                    
+                    if (confirm('Delete ' + this.selectedMessages.length + ' message(s)? This cannot be undone.')) {
+                        try {
+                            for (var i = 0; i < this.selectedMessages.length; i++) {
+                                await this.deleteMessage(this.selectedMessages[i]);
+                            }
+                            this.exitSelectionMode();
+                            this.loadMessages(this.activeThreadId);
+                        } catch (error) {
+                            console.error('Error deleting messages:', error);
+                            alert('Failed to delete some messages');
+                        }
+                    }
+                },
+                shareSelectedMessages: async function() {
+                    var self = this;
+                    if (this.selectedMessages.length === 0) return;
+                    
+                    try {
+                        // For now, just copy to clipboard
+                        var messagesText = this.selectedMessages.map(function(msgId) {
+                            var msg = self.activeMessages.find(function(m) { return m.id === msgId; });
+                            return msg ? msg.body : '';
+                        }).join('\n');
+                        
+                        await navigator.clipboard.writeText(messagesText);
+                        alert('Messages copied to clipboard. You can now share them.');
+                        this.exitSelectionMode();
+                    } catch (error) {
+                        console.error('Error sharing messages:', error);
+                        alert('Failed to share messages');
+                    }
+                },
+                deleteMessage: async function(messageId) {
+                    try {
+                        var user = this.getCurrentUser();
+                        var response = await fetch('/api/teacher/messaging/messages/' + messageId, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + (user.token || '')
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            // Remove from local display
+                            this.activeMessages = this.activeMessages.filter(function(m) { return m.id !== messageId; });
+                        } else {
+                            throw new Error('Failed to delete message');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting message:', error);
+                        throw error;
+                    }
+                },
+                shareMessage: async function(messageId) {
+                    try {
+                        var user = this.getCurrentUser();
+                        var message = this.activeMessages.find(function(m) { return m.id === messageId; });
+                        if (!message) return;
+                        
+                        var response = await fetch('/api/teacher/messaging/share', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + (user.token || '')
+                            },
+                            body: JSON.stringify({
+                                thread_id: this.activeThreadId,
+                                message_id: messageId,
+                                share_type: 'message'
+                            })
+                        });
+                        
+                        var result = await response.json();
+                        if (result.success) {
+                            // Copy share URL to clipboard
+                            await navigator.clipboard.writeText(result.data.share_url);
+                            alert('Share link copied to clipboard!');
+                        } else {
+                            throw new Error(result.message || 'Failed to share message');
+                        }
+                    } catch (error) {
+                        console.error('Error sharing message:', error);
+                        alert('Failed to share message');
+                    }
+                },
+                archiveThread: async function(threadId) {
+                    try {
+                        var user = this.getCurrentUser();
+                        var response = await fetch('/api/teacher/messaging/threads/' + threadId, {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + (user.token || '')
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            // Remove from local display
+                            this.threads = this.threads.filter(function(t) { return t.id !== threadId; });
+                            this.applyFilters();
+                            if (this.activeThreadId === threadId) {
+                                this.activeThreadId = '';
+                                this.activeMessages = [];
+                            }
+                        } else {
+                            throw new Error('Failed to archive thread');
+                        }
+                    } catch (error) {
+                        console.error('Error archiving thread:', error);
+                        alert('Failed to archive thread');
+                    }
+                }
+            };
+        };
+    </script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

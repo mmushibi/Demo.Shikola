@@ -1,0 +1,43 @@
+day,time,class,subject,teacher,room
+Monday,08:00-09:00,Grade 8A,Mathematics,Chanda Mwansa,Room 201
+Monday,09:00-10:00,Grade 8A,English Language,Banda Phiri,Room 202
+Monday,10:30-11:30,Grade 8A,Physics,Tembo Sikazwe,Room 203
+Monday,11:30-12:30,Grade 8A,Chemistry,Tembo Sikazwe,Room 203
+Monday,14:00-15:00,Grade 8A,History,Siamuleya Moyo,Room 204
+Monday,15:00-16:00,Grade 8A,Physical Education,Phiri Kalaba,Sports Field
+Tuesday,08:00-09:00,Grade 8A,Mathematics,Chanda Mwansa,Room 201
+Tuesday,09:00-10:00,Grade 8A,Geography,Mwamba Nyirenda,Room 205
+Tuesday,10:30-11:30,Grade 8A,Computer Studies,Chileshe Chanda,Computer Lab
+Tuesday,11:30-12:30,Grade 8A,French,Banda Nkhata,Room 206
+Tuesday,14:00-15:00,Grade 8A,English Language,Banda Phiri,Room 202
+Tuesday,15:00-16:00,Grade 8A,Civic Education,Sakala Simukonda,Room 207
+Wednesday,08:00-09:00,Grade 8A,Physics,Tembo Sikazwe,Room 203
+Wednesday,09:00-10:00,Grade 8A,Chemistry,Tembo Sikazwe,Room 203
+Wednesday,10:30-11:30,Grade 8A,Mathematics,Chanda Mwansa,Room 201
+Wednesday,11:30-12:30,Grade 8A,English Language,Banda Phiri,Room 202
+Wednesday,14:00-15:00,Grade 8A,History,Siamuleya Moyo,Room 204
+Wednesday,15:00-16:00,Grade 8A,Library Period,Mutale Mwale,Library
+Thursday,08:00-09:00,Grade 8A,Geography,Mwamba Nyirenda,Room 205
+Thursday,09:00-10:00,Grade 8A,Computer Studies,Chileshe Chanda,Computer Lab
+Thursday,10:30-11:30,Grade 8A,French,Banda Nkhata,Room 206
+Thursday,11:30-12:30,Grade 8A,Physical Education,Phiri Kalaba,Sports Field
+Thursday,14:00-15:00,Grade 8A,Mathematics,Chanda Mwansa,Room 201
+Thursday,15:00-16:00,Grade 8A,English Language,Banda Phiri,Room 202
+Friday,08:00-09:00,Grade 8A,Chemistry,Tembo Sikazwe,Room 203
+Friday,09:00-10:00,Grade 8A,Physics,Tembo Sikazwe,Room 203
+Friday,10:30-11:30,Grade 8A,History,Siamuleya Moyo,Room 204
+Friday,11:30-12:30,Grade 8A,Civic Education,Sakala Simukonda,Room 207
+Friday,14:00-15:00,Grade 8A,Geography,Mwamba Nyirenda,Room 205
+Friday,15:00-16:00,Grade 8A,Assembly,All Teachers,School Hall
+Monday,08:00-09:00,Grade 10A,Biology,Sakala Simukonda,Room 208
+Monday,09:00-10:00,Grade 10A,Mathematics,Chanda Mwansa,Room 205
+Monday,10:30-11:30,Grade 10A,English Language,Banda Phiri,Room 206
+Monday,11:30-12:30,Grade 10A,Physics,Tembo Sikazwe,Room 209
+Monday,14:00-15:00,Grade 10A,Chemistry,Tembo Sikazwe,Room 210
+Monday,15:00-16:00,Grade 10A,Computer Studies,Chileshe Chanda,Computer Lab
+Tuesday,08:00-09:00,Grade 10A,Mathematics,Chanda Mwansa,Room 205
+Tuesday,09:00-10:00,Grade 10A,English Language,Banda Phiri,Room 206
+Tuesday,10:30-11:30,Grade 10A,Biology,Sakala Simukonda,Room 208
+Tuesday,11:30-12:30,Grade 10A,History,Siamuleya Moyo,Room 211
+Tuesday,14:00-15:00,Grade 10A,Geography,Mwamba Nyirenda,Room 212
+Tuesday,15:00-16:00,Grade 10A,Physical Education,Phiri Kalaba,Sports Field

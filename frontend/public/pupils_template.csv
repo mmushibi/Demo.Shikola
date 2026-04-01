@@ -1,0 +1,37 @@
+pupil_id,first_name,last_name,gender,date_of_birth,nationality,address,class_name,admission_year,admission_date,parent_name,parent_phone,email,emergency_contact,emergency_phone,status
+REG-001,Chipo,Bwalya,Female,2015-03-12,Zambian,123 Kabulonga Road,Lusaka,Grade 1A,2023,2023-01-15,Esther Bwalya,+260977123456,chipo.bwalya@shikola.edu.zm,Esther Bwalya,+260977123456,Active
+REG-002,John,Mulenga,Male,2015-07-08,Zambian,456 Rhodes Park,Lusaka,Grade 1A,2023,2023-01-15,James Mulenga,+260977234567,john.mulenga@shikola.edu.zm,James Mulenga,+260977234567,Active
+REG-003,Mary,Phiri,Female,2015-11-22,Zambian,789 Chelston,Lusaka,Grade 1B,2023,2023-01-16,David Phiri,+260977345678,mary.phiri@shikola.edu.zm,David Phiri,+260977345678,Active
+REG-004,Brian,Chanda,Male,2014-05-18,Zambian,321 Kansenshi,Kitwe,Grade 2A,2022,2022-01-10,Grace Chanda,+260977456789,brian.chanda@shikola.edu.zm,Grace Chanda,+260977456789,Active
+REG-005,Patricia,Nkhata,Female,2014-09-30,Zambian,654 Mufulira,Mufulira,Grade 2A,2022,2022-01-10,Michael Nkhata,+260977567890,patricia.nkhata@shikola.edu.zm,Michael Nkhata,+260977567890,Active
+REG-006,Abraham,Tembo,Male,2014-02-14,Zambian,987 Kabwe,Kabwe,Grade 2B,2022,2022-01-11,Susan Tembo,+260977678901,abraham.tembo@shikola.edu.zm,Susan Tembo,+260977678901,Active
+REG-007,Ruth,Siamuleya,Female,2013-08-25,Zambian,147 Livingstone,Livingstone,Grade 3A,2021,2021-01-12,Joseph Siamuleya,+260977789012,ruth.siamuleya@shikola.edu.zm,Joseph Siamuleya,+260977789012,Active
+REG-008,Emmanuel,Kalaba,Male,2013-12-03,Zambian,258 Ndola,Ndola,Grade 3A,2021,2021-01-12,Agnes Kalaba,+260977890123,emmanuel.kalaba@shikola.edu.zm,Agnes Kalaba,+260977890123,Active
+REG-009,Beatrice,Mwale,Female,2013-04-17,Zambian,369 Luanshya,Luanshya,Grade 3B,2021,2021-01-13,Fred Mwale,+260977901234,beatrice.mwale@shikola.edu.zm,Fred Mwale,+260977901234,Active
+REG-010,Christopher,Sakala,Male,2012-06-29,Zambian,741 Chingola,Chingola,Grade 4A,2020,2020-01-14,Helen Sakala,+260977012345,christopher.sakala@shikola.edu.zm,Helen Sakala,+260977012345,Active
+REG-011,Grace,Chileshe,Female,2012-10-11,Zambian,852 Solwezi,Solwezi,Grade 4A,2020,2020-01-14,George Chileshe,+260977123456,grace.chileshe@shikola.edu.zm,George Chileshe,+260977123456,Active
+REG-012,Felix,Moyo,Male,2012-01-23,Zambian,963 Kasama,Kasama,Grade 4B,2020,2020-01-15,Patricia Moyo,+260977234567,felix.moyo@shikola.edu.zm,Patricia Moyo,+260977234567,Active
+REG-013,Hannah,Banda,Female,2011-07-15,Zambian,159 Mongu,Mongu,Grade 5A,2019,2019-01-16,Robert Banda,+260977345678,hannah.banda@shikola.edu.zm,Robert Banda,+260977345678,Active
+REG-014,Issac,Mwansa,Male,2011-11-08,Zambian,753 Chipata,Chipata,Grade 5A,2019,2019-01-16,Elizabeth Mwansa,+260977456789,issac.mwansa@shikola.edu.zm,Elizabeth Mwansa,+260977456789,Active
+REG-015,Joyce,Nyirenda,Female,2011-03-27,Zambian,357 Mansa,Mansa,Grade 5B,2019,2019-01-17,Charles Nyirenda,+260977567890,joyce.nyirenda@shikola.edu.zm,Charles Nyirenda,+260977567890,Active
+REG-016,Kennedy,Simukonda,Male,2010-09-12,Zambian,456 Kabwe,Kabwe,Grade 6A,2018,2018-01-18,Margaret Simukonda,+260977678901,kennedy.simukonda@shikola.edu.zm,Margaret Simukonda,+260977678901,Active
+REG-017,Linda,Mutale,Female,2010-12-20,Zambian,654 Kitwe,Kitwe,Grade 6A,2018,2018-01-18,Peter Mutale,+260977789012,linda.mutale@shikola.edu.zm,Peter Mutale,+260977789012,Active
+REG-018,Moses,Chanda,Male,2010-05-04,Zambian,987 Ndola,Ndola,Grade 6B,2018,2018-01-19,Rebecca Chanda,+260977890123,moses.chanda@shikola.edu.zm,Rebecca Chanda,+260977890123,Active
+REG-019,Nancy,Mwamba,Female,2009-08-16,Zambian,147 Mufulira,Mufulira,Grade 7A,2017,2017-01-20,Steven Mwamba,+260977901234,nancy.mwamba@shikola.edu.zm,Steven Mwamba,+260977901234,Active
+REG-020,Oliver,Phiri,Male,2009-02-28,Zambian,258 Luanshya,Luanshya,Grade 7A,2017,2017-01-20,Christine Phiri,+260977012345,oliver.phiri@shikola.edu.zm,Christine Phiri,+260977012345,Active
+REG-021,Precious,Sikazwe,Female,2009-11-11,Zambian,369 Chingola,Chingola,Grade 7B,2017,2017-01-21,Andrew Sikazwe,+260977123456,precious.sikazwe@shikola.edu.zm,Andrew Sikazwe,+260977123456,Active
+REG-022,Quinton,Kalaba,Male,2008-04-23,Zambian,741 Solwezi,Solwezi,Grade 8A,2016,2016-01-22,Dorothy Kalaba,+260977234567,quinton.kalaba@shikola.edu.zm,Dorothy Kalaba,+260977234567,Active
+REG-023,Rachel,Mulenga,Female,2008-07-07,Zambian,852 Kasama,Kasama,Grade 8A,2016,2016-01-22,Thomas Mulenga,+260977345678,rachel.mulenga@shikola.edu.zm,Thomas Mulenga,+260977345678,Active
+REG-024,Samson,Nkhata,Male,2008-01-15,Zambian,963 Mongu,Mongu,Grade 8B,2016,2016-01-23,Faith Nkhata,+260977456789,samson.nkhata@shikola.edu.zm,Faith Nkhata,+260977456789,Active
+REG-025,Taona,Banda,Female,2007-10-19,Zambian,159 Chipata,Chipata,Grade 9A,2015,2015-01-24,Victor Banda,+260977567890,taona.banda@shikola.edu.zm,Victor Banda,+260977567890,Active
+REG-026,Umar,Tembo,Male,2007-03-06,Zambian,753 Mansa,Mansa,Grade 9A,2015,2015-01-24,Janet Tembo,+260977678901,umar.tembo@shikola.edu.zm,Janet Tembo,+260977678901,Active
+REG-027,Victoria,Siamuleya,Female,2007-06-14,Zambian,357 Kabwe,Kabwe,Grade 9B,2015,2015-01-25,Mark Siamuleya,+260977789012,victoria.siamuleya@shikola.edu.zm,Mark Siamuleya,+260977789012,Active
+REG-028,William,Chanda,Male,2006-09-02,Zambian,456 Kitwe,Kitwe,Grade 10A,2014,2014-01-26,Lilian Chanda,+260977890123,william.chanda@shikola.edu.zm,Lilian Chanda,+260977890123,Active
+REG-029,Xavier,Mwale,Male,2006-12-25,Zambian,654 Ndola,Ndola,Grade 10A,2014,2014-01-26,Joseph Mwale,+260977901234,xavier.mwale@shikola.edu.zm,Joseph Mwale,+260977901234,Active
+REG-030,Yvonne,Sakala,Female,2006-02-17,Zambian,987 Mufulira,Mufulira,Grade 10B,2014,2014-01-27,David Sakala,+260977012345,yvonne.sakala@shikola.edu.zm,David Sakala,+260977012345,Active
+REG-031, Zachary,Chileshe,Male,2005-05-30,Zambian,147 Luanshya,Luanshya,Grade 11A,2013,2013-01-28,Mary Chileshe,+260977123456,zachary.chileshe@shikola.edu.zm,Mary Chileshe,+260977123456,Active
+REG-032,Angela,Moyo,Female,2005-08-13,Zambian,258 Chingola,Chingola,Grade 11A,2013,2013-01-28,Paul Moyo,+260977234567,angela.moyo@shikola.edu.zm,Paul Moyo,+260977234567,Active
+REG-033,Benjamin,Banda,Male,2005-11-21,Zambian,369 Solwezi,Solwezi,Grade 11B,2013,2013-01-29,Ruth Banda,+260977345678,benjamin.banda@shikola.edu.zm,Ruth Banda,+260977345678,Active
+REG-034,Carol,Mwansa,Female,2004-04-08,Zambian,741 Kasama,Kasama,Grade 12A,2012,2012-01-30,John Mwansa,+260977456789,carol.mwansa@shikola.edu.zm,John Mwansa,+260977456789,Active
+REG-035,Daniel,Nyirenda,Male,2004-07-22,Zambian,852 Mongu,Mongu,Grade 12A,2012,2012-01-30,Esther Nyirenda,+260977567890,daniel.nyirenda@shikola.edu.zm,Esther Nyirenda,+260977567890,Active
+REG-036,Elizabeth,Simukonda,Female,2004-01-10,Zambian,963 Chipata,Chipata,Grade 12B,2012,2012-01-31,Frank Simukonda,+260977678901,elizabeth.simukonda@shikola.edu.zm,Frank Simukonda,+260977678901,Active

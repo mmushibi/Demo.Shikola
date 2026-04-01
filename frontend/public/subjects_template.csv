@@ -1,0 +1,21 @@
+subject_code,subject_name,category,grade_levels,description,credits
+MAT101,Mathematics,Core,"Grade 1,Grade 2,Grade 3,Grade 4,Grade 5,Grade 6,Grade 7,Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",Fundamental mathematics covering arithmetic, algebra, geometry, and calculus,2
+ENG101,English Language,Core,"Grade 1,Grade 2,Grade 3,Grade 4,Grade 5,Grade 6,Grade 7,Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",English language skills including reading, writing, grammar, and literature,2
+SCI101,Science,Core,"Grade 1,Grade 2,Grade 3,Grade 4,Grade 5,Grade 6,Grade 7",General science covering basic concepts in physics, chemistry, and biology,2
+PHY101,Physics,Elective,"Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",Advanced physics covering mechanics, electricity, magnetism, and modern physics,2
+CHE101,Chemistry,Elective,"Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",Chemistry covering atomic structure, chemical reactions, organic chemistry, and analytical chemistry,2
+BIO101,Biology,Elective,"Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",Biology covering cell biology, genetics, ecology, and human physiology,2
+HIS101,History,Core,"Grade 7,Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",Zambian and African history from ancient times to present,1
+GEO101,Geography,Core,"Grade 7,Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",Physical and human geography with focus on Zambia and Africa,1
+CIV101,Civic Education,Core,"Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",Zambian government, citizenship, and social responsibility,1
+ART101,Art and Design,Elective,"Grade 1,Grade 2,Grade 3,Grade 4,Grade 5,Grade 6,Grade 7,Grade 8,Grade 9",Visual arts including drawing, painting, sculpture, and design,1
+MUS101,Music,Elective,"Grade 1,Grade 2,Grade 3,Grade 4,Grade 5,Grade 6,Grade 7,Grade 8,Grade 9",Music theory, appreciation, and performance,1
+PE101,Physical Education,Core,"Grade 1,Grade 2,Grade 3,Grade 4,Grade 5,Grade 6,Grade 7,Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",Physical fitness, sports, and health education,1
+COM101,Computer Studies,Elective,"Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",Computer literacy, programming, and digital skills,2
+AGR101,Agricultural Science,Elective,"Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",Agricultural practices, crop science, and animal husbandry,2
+BUS101,Business Studies,Elective,"Grade 10,Grade 11,Grade 12",Business principles, accounting, and entrepreneurship,2
+FRE101,French,Elective,"Grade 8,Grade 9,Grade 10,Grade 11,Grade 12",French language skills including speaking, reading, and writing,1
+REL101,Religious Education,Core,"Grade 7,Grade 8,Grade 9",Study of major world religions with emphasis on Christianity in Zambia,1
+ECO101,Economics,Elective,"Grade 11,Grade 12",Economic principles, microeconomics, and macroeconomics,2
+ACC101,Principles of Accounting,Elective,"Grade 11,Grade 12",Financial accounting principles and practices,2
+LIT101,English Literature,Elective,"Grade 10,Grade 11,Grade 12",Study of English literature including novels, poetry, and drama,1

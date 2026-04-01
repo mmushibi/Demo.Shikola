@@ -1,0 +1,331 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - Admission Letter</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../../config/config.js"></script>
+    <script src="../../../shared-assets/js/shared-api-client.js"></script>
+    <!-- auth helpers must load before Alpine so Alpine expressions can access authData() -->
+    <script src="../../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../../shared-assets/js/shared-realtime-sync.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../../shared-assets/js/button-functions.js" defer></script>
+    <script src="../../../shared-assets/js/shared-school-profile.js" defer></script>
+    <script src="../../shared-assets/js/pupils-api.js" defer></script>
+    <script src="pupil-functionality.js" defer></script>
+    <script src="admission-letter.js" defer></script>
+    <script src="pupil-security.js"></script>
+    <script src="../../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page font-sans">
+    <div x-data="{ sidebarOpen: false, chatOpen: false, pageTitle: 'Admission Letter', pageSubtitle: 'Your official admission document' }" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover" data-school-logo>
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="admission-letter.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center"><i class="fas fa-envelope-open-text"></i></span>
+                        <span class="flex-1">Admission Letter</span>
+                    </a>
+                    <a href="paid-fee-receipt.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-receipt"></i></span>
+                        <span class="flex-1">Paid Fee Receipt</span>
+                    </a>
+                    <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">My Timetable</span>
+                    </a>
+                    <a href="my-report-card.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                        <span class="flex-1">My Report Card</span>
+                    </a>
+                    <a href="exam-result.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-invoice"></i></span>
+                        <span class="flex-1">Exam Result</span>
+                    </a>
+                    <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
+                        <span class="flex-1">Home Assignments</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                    <a href="live-class.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-video"></i></span>
+                        <span class="flex-1">Live Class</span>
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-circle"></i></span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div x-show="sidebarOpen" x-cloak class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover" data-school-logo>
+                    </div>
+
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="admission-letter.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center"><i class="fas fa-envelope-open-text"></i></span>
+                            <span class="flex-1">Admission Letter</span>
+                        </a>
+                        <a href="paid-fee-receipt.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-receipt"></i></span>
+                            <span class="flex-1">Paid Fee Receipt</span>
+                        </a>
+                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                            <span class="flex-1">My Timetable</span>
+                        </a>
+                        <a href="my-report-card.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                            <span class="flex-1">My Report Card</span>
+                        </a>
+                        <a href="exam-result.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-invoice"></i></span>
+                            <span class="flex-1">Exam Result</span>
+                        </a>
+                        <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
+                            <span class="flex-1">Home Assignments</span>
+                        </a>
+                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                            <span class="flex-1">Messaging</span>
+                        </a>
+                        <a href="live-class.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-video"></i></span>
+                            <span class="flex-1">Live Class</span>
+                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-user-circle"></i></span>
+                            <span class="flex-1">Profile</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center justify-center px-2">
+                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div class="flex items-center justify-center w-full lg:w-auto lg:justify-start gap-3">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-14 w-auto rounded-2xl lg:hidden">
+                            <div class="text-center lg:text-left">
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Admission Letter</h1>
+                                <p class="hidden sm:block text-xs sm:text-sm text-slate-400 mt-1">Your official admission document.</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-3">
+                            <div class="hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-56">
+                                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                                <input type="text" placeholder="Search..." class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1">
+                            </div>
+                            <button class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" type="button" aria-label="Notifications" title="Notifications">
+                                <i class="far fa-bell"></i>
+                            </button>
+                            <div class="relative" x-data="Object.assign({ open: false }, authData())" x-init="init()" @click.outside="open = false">
+                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open" title="User menu">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <div class="text-xs font-medium text-slate-700">Shikola</div>
+                                        <div class="text-[10px] text-slate-400">Pupil</div>
+                                    </div>
+                                </button>
+                                <div
+                                    x-show="open"
+                                    x-cloak
+                                    class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
+                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
+                                        <span class="w-4 flex justify-center text-slate-400">
+                                            <i class="fas fa-user-circle"></i>
+                                        </span>
+                                        <span>View Profile</span>
+                                    </a>
+                                    <div class="my-1 border-t border-slate-100"></div>
+                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                        <span class="w-4 flex justify-center">
+                                            <i class="fas fa-right-from-bracket"></i>
+                                        </span>
+                                        <span>Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex-1">
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 sm:p-7">
+                            <!-- Admission Letter Content -->
+                            <div id="admission-letter-content" class="max-w-3xl mx-auto font-sans text-[13px] leading-relaxed text-slate-700">
+                                <div class="text-center mb-6 space-y-2">
+                                    <img src="../../assets/images/logo.png" alt="School logo" class="letter-logo h-12 w-16 mx-auto mb-1.5 rounded-2xl object-cover" data-school-logo>
+                                    <h2 class="text-xl font-semibold tracking-[0.15em] text-slate-900 uppercase" data-school-name>[SCHOOL NAME]</h2>
+                                    <p class="text-sm text-slate-500" data-school-tagline>[SCHOOL TAGLINE]</p>
+                                    <h3 class="text-base font-semibold text-slate-800 tracking-wide uppercase mt-2">Official Admission Letter</h3>
+                                    <p class="text-sm text-slate-500" data-admission-year-heading>Academic Year</p>
+                                    <div class="w-20 h-px bg-orange-400 mx-auto mt-2"></div>
+                                </div>
+
+                                <div class="hidden mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800" data-admission-empty-state>
+                                    We couldn't find an admission record yet. Once your enrolment is approved, your personalised letter will appear here automatically.
+                                </div>
+
+                                <div class="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-lg mb-6">
+                                    <p>
+                                        We are pleased to inform you that you have been successfully admitted to <span data-school-name>Shikola Academy</span> for the upcoming academic year. Your admission has been confirmed based on your successful completion of the entrance examination and interview process.
+                                    </p>
+                                </div>
+
+                                <div class="space-y-3 text-[13px] text-slate-700 mb-6">
+                                    <h4 class="font-semibold text-slate-800 uppercase tracking-wide text-[12px]">Admission Details</h4>
+                                    <p>
+                                        <strong>Date:</strong> <span data-admission-date></span><br>
+                                        <strong>Admission Number:</strong> <span data-admission-no></span><br>
+                                        <strong>Pupil Name:</strong> <span data-admission-pupil-name></span><br>
+                                        <strong>Date of Birth:</strong> <span data-admission-dob></span><br>
+                                        <strong>Class Admitted:</strong> <span data-admission-class></span><br>
+                                        <strong>Academic Year:</strong> <span data-admission-academic-year></span>
+                                    </p>
+                                </div>
+
+                                <div class="space-y-3 text-[13px] text-slate-700 mb-6">
+                                    <h4 class="font-semibold text-slate-800 uppercase tracking-wide text-[12px]">Important Information</h4>
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>School orientation details will be communicated by your school.</li>
+                                        <li>Class commencement dates will be communicated by your school.</li>
+                                        <li>School uniform and books can be collected from the school store</li>
+                                        <li>Please ensure all required documents are submitted to the administration office</li>
+                                        <li>First term fees must be paid before the start of classes</li>
+                                    </ul>
+                                </div>
+
+                                <div class="space-y-3 text-[13px] text-slate-700 mb-6">
+                                    <h4 class="font-semibold text-slate-800 uppercase tracking-wide text-[12px]">Required Documents</h4>
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>Birth certificate (original and copy)</li>
+                                        <li>Previous school report cards (last 2 years)</li>
+                                        <li>Medical certificate</li>
+                                        <li>Passport size photographs (4 copies)</li>
+                                        <li>Parent/guardian identification documents</li>
+                                    </ul>
+                                </div>
+
+                                <div class="space-y-3 text-[13px] text-slate-700 mb-6" id="admission-rules-section">
+                                    <h4 class="font-semibold text-slate-800 uppercase tracking-wide text-[12px]">School Rules &amp; Regulations</h4>
+                                    <div id="admission-rules-content" class="text-[12px] sm:text-[13px] text-slate-700 leading-relaxed space-y-2">
+                                        <p class="text-slate-400">Rules &amp; regulations will appear here after your school admin saves them in General Settings.</p>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-3 text-[13px] text-slate-700 mb-6">
+                                    <h4 class="font-semibold text-slate-800 uppercase tracking-wide text-[12px]">Contact Information</h4>
+                                    <p>
+                                        <strong>School Address:</strong> <span data-school-address>[SCHOOL ADDRESS]</span><br>
+                                        <strong>Phone:</strong> <span data-school-phone>[SCHOOL PHONE]</span><br>
+                                        <strong>Email:</strong> <span data-school-email>[SCHOOL EMAIL]</span><br>
+                                        <strong>Website:</strong> <span data-school-website>[SCHOOL WEBSITE]</span>
+                                    </p>
+                                </div>
+
+                                <div class="mt-8 space-y-6">
+                                    <div class="text-center">
+                                        <p class="text-[13px] text-slate-600 mb-3">We congratulate you on this achievement and look forward to welcoming you to the <span data-school-name>[SCHOOL NAME]</span> family.</p>
+                                        <p class="text-sm font-medium text-slate-700 tracking-wide uppercase">Sincerely</p>
+                                    </div>
+
+                                    <div class="flex justify-center">
+                                        <div class="text-center">
+                                            <div class="w-44 border-t border-slate-400 pt-2">
+                                                <p class="text-sm font-medium text-slate-700" data-school-headteacher>[HEAD TEACHER NAME]</p>
+                                                <p class="text-xs text-slate-500">Headteacher</p>
+                                                <p class="text-xs text-slate-500" data-school-name>[SCHOOL NAME]</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-8 pt-6 border-t border-slate-200">
+                                    <div class="flex flex-col sm:flex-row gap-3 justify-center text-sm">
+                                        <button type="button" class="px-6 py-3 rounded-xl bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 flex items-center justify-center gap-2" data-action="download-letter">
+                                            <i class="fas fa-download"></i>
+                                            <span>Download PDF</span>
+                                        </button>
+                                        <button type="button" class="px-6 py-3 rounded-xl border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 flex items-center justify-center gap-2" data-action="print-letter">
+                                            <i class="fas fa-print"></i>
+                                            <span>Print Letter</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+</body>
+</html>

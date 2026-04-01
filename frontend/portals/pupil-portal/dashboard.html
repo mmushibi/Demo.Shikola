@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - Pupil Dashboard</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../../config.js"></script>
+    <script src="../../shared-assets/js/shared-api-client.js"></script>
+    <script src="../../shared/js/shared-ecz-grading.js"></script>
+    <script src="../../shared/js/shared-exam-results.js"></script>
+    <script src="../../shared/js/shared-report-card-data.js"></script>
+    <script src="pupil-dashboard-integration.js" defer></script>
+    <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../shared/js/shared-attendance.js" defer></script>
+    <script src="../../shared-assets/js/button-functions.js" defer></script>
+    <script src="pupil-functionality.js" defer></script>
+    <script src="../../shared/js/shared-notifications.js" defer></script>
+    <script src="../../shared/js/shared-export-print.js" defer></script>
+    <script src="../../shared/js/shared-chart-interactions.js" defer></script>
+    <script src="pupil-security.js"></script>
+    <script src="../../public/data-initializer.js"></script>
+    <script src="../../public/quick-data-loader.js"></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page">
+    <div x-data="{ sidebarOpen: false, chatOpen: false, pageTitle: 'Pupil Dashboard', pageSubtitle: 'Your learning journey starts here' }" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="admission-letter.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-envelope-open-text"></i></span>
+                        <span class="flex-1">Admission Letter</span>
+                    </a>
+                    <a href="paid-fee-receipt.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-receipt"></i></span>
+                        <span class="flex-1">Paid Fee Receipt</span>
+                    </a>
+                    <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">My Timetable</span>
+                    </a>
+                    <a href="my-report-card.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                        <span class="flex-1">My Report Card</span>
+                    </a>
+                    <a href="exam-result.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-invoice"></i></span>
+                        <span class="flex-1">Exam Result</span>
+                    </a>
+                    <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
+                        <span class="flex-1">Home Assignments</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                    <a href="live-class.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-video"></i></span>
+                        <span class="flex-1">Live Class</span>
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-circle"></i></span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div x-show="sidebarOpen" x-cloak class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6 overflow-y-auto">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    </div>
+
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="admission-letter.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-envelope-open-text"></i></span>
+                            <span class="flex-1">Admission Letter</span>
+                        </a>
+                        <a href="paid-fee-receipt.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-receipt"></i></span>
+                            <span class="flex-1">Paid Fee Receipt</span>
+                        </a>
+                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                            <span class="flex-1">My Timetable</span>
+                        </a>
+                        <a href="my-report-card.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                            <span class="flex-1">My Report Card</span>
+                        </a>
+                        <a href="exam-result.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-invoice"></i></span>
+                            <span class="flex-1">Exam Result</span>
+                        </a>
+                        <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
+                            <span class="flex-1">Home Assignments</span>
+                        </a>
+                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                            <span class="flex-1">Messaging</span>
+                        </a>
+                        <a href="live-class.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-video"></i></span>
+                            <span class="flex-1">Live Class</span>
+                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-user-circle"></i></span>
+                            <span class="flex-1">Profile</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center justify-center px-2">
+                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100 pb-3">
+                        <div class="flex items-center justify-center w-full lg:w-auto lg:justify-start gap-3">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-14 w-auto rounded-2xl lg:hidden">
+                            <div class="text-center lg:text-left">
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Pupil Dashboard</h1>
+                                <p class="hidden sm:block text-xs sm:text-sm text-slate-400 mt-1">Welcome back! Here's your academic progress overview.</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-3">
+                            <!-- Enhanced Search Bar -->
+                            <div
+                                x-data="{
+                                    query: '',
+                                    focus: false,
+                                    suggestions: ['Assignments', 'Grades', 'Attendance', 'Schedule', 'Exams', 'Homework'],
+                                    get allSuggestions() {
+                                        if (!this.query) return this.suggestions.slice(0, 5);
+                                        const q = this.query.toLowerCase();
+                                        return this.suggestions.filter(s => s.toLowerCase().includes(q)).slice(0, 5);
+                                    },
+                                    selectSuggestion(item) {
+                                        this.query = item;
+                                        this.focus = false;
+                                    }
+                                }"
+                                class="relative hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-64"
+                                @click.outside="focus = false">
+                                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search assignments, grades..."
+                                    class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1"
+                                    x-model="query"
+                                    @focus="focus = true"
+                                    @input="focus = true">
+                                <div
+                                    x-show="focus && allSuggestions.length"
+                                    x-cloak
+                                    class="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-20">
+                                    <template x-for="(item, index) in allSuggestions" :key="item">
+                                        <button
+                                            type="button"
+                                            class="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors"
+                                            @mousedown.prevent="selectSuggestion(item)">
+                                            <div x-text="item"></div>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Notifications -->
+                            <div class="relative" x-data="{
+                                open: false,
+                                notifications: [],
+                                serverNotifications: [],
+                                storageKey: 'shikola_notifications_v1',
+                                init() {
+                                    this.loadFromStorage();
+                                    this.loadServerNotifications();
+                                    var self = this;
+                                    try {
+                                        var refreshMs = 20000;
+                                        setInterval(function () {
+                                            try { if (document.hidden) return; } catch (e) {}
+                                            self.loadServerNotifications();
+                                        }, refreshMs);
+                                    } catch (e) {}
+                                },
+                                apiBase() {
+                                    return window.SHIKOLA_API_BASE || '/api';
+                                },
+                                getToken() {
+                                    try {
+                                        return localStorage.getItem('shikola_token') || localStorage.getItem('authToken');
+                                    } catch (e) {
+                                        return null;
+                                    }
+                                },
+                                async fetchJson(path, options) {
+                                    var token = this.getToken();
+                                    if (!token) return null;
+                                    var base = this.apiBase();
+                                    var headers = Object.assign({
+                                        'Authorization': 'Bearer ' + token,
+                                        'Content-Type': 'application/json'
+                                    }, (options && options.headers) ? options.headers : {});
+                                    var opts = Object.assign({}, options || {}, { headers: headers });
+                                    var res = await fetch(base + path, opts);
+                                    if (!res.ok) {
+                                        return null;
+                                    }
+                                    try { return await res.json(); } catch (e) { return null; }
+                                },
+                                formatTimeLabel(value) {
+                                    if (!value) return '';
+                                    try {
+                                        var d = new Date(value);
+                                        if (isNaN(d.getTime())) return '';
+                                        return d.toLocaleString();
+                                    } catch (e) {
+                                        return '';
+                                    }
+                                },
+                                normalizeKeyText(value) {
+                                    return String(value || '')
+                                        .toLowerCase()
+                                        .replace(/\s+/g, ' ')
+                                        .trim();
+                                },
+                                fingerprint(notification) {
+                                    if (!notification) return '';
+                                    var title = this.normalizeKeyText(notification.title);
+                                    var message = this.normalizeKeyText(notification.message);
+                                    var url = this.normalizeKeyText(notification.actionUrl || notification.link);
+                                    var bucket = '';
+                                    try {
+                                        var d = new Date(notification.createdAt || '');
+                                        if (!isNaN(d.getTime())) bucket = d.toISOString().slice(0, 16);
+                                    } catch (e) {}
+                                    return [title, message, url, bucket].join('|');
+                                },
+                                buildCombined() {
+                                    var merged = [];
+                                    var seen = {};
+                                    var seenFp = {};
+                                    var server = Array.isArray(this.serverNotifications) ? this.serverNotifications : [];
+                                    var local = Array.isArray(this.notifications) ? this.notifications : [];
+                                    var self = this;
+                                    function addItem(item) {
+                                        if (!item) return;
+                                        var id = item.id;
+                                        var fp = self.fingerprint(item);
+                                        if (id && seen[id]) return;
+                                        if (fp && seenFp[fp]) return;
+                                        if (id) seen[id] = true;
+                                        if (fp) seenFp[fp] = true;
+                                        merged.push(item);
+                                    }
+                                    for (var i = 0; i < server.length; i++) {
+                                        addItem(server[i]);
+                                    }
+                                    for (var j = 0; j < local.length; j++) {
+                                        addItem(local[j]);
+                                    }
+                                    merged.sort(function (a, b) {
+                                        var ta = a && a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                                        var tb = b && b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                                        return (tb || 0) - (ta || 0);
+                                    });
+                                    if (merged.length > 100) merged = merged.slice(0, 100);
+                                    this.notifications = merged;
+                                    this.saveToStorage();
+                                },
+                                async loadServerNotifications() {
+                                    var data = await this.fetchJson('/api/notifications?limit=30&offset=0');
+                                    if (!data || !Array.isArray(data.data)) {
+                                        this.buildCombined();
+                                        return;
+                                    }
+                                    var mapped = [];
+                                    for (var i = 0; i < data.data.length; i++) {
+                                        var n = data.data[i] || {};
+                                        mapped.push({
+                                            id: n.id,
+                                            title: n.title || 'Notification',
+                                            message: n.message || '',
+                                            createdAt: n.createdAt || null,
+                                            time: this.formatTimeLabel(n.createdAt) || '',
+                                            read: !!n.read,
+                                            link: n.actionUrl || '',
+                                            actionUrl: n.actionUrl || '',
+                                            origin: 'server'
+                                        });
+                                    }
+                                    this.serverNotifications = mapped;
+                                    this.buildCombined();
+                                },
+                                loadFromStorage() {
+                                    var raw;
+                                    try {
+                                        raw = localStorage.getItem(this.storageKey);
+                                    } catch (e) {
+                                        raw = null;
+                                    }
+                                    if (!raw) {
+                                        this.notifications = [];
+                                        return;
+                                    }
+                                    try {
+                                        var parsed = JSON.parse(raw);
+                                        this.notifications = Array.isArray(parsed) ? parsed : [];
+                                    } catch (e) {
+                                        this.notifications = [];
+                                    }
+                                },
+                                saveToStorage() {
+                                    try {
+                                        localStorage.setItem(this.storageKey, JSON.stringify(this.notifications || []));
+                                    } catch (e) {}
+                                },
+                                unreadCount() {
+                                    var list = this.notifications || [];
+                                    var count = 0;
+                                    for (var i = 0; i < list.length; i++) {
+                                        if (list[i] && !list[i].read) count++;
+                                    }
+                                    return count;
+                                },
+                                markAllRead() {
+                                    var list = this.notifications || [];
+                                    for (var i = 0; i < list.length; i++) {
+                                        if (list[i]) list[i].read = true;
+                                    }
+                                    this.notifications = list;
+                                    this.saveToStorage();
+                                },
+                                clearAll() {
+                                    this.notifications = [];
+                                    this.saveToStorage();
+                                },
+                                handleClick(notification) {
+                                    if (!notification) return;
+                                    notification.read = true;
+                                    this.saveToStorage();
+                                    if (notification.link) {
+                                        try {
+                                            window.location.href = notification.link;
+                                        } catch (e) {}
+                                    }
+                                }
+                            }" @click.outside="open = false">
+                                <button type="button" class="relative h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" @click="open = !open; if (open) { loadServerNotifications(); }" aria-label="Notifications">
+                                    <i class="far fa-bell"></i>
+                                    <span x-show="unreadCount() > 0" x-cloak class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center" x-text="unreadCount()"></span>
+                                </button>
+                                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-80 rounded-xl bg-white shadow-lg border border-slate-100 z-30 overflow-hidden">
+                                    <div class="p-4 border-b border-slate-100">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="text-sm font-semibold text-slate-800">Notifications</div>
+                                            <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                                                <button type="button" class="hover:text-slate-600" @click="markAllRead()">Mark all read</button>
+                                                <button type="button" class="hover:text-slate-600" @click="clearAll()">Clear</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="max-h-96 overflow-y-auto">
+                                        <template x-for="notification in notifications" :key="notification.id">
+                                            <div class="p-4 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 cursor-pointer" @click="handleClick(notification)">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <div class="text-sm" :class="notification.read ? 'font-normal text-slate-700' : 'font-semibold text-slate-800'" x-text="notification.title"></div>
+                                                        <div class="text-xs text-slate-600 mt-1" x-text="notification.message"></div>
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-400 mt-0.5" x-text="notification.time"></div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <div class="p-4 text-[11px] text-slate-400 text-center" x-show="!notifications.length" x-cloak>
+                                            No notifications yet.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- User Profile -->
+                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <div class="text-xs font-medium text-slate-700">Shikola</div>
+                                        <div class="text-[10px] text-slate-400">Pupil</div>
+                                    </div>
+                                </button>
+                                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-lg border border-slate-100 py-2 z-50">
+                                    <a href="profile.html" class="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 transition">
+                                        <span class="w-5 flex justify-center text-slate-400">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                        <span class="text-[10px] text-slate-700">Profile</span>
+                                    </a>
+                                    <div class="border-t border-slate-100 my-1"></div>
+                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                        <span class="w-5 flex justify-center text-slate-400">
+                                            <i class="fas fa-right-from-bracket"></i>
+                                        </span>
+                                        <span class="text-[10px]">Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                        <!-- Academic Performance -->
+                        <div class="rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-100 p-4" x-data="pupilAcademicCard()" x-init="init()">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-indigo-500">
+                                    <i class="fas fa-chart-line text-sm"></i>
+                                </div>
+                                <span class="text-[10px] text-indigo-600 font-medium" x-text="academicStatus"></span>
+                            </div>
+                            <div class="text-[11px] uppercase tracking-wide text-indigo-600 mb-1">Academic Performance</div>
+                            <div class="text-2xl font-semibold text-slate-800" x-text="averageGrade"></div>
+                            <div class="text-[11px] text-slate-500 mt-1">
+                                <span>Recent performance</span>
+                                <span class="ml-1" x-text="gradeSummary"></span>
+                            </div>
+                            <div class="mt-2 border-t border-indigo-100 pt-2 space-y-1" x-show="recentGrades && recentGrades.length" x-cloak>
+                                <div class="text-[10px] text-indigo-700 font-semibold">Recent grades</div>
+                                <template x-for="grade in recentGrades.slice(0, 3)" :key="grade.subject">
+                                    <div class="flex justify-between text-[10px] text-indigo-900">
+                                        <span x-text="grade.subject"></span>
+                                        <span x-text="grade.score + '/' + grade.maxScore"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Attendance -->
+                        <div class="rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-100 p-4" x-data="pupilAttendanceCard()" x-init="init()">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-emerald-500">
+                                    <i class="fas fa-user-check text-sm"></i>
+                                </div>
+                                <span class="text-[10px] text-emerald-600 font-medium" x-text="termPercentage >= 90 ? 'Excellent' : (termPercentage >= 75 ? 'Good' : (termPercentage >= 50 ? 'Fair' : (termPercentage > 0 ? 'Needs attention' : 'No attendance')))"></span>
+                            </div>
+                            <div class="text-[11px] uppercase tracking-wide text-emerald-600 mb-1">Attendance</div>
+                            <div class="text-2xl font-semibold text-slate-800" x-text="termPercentage + '%'">0%</div>
+                            <div class="text-[11px] text-slate-500 mt-1">
+                                <span>This term</span>
+                                <span class="ml-1" x-text="'Today: ' + todayLabel"></span>
+                            </div>
+                            <div class="mt-2 border-t border-emerald-100 pt-2 space-y-1" x-show="recentRecords && recentRecords.length" x-cloak>
+                                <div class="text-[10px] text-emerald-700 font-semibold">Recent attendance</div>
+                                <template x-for="rec in recentRecords" :key="rec.date + '-' + (rec.className || '')">
+                                    <div class="flex justify-between text-[10px] text-emerald-900">
+                                        <span x-text="rec.date"></span>
+                                        <span x-text="rec.label"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Pending Assignments -->
+                        <div class="rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-100 p-4" x-data="pupilAssignmentCard()" x-init="init()">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-orange-500">
+                                    <i class="fas fa-book text-sm"></i>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-full bg-orange-200 text-orange-700 text-[10px] font-medium" x-text="assignmentStatus"></span>
+                            </div>
+                            <div class="text-[11px] uppercase tracking-wide text-orange-600 mb-1">Assignments</div>
+                            <div class="text-2xl font-semibold text-slate-800" x-text="pendingCount"></div>
+                            <div class="text-[11px] text-slate-500 mt-1">
+                                <span>Pending assignments</span>
+                                <span class="ml-1" x-show="overdueCount > 0" x-text="'(' + overdueCount + ' overdue)'"></span>
+                            </div>
+                            <div class="mt-2 border-t border-orange-100 pt-2 space-y-1" x-show="recentAssignments && recentAssignments.length" x-cloak>
+                                <div class="text-[10px] text-orange-700 font-semibold">Recent assignments</div>
+                                <template x-for="assignment in recentAssignments.slice(0, 3)" :key="assignment.id">
+                                    <div class="p-2 rounded-lg bg-orange-50 border border-orange-100">
+                                        <div class="flex justify-between text-[10px] text-orange-900 mb-1">
+                                            <span x-text="assignment.subject" class="truncate max-w-[100px] font-medium"></span>
+                                            <span x-text="formatDate(assignment.dueDate)" class="whitespace-nowrap"></span>
+                                        </div>
+                                        <div class="text-[9px] text-orange-700 mb-1" x-text="assignment.title"></div>
+                                        <div class="text-[9px] text-orange-600 mb-1" x-show="assignment.teacher" x-text="'Teacher: ' + assignment.teacher"></div>
+                                        <div class="text-[9px] text-orange-600 italic" x-show="assignment.instructions" x-text="assignment.instructions"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Fee Balance -->
+                        <div class="rounded-2xl bg-gradient-to-br from-red-50 to-red-100 border border-red-100 p-4" x-data="pupilFeeCard()" x-init="init()">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-red-500">
+                                    <i class="fas fa-money-bill-wave text-sm"></i>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-full bg-red-200 text-red-700 text-[10px] font-medium" x-text="feeStatus"></span>
+                            </div>
+                            <div class="text-[11px] uppercase tracking-wide text-red-600 mb-1">Fee Balance</div>
+                            <div class="text-2xl font-semibold text-slate-800" x-text="formattedOutstandingFees"></div>
+                            <div class="text-[11px] text-slate-500 mt-1">
+                                <span>Outstanding:</span>
+                                <span class="ml-1" x-text="formattedOutstandingFees"></span>
+                            </div>
+                            <div class="mt-2 border-t border-red-100 pt-2 space-y-1" x-show="feeInfo && (feeInfo.totalFees > 0 || feeInfo.paidFees > 0)" x-cloak>
+                                <div class="flex justify-between text-[10px] text-red-900">
+                                    <span>Total Fees:</span>
+                                    <span x-text="formattedTotalFees"></span>
+                                </div>
+                                <div class="flex justify-between text-[10px] text-red-900">
+                                    <span>Paid:</span>
+                                    <span x-text="formattedPaidFees"></span>
+                                </div>
+                                <div class="flex justify-between text-[10px] text-red-900" x-show="feeInfo.lastPaymentDate">
+                                    <span>Last Payment:</span>
+                                    <span x-text="formattedLastPaymentDate"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs flex-1">
+                        <!-- My Activities -->
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" x-data="pupilActivitiesWidget()">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">My Activities</div>
+                                    <div class="text-xs text-slate-400 mt-1">Your personal activities and events</div>
+                                </div>
+                                <a href="my-timetable.html?view=activities" class="text-xs text-orange-600 hover:text-orange-700">
+                                    <i class="fas fa-plus mr-1"></i>Add
+                                </a>
+                            </div>
+                            <div id="activities-widget-container" class="space-y-3">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin text-slate-300"></i>
+                                    <div class="text-xs text-slate-400 mt-2">Loading activities...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Study Sessions -->
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" x-data="pupilStudyWidget()">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Study Sessions</div>
+                                    <div class="text-xs text-slate-400 mt-1">Your personal study timetable</div>
+                                </div>
+                                <a href="my-timetable.html?view=study" class="text-xs text-blue-600 hover:text-blue-700">
+                                    <i class="fas fa-plus mr-1"></i>Add
+                                </a>
+                            </div>
+                            <div id="study-widget-container" class="space-y-3">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin text-slate-300"></i>
+                                    <div class="text-xs text-slate-400 mt-2">Loading study sessions...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Classes -->
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" x-data="pupilEventsCard()" x-init="init()">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Upcoming Classes</div>
+                                    <div class="text-xs text-slate-400 mt-1">Your scheduled classes for today</div>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <template x-for="classItem in upcomingClasses" :key="classItem.id">
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="flex-1">
+                                                <div class="text-xs font-medium text-slate-800" x-text="classItem.subject"></div>
+                                                <div class="text-[10px] text-slate-600 mt-1">
+                                                    <span x-text="classItem.teacher"></span>
+                                                    <span class="mx-1">•</span>
+                                                    <span x-text="classItem.room"></span>
+                                                </div>
+                                            </div>
+                                            <div class="text-[10px] text-slate-400 whitespace-nowrap">
+                                                <span x-text="formatTime(classItem.startTime)"></span>
+                                                <span class="mx-1">-</span>
+                                                <span x-text="formatTime(classItem.endTime)"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div class="p-4 rounded-xl bg-slate-50 text-[11px] text-slate-500 text-center" x-show="!upcomingClasses || !upcomingClasses.length" x-cloak>
+                                    No classes scheduled for today. Check your timetable for the complete weekly schedule.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- School Announcements -->
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" x-data="pupilAnnouncementsCard()" x-init="init()">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Announcements</div>
+                                    <div class="text-xs text-slate-400 mt-1">Important updates from your school</div>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <template x-for="announcement in announcements" :key="announcement.id">
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex-1">
+                                                <div class="text-xs font-medium text-slate-800" x-text="announcement.title"></div>
+                                                <div class="text-[10px] text-slate-600 line-clamp-2" x-text="announcement.content"></div>
+                                                <div class="text-[9px] text-slate-400 mt-1">
+                                                    <span x-text="announcement.creator"></span>
+                                                    <span class="mx-1">•</span>
+                                                    <span x-text="formatDate(announcement.createdAt)"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div class="p-4 rounded-xl bg-slate-50 text-[11px] text-slate-500 text-center" x-show="!announcements || !announcements.length" x-cloak>
+                                    No announcements at this time. School administrators and teachers will post important updates here.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="mt-6">
+                        <div class="text-sm font-semibold text-slate-800 mb-3">Quick Actions</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <a href="home-assignments.html" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition text-center">
+                                <div class="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <span class="text-xs font-medium text-slate-700">Assignments</span>
+                            </a>
+                            <a href="my-timetable.html" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition text-center">
+                                <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <span class="text-xs font-medium text-slate-700">Timetable</span>
+                            </a>
+                            <a href="messaging.html" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition text-center">
+                                <div class="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <span class="text-xs font-medium text-slate-700">Messages</span>
+                            </a>
+                            <a href="live-class.html" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition text-center">
+                                <div class="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <span class="text-xs font-medium text-slate-700">Live Class</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('alpine:init', function () {
+            if (!window.Alpine) return;
+
+            // Helper function for API calls
+            function apiClient() {
+                return {
+                    async get(endpoint) {
+                        try {
+                            const token = localStorage.getItem('shikola_token') || localStorage.getItem('authToken');
+                            if (!token) return null;
+                            
+                            const response = await fetch((window.SHIKOLA_API_BASE || '/api') + endpoint, {
+                                headers: {
+                                    'Authorization': 'Bearer ' + token,
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (!response.ok) return null;
+                            return await response.json();
+                        } catch (error) {
+                            console.error('API call failed:', error);
+                            return null;
+                        }
+                    }
+                };
+            }
+
+            // Format currency
+            function formatCurrency(amount) {
+                if (typeof amount !== 'number') return 'ZMW 0.00';
+                return new Intl.NumberFormat('en-ZM', {
+                    style: 'currency',
+                    currency: 'ZMW',
+                    minimumFractionDigits: 2
+                }).format(amount);
+            }
+
+            // Format date
+            function formatDate(dateString) {
+                if (!dateString) return 'N/A';
+                try {
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('en-ZM', { 
+                        month: 'short', 
+                        day: 'numeric' 
+                    });
+                } catch (e) {
+                    return 'N/A';
+                }
+            }
+
+            // Format time
+            function formatTime(time) {
+                if (!time) return 'N/A';
+                try {
+                    if (typeof time === 'string') {
+                        const date = new Date('1970-01-01T' + time);
+                        return date.toLocaleTimeString('en-ZM', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: false 
+                        });
+                    } else if (time instanceof Date) {
+                        return time.toLocaleTimeString('en-ZM', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: false 
+                        });
+                    }
+                    return 'N/A';
+                } catch (e) {
+                    return 'N/A';
+                }
+            }
+
+            // Pupil Fee Card Component
+            window.Alpine.data('pupilFeeCard', function () {
+                return {
+                    feeInfo: null,
+                    feeStatus: 'Loading...',
+                    formattedOutstandingFees: '...',
+                    formattedTotalFees: '...',
+                    formattedPaidFees: '...',
+                    formattedLastPaymentDate: '...',
+                    loading: false,
+
+                    async init() {
+                        await this.loadFeeData();
+                        // Auto-refresh every 5 minutes
+                        setInterval(() => this.loadFeeData(), 300000);
+                    },
+
+                    async loadFeeData() {
+                        this.loading = true;
+                        this.feeStatus = 'Loading...';
+                        this.formattedOutstandingFees = '...';
+                        
+                        try {
+                            const api = apiClient();
+                            const response = await api.get('/api/pupilportal/dashboard');
+                            
+                            if (response && response.success && response.data && response.data.feeInfo) {
+                                this.feeInfo = response.data.feeInfo;
+                                this.updateDisplay();
+                            } else {
+                                this.feeStatus = 'No fees';
+                                this.formattedOutstandingFees = 'ZMW 0.00';
+                            }
+                        } catch (error) {
+                            console.error('Failed to load fee data:', error);
+                            this.feeStatus = 'Error';
+                            this.formattedOutstandingFees = 'N/A';
+                        } finally {
+                            this.loading = false;
+                        }
+                    },
+
+                    updateDisplay() {
+                        if (!this.feeInfo) {
+                            this.feeStatus = 'No fees';
+                            this.formattedOutstandingFees = 'ZMW 0.00';
+                            this.formattedTotalFees = 'ZMW 0.00';
+                            this.formattedPaidFees = 'ZMW 0.00';
+                            return;
+                        }
+
+                        this.formattedOutstandingFees = formatCurrency(this.feeInfo.outstandingFees);
+                        this.formattedTotalFees = formatCurrency(this.feeInfo.totalFees);
+                        this.formattedPaidFees = formatCurrency(this.feeInfo.paidFees);
+                        
+                        if (this.feeInfo.lastPaymentDate) {
+                            this.formattedLastPaymentDate = formatDate(this.feeInfo.lastPaymentDate);
+                        }
+
+                        if (this.feeInfo.outstandingFees > 0) {
+                            this.feeStatus = 'Outstanding';
+                        } else if (this.feeInfo.totalFees > 0) {
+                            this.feeStatus = 'Paid';
+                        } else {
+                            this.feeStatus = 'No fees';
+                        }
+                    }
+                };
+            });
+
+            // Pupil Academic Card Component
+            window.Alpine.data('pupilAcademicCard', function () {
+                return {
+                    recentGrades: [],
+                    academicStatus: 'Loading...',
+                    averageGrade: '...',
+                    gradeSummary: 'Loading academic data...',
+                    loading: false,
+
+                    async init() {
+                        await this.loadAcademicData();
+                        // Auto-refresh every 10 minutes
+                        setInterval(() => this.loadAcademicData(), 600000);
+                    },
+
+                    async loadAcademicData() {
+                        this.loading = true;
+                        this.academicStatus = 'Loading...';
+                        this.averageGrade = '...';
+                        this.gradeSummary = 'Loading academic data...';
+                        
+                        try {
+                            const api = apiClient();
+                            const response = await api.get('/api/pupilportal/dashboard');
+                            
+                            if (response && response.success && response.data && response.data.recentGrades) {
+                                this.recentGrades = response.data.recentGrades;
+                                this.updateDisplay();
+                            } else {
+                                this.academicStatus = 'No grades';
+                                this.averageGrade = 'N/A';
+                                this.gradeSummary = 'No grades available yet';
+                            }
+                        } catch (error) {
+                            console.error('Failed to load academic data:', error);
+                            this.academicStatus = 'Error';
+                            this.averageGrade = 'N/A';
+                            this.gradeSummary = 'Unable to load grades';
+                        } finally {
+                            this.loading = false;
+                        }
+                    },
+
+                    updateDisplay() {
+                        if (!this.recentGrades || this.recentGrades.length === 0) {
+                            this.academicStatus = 'No grades';
+                            this.averageGrade = 'N/A';
+                            this.gradeSummary = 'No grades available yet';
+                            return;
+                        }
+
+                        // Calculate average
+                        const validGrades = this.recentGrades.filter(g => g.score != null && g.maxScore > 0);
+                        if (validGrades.length > 0) {
+                            const totalPercentage = validGrades.reduce((sum, grade) => {
+                                return sum + (grade.score / grade.maxScore * 100);
+                            }, 0);
+                            const averagePercentage = totalPercentage / validGrades.length;
+                            this.averageGrade = Math.round(averagePercentage) + '%';
+                            
+                            if (averagePercentage >= 80) {
+                                this.academicStatus = 'Excellent';
+                                this.gradeSummary = 'Outstanding performance';
+                            } else if (averagePercentage >= 65) {
+                                this.academicStatus = 'Good';
+                                this.gradeSummary = 'Good progress';
+                            } else if (averagePercentage >= 50) {
+                                this.academicStatus = 'Fair';
+                                this.gradeSummary = 'Room for improvement';
+                            } else {
+                                this.academicStatus = 'Needs attention';
+                                this.gradeSummary = 'Requires focus';
+                            }
+                        } else {
+                            this.academicStatus = 'No grades';
+                            this.averageGrade = 'N/A';
+                            this.gradeSummary = 'No valid grades available';
+                        }
+                    }
+                };
+            });
+
+            // Pupil Assignment Card Component
+            window.Alpine.data('pupilAssignmentCard', function () {
+                return {
+                    recentAssignments: [],
+                    assignmentStatus: 'Loading...',
+                    pendingCount: '...',
+                    overdueCount: 0,
+                    loading: false,
+
+                    async init() {
+                        await this.loadAssignmentData();
+                        // Auto-refresh every 5 minutes
+                        setInterval(() => this.loadAssignmentData(), 300000);
+                    },
+
+                    async loadAssignmentData() {
+                        this.loading = true;
+                        this.assignmentStatus = 'Loading...';
+                        this.pendingCount = '...';
+                        
+                        try {
+                            const api = apiClient();
+                            const response = await api.get('/api/pupilportal/dashboard');
+                            
+                            if (response && response.success && response.data && response.data.recentAssignments) {
+                                this.recentAssignments = response.data.recentAssignments;
+                                this.updateDisplay();
+                            } else {
+                                this.assignmentStatus = 'No assignments';
+                                this.pendingCount = '0';
+                            }
+                        } catch (error) {
+                            console.error('Failed to load assignment data:', error);
+                            this.assignmentStatus = 'Error';
+                            this.pendingCount = 'N/A';
+                        } finally {
+                            this.loading = false;
+                        }
+                    },
+
+                    updateDisplay() {
+                        if (!this.recentAssignments || this.recentAssignments.length === 0) {
+                            this.assignmentStatus = 'No assignments';
+                            this.pendingCount = '0';
+                            this.overdueCount = 0;
+                            return;
+                        }
+
+                        const pending = this.recentAssignments.filter(a => a.submissionStatus !== 'Submitted');
+                        const overdue = pending.filter(a => a.status === 'Overdue');
+                        
+                        this.pendingCount = pending.length.toString();
+                        this.overdueCount = overdue.length;
+                        
+                        if (overdue.length > 0) {
+                            this.assignmentStatus = 'Overdue';
+                        } else if (pending.length > 0) {
+                            this.assignmentStatus = 'Pending';
+                        } else {
+                            this.assignmentStatus = 'Up to date';
+                        }
+                    },
+
+                    formatDate
+                };
+            });
+
+            // Pupil Activities Card Component
+            window.Alpine.data('pupilActivitiesCard', function () {
+                return {
+                    activities: [],
+                    loading: false,
+
+                    async init() {
+                        await this.loadActivities();
+                        // Auto-refresh every 10 minutes
+                        setInterval(() => this.loadActivities(), 600000);
+                    },
+
+                    async loadActivities() {
+                        this.loading = true;
+                        try {
+                            const api = apiClient();
+                            const response = await api.get('/api/pupilportal/dashboard');
+                            
+                            if (response && response.success && response.data) {
+                                // Create activities from different data sources
+                                const activities = [];
+                                
+                                // Add recent grades as activities
+                                if (response.data.recentGrades) {
+                                    response.data.recentGrades.slice(0, 3).forEach(grade => {
+                                        activities.push({
+                                            id: 'grade-' + grade.subject + '-' + grade.date,
+                                            title: 'Grade Received',
+                                            description: `${grade.subject}: ${grade.score}/${grade.maxScore}`,
+                                            timestamp: grade.date
+                                        });
+                                    });
+                                }
+                                
+                                // Add recent assignments as activities
+                                if (response.data.recentAssignments) {
+                                    response.data.recentAssignments.slice(0, 3).forEach(assignment => {
+                                        activities.push({
+                                            id: 'assignment-' + assignment.id,
+                                            title: assignment.submissionStatus === 'Submitted' ? 'Assignment Submitted' : 'New Assignment',
+                                            description: `${assignment.subject}: ${assignment.title}`,
+                                            timestamp: assignment.dueDate
+                                        });
+                                    });
+                                }
+                                
+                                // Sort by timestamp (most recent first)
+                                activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                                this.activities = activities.slice(0, 5);
+                            }
+                        } catch (error) {
+                            console.error('Failed to load activities:', error);
+                        } finally {
+                            this.loading = false;
+                        }
+                    },
+
+                    formatTime
+                };
+            });
+
+            // Pupil Events Card Component
+            window.Alpine.data('pupilEventsCard', function () {
+                return {
+                    upcomingClasses: [],
+                    loading: false,
+
+                    async init() {
+                        await this.loadUpcomingClasses();
+                        // Auto-refresh every 5 minutes
+                        setInterval(() => this.loadUpcomingClasses(), 300000);
+                    },
+
+                    async loadUpcomingClasses() {
+                        this.loading = true;
+                        try {
+                            const api = apiClient();
+                            const response = await api.get('/api/pupilportal/dashboard');
+                            
+                            if (response && response.success && response.data && response.data.upcomingClasses) {
+                                this.upcomingClasses = response.data.upcomingClasses;
+                            }
+                        } catch (error) {
+                            console.error('Failed to load upcoming classes:', error);
+                        } finally {
+                            this.loading = false;
+                        }
+                    },
+
+                    formatTime
+                };
+            });
+
+            // Pupil Announcements Card Component
+            window.Alpine.data('pupilAnnouncementsCard', function () {
+                return {
+                    announcements: [],
+                    loading: false,
+
+                    async init() {
+                        await this.loadAnnouncements();
+                        // Auto-refresh every 5 minutes
+                        setInterval(() => this.loadAnnouncements(), 300000);
+                    },
+
+                    async loadAnnouncements() {
+                        this.loading = true;
+                        try {
+                            const api = apiClient();
+                            const response = await api.get('/api/pupilportal/dashboard');
+                            
+                            if (response && response.success && response.data && response.data.announcements) {
+                                this.announcements = response.data.announcements;
+                            }
+                        } catch (error) {
+                            console.error('Failed to load announcements:', error);
+                        } finally {
+                            this.loading = false;
+                        }
+                    },
+
+                    formatDate
+                };
+            });
+
+            // Enhanced Attendance Card (existing functionality maintained)
+            window.Alpine.data('pupilAttendanceCard', function () {
+                return {
+                    todayLabel: 'Not marked',
+                    termPercentage: 0,
+                    recentRecords: [],
+                    init: function () {
+                        try {
+                            var auth = window.shikolaAuth;
+                            if (!auth || typeof auth.getCurrentUser !== 'function') return;
+                            var user = auth.getCurrentUser();
+                            if (!user || !user.id) return;
+                            var pupilId = String(user.id);
+                            var today = new Date().toISOString().slice(0, 10);
+                            
+                            // Set up real-time attendance updates
+                            var self = this;
+                            try {
+                                window.addEventListener('shikola:attendance-saved', function(event) {
+                                    const { className, date, pupils } = event.detail;
+                                    const pupilRecord = pupils.find(s => s.id === pupilId);
+                                    if (pupilRecord && date === today) {
+                                        // Update today's attendance
+                                        if (pupilRecord.status === 'P') {
+                                            self.todayLabel = 'Present';
+                                        } else if (pupilRecord.status === 'A') {
+                                            self.todayLabel = 'Absent';
+                                        } else if (pupilRecord.status === 'Lv') {
+                                            self.todayLabel = 'On leave';
+                                        } else if (pupilRecord.status === 'L') {
+                                            self.todayLabel = 'Late';
+                                        } else {
+                                            self.todayLabel = 'Not marked';
+                                        }
+                                        
+                                        // Refresh attendance data
+                                        self.computeAttendance();
+                                    }
+                                });
+
+                                window.addEventListener('shikola:attendance-remarks-updated', function(event) {
+                                    const { className, date, remarks } = event.detail;
+                                    const remarkRecord = remarks.find(r => r.pupilId === pupilId);
+                                    if (remarkRecord && date === today) {
+                                        // Show notification for new remark
+                                        if (remarkRecord.remark && remarkRecord.remark.trim()) {
+                                            self.showNotification('New attendance remark: ' + remarkRecord.remark);
+                                        }
+                                    }
+                                });
+                            } catch (e) {
+                                console.warn('Failed to set up real-time attendance listeners:', e);
+                            }
+                            
+                            if (window.ShikolaAttendanceStore && typeof window.ShikolaAttendanceStore.getPupilStatusForDate === 'function') {
+                                var status = window.ShikolaAttendanceStore.getPupilStatusForDate(pupilId, today);
+                                if (status === 'P') {
+                                    this.todayLabel = 'Present';
+                                } else if (status === 'A') {
+                                    this.todayLabel = 'Absent';
+                                } else if (status === 'Lv') {
+                                    this.todayLabel = 'On leave';
+                                } else if (status === 'L') {
+                                    this.todayLabel = 'Late';
+                                } else {
+                                    this.todayLabel = 'Not marked';
+                                }
+                            }
+                            // Compute term attendance percentage and recent records for this pupil
+                            if (window.ShikolaAttendanceStore && window.ShikolaAttendanceStore.PREFIX) {
+                                var PREFIX = window.ShikolaAttendanceStore.PREFIX;
+                                var basePrefix = PREFIX + ':pupils:';
+                                var present = 0;
+                                var total = 0;
+                                var records = [];
+                                try {
+                                    for (var idx = 0; idx < localStorage.length; idx++) {
+                                        var key = localStorage.key(idx);
+                                        if (!key || key.indexOf(basePrefix) !== 0) continue;
+                                        var raw = localStorage.getItem(key);
+                                        if (!raw) continue;
+                                        var parsed;
+                                        try {
+                                            parsed = JSON.parse(raw) || {};
+                                        } catch (e) {
+                                            continue;
+                                        }
+                                        var attendance = parsed.attendance || {};
+                                        var remarks = parsed.remarks || {};
+                                        var idStr = String(pupilId);
+                                        if (!Object.prototype.hasOwnProperty.call(attendance, idStr)) continue;
+                                        var st = attendance[idStr];
+                                        if (!st) continue;
+                                        // Count only marked days
+                                        total += 1;
+                                        if (st === 'P') present += 1;
+                                        var parts = key.split(':');
+                                        var dateIso = parts[2] || '';
+                                        var className = parts.slice(3).join(':') || '';
+                                        var remark = remarks[idStr] || '';
+                                        var label = 'Not marked';
+                                        if (st === 'P') label = 'Present';
+                                        else if (st === 'A') label = 'Absent';
+                                        else if (st === 'Lv') label = 'On leave';
+                                        else if (st === 'L') label = 'Late';
+                                        records.push({
+                                            date: dateIso,
+                                            className: className,
+                                            status: st,
+                                            label: label,
+                                            remark: remark
+                                        });
+                                    }
+                                } catch (e) {
+                                    present = 0;
+                                    total = 0;
+                                    records = [];
+                                }
+                                this.termPercentage = total ? Math.round((present * 100) / total) : 0;
+                                try {
+                                    records.sort(function (a, b) {
+                                        return String(b.date || '').localeCompare(String(a.date || ''));
+                                    });
+                                } catch (e) {}
+                                this.recentRecords = records.slice(0, 5);
+                            }
+                        } catch (e) {
+                        }
+                    },
+                    computeAttendance: function() {
+                        // Refresh attendance calculation
+                        var self = this;
+                        try {
+                            var auth = window.shikolaAuth;
+                            if (!auth || typeof auth.getCurrentUser !== 'function') return;
+                            var user = auth.getCurrentUser();
+                            if (!user || !user.id) return;
+                            var pupilId = String(user.id);
+                            
+                            if (window.ShikolaAttendanceStore && window.ShikolaAttendanceStore.PREFIX) {
+                                var PREFIX = window.ShikolaAttendanceStore.PREFIX;
+                                var basePrefix = PREFIX + ':pupils:';
+                                var present = 0;
+                                var total = 0;
+                                var records = [];
+                                try {
+                                    for (var idx = 0; idx < localStorage.length; idx++) {
+                                        var key = localStorage.key(idx);
+                                        if (!key || key.indexOf(basePrefix) !== 0) continue;
+                                        var raw = localStorage.getItem(key);
+                                        if (!raw) continue;
+                                        var parsed;
+                                        try {
+                                            parsed = JSON.parse(raw) || {};
+                                        } catch (e) {
+                                            continue;
+                                        }
+                                        var attendance = parsed.attendance || {};
+                                        var remarks = parsed.remarks || {};
+                                        var idStr = String(pupilId);
+                                        if (!Object.prototype.hasOwnProperty.call(attendance, idStr)) continue;
+                                        var st = attendance[idStr];
+                                        if (!st) continue;
+                                        total += 1;
+                                        if (st === 'P') present += 1;
+                                        var parts = key.split(':');
+                                        var dateIso = parts[2] || '';
+                                        var className = parts.slice(3).join(':') || '';
+                                        var remark = remarks[idStr] || '';
+                                        var label = 'Not marked';
+                                        if (st === 'P') label = 'Present';
+                                        else if (st === 'A') label = 'Absent';
+                                        else if (st === 'Lv') label = 'On leave';
+                                        else if (st === 'L') label = 'Late';
+                                        records.push({
+                                            date: dateIso,
+                                            className: className,
+                                            status: st,
+                                            label: label,
+                                            remark: remark
+                                        });
+                                    }
+                                } catch (e) {
+                                    present = 0;
+                                    total = 0;
+                                    records = [];
+                                }
+                                self.termPercentage = total ? Math.round((present * 100) / total) : 0;
+                                try {
+                                    records.sort(function (a, b) {
+                                        return String(b.date || '').localeCompare(String(a.date || ''));
+                                    });
+                                } catch (e) {}
+                                self.recentRecords = records.slice(0, 5);
+                            }
+                        } catch (e) {
+                        }
+                    },
+                    showNotification: function(message) {
+                        // Simple notification for pupils
+                        try {
+                            if (window.shikolaNotifications && typeof window.shikolaNotifications.show === 'function') {
+                                window.shikolaNotifications.show(message, 'info');
+                            } else {
+                                console.log('Pupil notification:', message);
+                            }
+                        } catch (e) {
+                            console.log('Pupil notification:', message);
+                        }
+                    }
+                };
+            });
+
+            // Activities Widget Component
+            window.Alpine.data('pupilActivitiesWidget', function () {
+                return {
+                    init() {
+                        // Initialize widget with activities data
+                        if (window.PupilDashboardComponents) {
+                            setTimeout(() => {
+                                const container = document.getElementById('activities-widget-container');
+                                if (container) {
+                                    window.PupilDashboardComponents.renderUpcomingActivities(container, 3);
+                                }
+                            }, 100);
+                        }
+                    }
+                };
+            });
+
+            // Study Sessions Widget Component
+            window.Alpine.data('pupilStudyWidget', function () {
+                return {
+                    init() {
+                        // Initialize widget with study sessions data
+                        if (window.PupilDashboardComponents) {
+                            setTimeout(() => {
+                                const container = document.getElementById('study-widget-container');
+                                if (container) {
+                                    window.PupilDashboardComponents.renderUpcomingStudySessions(container, 3);
+                                }
+                            }, 100);
+                        }
+                    }
+                };
+            });
+        });
+    </script>
+</body>
+</html>

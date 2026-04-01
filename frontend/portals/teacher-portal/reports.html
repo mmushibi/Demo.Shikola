@@ -1,0 +1,953 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - Teacher Reports</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../config.js"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../school-admin/classes-api.js" defer></script>
+    <script src="teacher-api.js" defer></script>
+    <script src="teacher-reports-api.js" defer></script>
+    <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../shared-assets/js/shared-realtime-sync.js" defer></script>
+    <script src="../../shared-assets/js/shared-universal-notifications.js" defer></script>
+    <script src="../../shared-assets/js/shared-messages.js" defer></script>
+    <script src="../../shared-assets/js/button-functions.js" defer></script>
+    <script src="../../shared-assets/js/shared-admin-notifications.js" defer></script>
+    <script src="../../fix-accessibility.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="../../shared-assets/js/shared-ecz-grading.js"></script>
+    <script src="../../shared-assets/js/shared-ecz-customization-helper.js"></script>
+    <script src="../../shared-assets/js/shared-unified-report-cards.js"></script>
+    <script src="teacher-reports.js"></script>
+    <script>
+        // Global fallback variables to prevent ReferenceError
+        window.unreadCount = function() {
+            try {
+                if (window.ShikolaAdminNotifications && window.Alpine) {
+                    // This will be properly set when Alpine initializes
+                    return 0;
+                }
+            } catch (e) {}
+            return 0;
+        };
+        
+        window.notifications = [];
+        window.user = null;
+        
+        // authData function for Alpine.js
+        function authData() {
+            const auth = window.shikolaAuth || (window.ShikolaAuth ? ShikolaAuth.getInstance() : null);
+            return {
+                user: auth ? auth.currentUser : null,
+                notifications: window.notifications || [],
+                unreadCount: window.unreadCount || function() { return 0; }
+            };
+        }
+        
+        // Initialize user data when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const auth = window.shikolaAuth || (window.ShikolaAuth ? ShikolaAuth.getInstance() : null);
+            if (auth && auth.currentUser) {
+                window.user = auth.currentUser;
+            }
+        });
+        
+        // Listen for user updates
+        window.addEventListener('shikola:user-updated', function(e) {
+            if (e.detail && e.detail.user) {
+                window.user = e.detail.user;
+            }
+        });
+        
+        // Utility functions
+        function getInitials(name) {
+            if (!name) return '';
+            return name.split(' ').map(word => word.charAt(0).toUpperCase()).join('').slice(0, 2);
+        }
+        
+        window.getInitials = getInitials;
+    </script>
+    <script src="/shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+    <style>
+        /* Remove blue focus ring from all interactive elements when clicked */
+        button:focus,
+        input:focus,
+        select:focus,
+        textarea:focus,
+        a:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Keep accessible focus indicator for keyboard navigation */
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        a:focus-visible {
+            outline: 2px solid rgb(251 146 60) !important;
+            outline-offset: 2px !important;
+        }
+    </style>
+</head>
+<body class="dashboard-page">
+    <div x-data="Object.assign({}, (typeof authData === 'function' ? authData() : {}), { sidebarOpen: false, chatOpen: false, activeTab: localStorage.getItem('teacherReportsActiveTab') || 'student-report-card', signatureUrls: { classTeacher: null, headTeacher: null } })" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                        <span class="flex-1">Attendance</span>
+                    </a>
+                    <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">My Timetable</span>
+                    </a>
+                    <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                        <span class="flex-1">Classes</span>
+                    </a>
+                    <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                        <span class="flex-1">Exams</span>
+                    </a>
+                    <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                        <span class="flex-1">Class Tests</span>
+                    </a>
+                    <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                        <span class="flex-1">Reports</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center">
+                                <i class="fas fa-right-from-bracket"></i>
+                            </span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+            <div x-show="sidebarOpen" x-cloak x-transition:enter="transition ease-in-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in-out duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    </div>
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="attendance.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-user-check"></i></span>
+                            <span class="flex-1">Attendance</span>
+                        </a>
+                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                            <span class="flex-1">My Timetable</span>
+                        </a>
+                        <a href="classes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
+                            <span class="flex-1">Classes</span>
+                        </a>
+                        <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                            <span class="flex-1">Exams</span>
+                        </a>
+                        <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
+                            <span class="flex-1">Class Tests</span>
+                        </a>
+                        <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
+                            <span class="flex-1">Reports</span>
+                        </a>
+                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                            <span class="flex-1">Messaging</span>
+                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
+                            <span class="flex-1">Profile</span>
+                        </a>
+                    </nav>
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center justify-center px-2">
+                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center">
+                                    <i class="fas fa-right-from-bracket"></i>
+                                </span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-10 w-auto rounded-2xl lg:hidden ml-16 pl-9">
+                            <div>
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Reports</h1>
+                                <p class="text-xs sm:text-sm text-slate-400 mt-1 hidden sm:block">View student report cards and monthly attendance summaries for your classes.</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-3">
+                            <div x-data="{ query: '', focus: false, suggestions: ['Students Report Card', 'Students Monthly Attendance'], get filtered() { if (!this.query) return this.suggestions; const q = this.query.toLowerCase(); return this.suggestions.filter(s => s.toLowerCase().includes(q)); } }" class="relative hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-56" @click.outside="focus = false">
+                                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                                <input type="text" placeholder="Search" class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1" x-model="query" @focus="focus = true" @input="focus = true">
+                                <div x-show="focus && filtered.length" x-cloak class="absolute left-0 right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-20">
+                                    <template x-for="suggestion in filtered" :key="suggestion">
+                                        <button type="button" class="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2" @mousedown.prevent="query = suggestion; if (suggestion === 'Students Report Card') { activeTab = 'student-report-card'; localStorage.setItem('teacherReportsActiveTab', 'student-report-card'); } else if (suggestion === 'Students Monthly Attendance') { activeTab = 'student-attendance-report'; localStorage.setItem('teacherReportsActiveTab', 'student-attendance-report'); }">
+                                            <i class="fas fa-search text-[10px] text-slate-400"></i>
+                                            <span x-text="suggestion"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="relative" x-data="window.ShikolaAdminNotifications ? window.ShikolaAdminNotifications.dropdown({ links: { pupilCreated: 'classes.html#students', employeeCreated: '', feesPaymentRecorded: '', attendanceUpdated: 'attendance.html' } }) : { open: false, notifications: [], unreadCount() { return 0; }, loadServerNotifications() {}, markAllRead() {} }" @click.outside="open = false">
+                                <button type="button" class="relative h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" @click="open = !open; if (open) { loadServerNotifications(); }" aria-label="Notifications">
+                                    <i class="far fa-bell"></i>
+                                    <span x-show="unreadCount() > 0" x-cloak class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center" x-text="unreadCount()"></span>
+                                </button>
+                                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-80 rounded-xl bg-white shadow-lg border border-slate-100 z-30 overflow-hidden">
+                                    <div class="p-4 border-b border-slate-100">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="text-sm font-semibold text-slate-800">Notifications</div>
+                                            <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                                                <button type="button" class="hover:text-slate-600" @click="markAllRead()">Mark all read</button>
+                                                <button type="button" class="hover:text-slate-600" @click="clearAll()">Clear</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="max-h-96 overflow-y-auto">
+                                        <template x-for="notification in notifications" :key="notification.id">
+                                            <div class="p-4 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 cursor-pointer" @click="handleClick(notification)">
+                                                <div class="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <div class="text-sm break-words" :class="notification.read ? 'font-normal text-slate-700' : 'font-semibold text-slate-800'" x-text="notification.title"></div>
+                                                        <div class="text-xs text-slate-600 mt-1 break-words max-h-10 overflow-hidden" x-text="notification.message"></div>
+                                                    </div>
+                                                    <div class="text-[10px] text-slate-400 mt-0.5" x-text="notification.time"></div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <div class="p-4 text-[11px] text-slate-400 text-center" x-show="!notifications.length" x-cloak>
+                                            No notifications yet.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm font-medium">
+                                        <span x-show="user" x-text="(typeof getInitials === 'function' && user && user.name) ? getInitials(user.name) : ''"></span>
+                                        <i x-show="!user" class="fas fa-user"></i>
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <div class="text-xs font-medium text-slate-700" x-text="user && user.name ? user.name : 'Shikola'">Shikola</div>
+                                        <div class="text-[10px] text-slate-400 capitalize" x-text="user && user.role ? user.role : 'teacher'">Teacher</div>
+                                    </div>
+                                </button>
+                                <div x-show="open" x-cloak class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
+                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
+                                        <span class="w-4 flex justify-center text-slate-400">
+                                            <i class="fas fa-id-badge"></i>
+                                        </span>
+                                        <span>Profile</span>
+                                    </a>
+                                    <div class="my-1 border-t border-slate-100"></div>
+                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                        <span class="w-4 flex justify-center">
+                                            <i class="fas fa-right-from-bracket"></i>
+                                        </span>
+                                        <span>Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 text-xs sm:text-sm">
+                            <button type="button" @click="activeTab = 'student-report-card'; localStorage.setItem('teacherReportsActiveTab', 'student-report-card')" :class="activeTab === 'student-report-card' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                                <span class="w-5 flex justify-center">
+                                    <i class="fas fa-file-alt"></i>
+                                </span>
+                                <span>Students Report Card</span>
+                            </button>
+                            <button type="button" @click="activeTab = 'result-cards'; localStorage.setItem('teacherReportsActiveTab', 'result-cards')" :class="activeTab === 'result-cards' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                                <span class="w-5 flex justify-center">
+                                    <i class="fas fa-chart-bar"></i>
+                                </span>
+                                <span>Result Cards</span>
+                            </button>
+                            <button type="button" @click="activeTab = 'student-attendance-report'; localStorage.setItem('teacherReportsActiveTab', 'student-attendance-report')" :class="activeTab === 'student-attendance-report' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                                <span class="w-5 flex justify-center">
+                                    <i class="fas fa-calendar-check"></i>
+                                </span>
+                                <span>Students Monthly Attendance</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex-1 space-y-6 text-sm">
+                        <section x-show="activeTab === 'student-report-card'" x-cloak x-data="studentReportCard">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Students Report Card</div>
+                                        <div class="text-xs text-slate-400 mt-1">Generate subject-wise report cards for pupils in your assigned classes.</div>
+                                    </div>
+                                    <div class="flex flex-wrap justify-end gap-2 text-xs">
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600" @click="resetFilters()">Reset</button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800" @click="generateReport()">Generate report</button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5" data-action="export" data-format="excel">
+                                            <i class="fas fa-file-excel text-emerald-500 text-xs"></i>
+                                            <span>Export</span>
+                                        </button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5" @click="printPreview()">
+                                            <i class="fas fa-print text-slate-500 text-xs"></i>
+                                            <span>Print</span>
+                                        </button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5" @click="downloadPdf()">
+                                            <i class="fas fa-file-pdf text-rose-500 text-xs"></i>
+                                            <span>Download PDF</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs mb-4">
+                                    <div>
+                                        <label for="filter-academic-year" class="block text-[11px] font-medium text-slate-600 mb-1">Academic Year</label>
+                                        <select id="filter-academic-year" x-model="filters.year" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All years</option>
+                                            <option value="2028">2028</option>
+                                            <option value="2027">2027</option>
+                                            <option value="2026">2026</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="filter-exam-term" class="block text-[11px] font-medium text-slate-600 mb-1">Exam Term</label>
+                                        <select id="filter-exam-term" x-model="filters.term" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select term</option>
+                                            <template x-for="term in examTerms" :key="term">
+                                                <option :value="term" x-text="term"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="filter-class" class="block text-[11px] font-medium text-slate-600 mb-1">Class</label>
+                                        <select id="filter-class" x-model="filters.className" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All my classes</option>
+                                            <template x-for="className in classOptions" :key="className">
+                                                <option :value="className" x-text="className"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div class="relative" @click.outside="showSuggestions = false">
+                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Pupil</label>
+                                        <input type="text" x-model="searchQuery" @input="showSuggestions = true" @focus="showSuggestions = true" @keydown.escape="showSuggestions = false" @keydown.arrow-down.prevent="moveSelection(1)" @keydown.arrow-up.prevent="moveSelection(-1)" @keydown.enter.prevent="selectHighlighted()" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" placeholder="Search by name or admission no.">
+                                        <div x-show="showSuggestions && filteredStudents().length" x-cloak class="absolute z-20 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-auto">
+                                            <template x-for="(student, index) in filteredStudents()" :key="student.id">
+                                                <button type="button" @mousedown.prevent="selectStudent(student)" :class="['w-full text-left px-3 py-2 flex flex-col', index === highlightedIndex ? 'bg-slate-100' : 'hover:bg-slate-50']">
+                                                    <span class="text-[11px] font-medium text-slate-800" x-text="student.name"></span>
+                                                    <span class="text-[10px] text-slate-500" x-text="student.id + ' · ' + student.className + ' · ' + student.term + ' ' + student.year"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div x-show="isBatchMode()" x-cloak class="bg-white rounded-2xl border border-slate-100 shadow-sm mt-4 p-4 text-xs">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div>
+                                            <div class="font-semibold text-slate-800 text-sm">Class Pupils - Batch Print / Download</div>
+                                            <div class="text-[11px] text-slate-500 mt-0.5">Select one or more pupils in this class, then use Print or Download PDF above.</div>
+                                        </div>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 text-[11px]" @click="toggleSelectAllInClass()">Select / Clear all</button>
+                                    </div>
+                                    <div class="border border-slate-200 rounded-xl overflow-hidden">
+                                        <table class="min-w-full text-[11px]">
+                                            <thead class="bg-slate-50 text-slate-600">
+                                                <tr>
+                                                    <th class="px-3 py-1.5 text-left w-10">
+                                                        <span class="sr-only">Select</span>
+                                                    </th>
+                                                    <th class="px-3 py-1.5 text-left font-medium">Pupil</th>
+                                                    <th class="px-3 py-1.5 text-left font-medium">ID</th>
+                                                    <th class="px-3 py-1.5 text-left font-medium">Gender</th>
+                                                    <th class="px-3 py-1.5 text-left font-medium">Term</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100">
+                                                <template x-for="student in filteredStudents()" :key="student.id">
+                                                    <tr>
+                                                        <td class="px-3 py-1.5">
+                                                            <input type="checkbox" class="h-3.5 w-3.5 rounded border-slate-300 text-orange-500 focus:ring-orange-400" :checked="isStudentChecked(student.id)" @change="toggleStudentSelection(student.id)">
+                                                        </td>
+                                                        <td class="px-3 py-1.5 text-slate-800 font-medium" x-text="student.name"></td>
+                                                        <td class="px-3 py-1.5 text-slate-600" x-text="student.id"></td>
+                                                        <td class="px-3 py-1.5 text-slate-600" x-text="student.gender"></td>
+                                                        <td class="px-3 py-1.5 text-slate-600" x-text="student.term + ' ' + student.year"></td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div x-show="!isBatchMode()" x-cloak class="rounded-2xl border border-slate-100 overflow-hidden mt-2 bg-slate-50" x-ref="preview">
+                                    <div class="bg-white px-5 py-3 border-b border-slate-100">
+                                        <div class="text-center text-xs text-slate-600">
+                                            <div class="flex items-center justify-center gap-3 mb-2">
+                                                <template x-if="schoolSettings && schoolSettings.logo">
+                                                    <img :src="schoolSettings.logo" alt="School Logo" class="h-12 w-auto object-contain">
+                                                </template>
+                                            </div>
+                                            <div class="text-sm font-semibold text-slate-900 tracking-wide uppercase" x-text="schoolSettings?.name || 'School'"></div>
+                                            <div class="mt-0.5" x-text="schoolSettings?.address || 'School Address'"></div>
+                                            <div class="mt-0 text-[11px]" x-text="`Phone: ${schoolSettings?.phone || 'School Phone'} · Email: ${schoolSettings?.email || 'School Email'}`"></div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white px-5 py-2 border-b border-slate-100 text-xs text-center text-slate-700">
+                                        <div class="font-semibold" x-text="currentStudent().termLabel || ('REPORT CARD - ' + (currentStudent().term || '') + ' (' + (currentStudent().year || '') + ')')"></div>
+                                    </div>
+                                    <div class="bg-white px-6 py-4 border-b border-slate-100 text-xs">
+                                        <div class="font-semibold text-slate-800 mb-2">Pupil Information</div>
+                                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                                            <table class="min-w-full text-[11px]">
+                                                <tbody>
+                                                    <tr class="divide-x divide-slate-200">
+                                                        <td class="bg-slate-50 px-3 py-2 align-top">
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Pupil Name</div>
+                                                            <div class="mt-0.5 font-semibold text-slate-800" x-text="currentStudent().name"></div>
+                                                        </td>
+                                                        <td class="bg-slate-50 px-3 py-2 align-top">
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Gender</div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().gender"></div>
+                                                        </td>
+                                                        <td class="bg-slate-50 px-3 py-2 align-top">
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Date of Birth</div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().dob"></div>
+                                                        </td>
+                                                        <td class="bg-slate-50 px-3 py-2 align-top">
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Admission No.</div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().admissionNo"></div>
+                                                        </td>
+                                                        <td class="bg-slate-50 px-3 py-2 align-top">
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Student ID</div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().id"></div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr class="divide-x divide-slate-200">
+                                                        <td class="bg-slate-50 px-3 py-2 align-top">
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Grade</div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().grade"></div>
+                                                        </td>
+                                                        <td class="bg-slate-50 px-3 py-2 align-top">
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Class / Section</div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().classSection"></div>
+                                                        </td>
+                                                        <td class="bg-slate-50 px-3 py-2 align-top">
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Level</div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentLevel()"></div>
+                                                        </td>
+                                                        <td class="bg-slate-50 px-3 py-2 align-top">
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Campus</div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().campus"></div>
+                                                        </td>
+                                                        <td class="bg-slate-50 px-3 py-2 align-top">
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Term</div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="(currentStudent().term || '') + ' (' + (currentStudent().year || '') + ')' "></div>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white px-6 py-4 border-b border-slate-100 text-xs">
+                                        <div class="font-semibold text-slate-800 mb-2">Subject Performance</div>
+                                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                                            <table class="min-w-full text-[11px]">
+                                                <thead class="bg-slate-50 text-slate-600">
+                                                    <tr>
+                                                        <th class="px-3 py-1.5 text-left font-medium">Subject</th>
+                                                        <th class="px-3 py-1.5 text-right font-medium">Marks Obtained</th>
+                                                        <th class="px-3 py-1.5 text-right font-medium">Total Marks</th>
+                                                        <th class="px-3 py-1.5 text-right font-medium">Percentage</th>
+                                                        <th class="px-3 py-1.5 text-center font-medium">Grade</th>
+                                                        <th class="px-3 py-1.5 text-left font-medium">Teacher Remarks</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100">
+                                                    <template x-for="subject in currentStudent().subjects" :key="subject.name">
+                                                        <tr>
+                                                            <td class="px-3 py-1.5 font-medium text-slate-800" x-text="subject.name"></td>
+                                                            <td class="px-3 py-1.5 text-right text-slate-700" x-text="subject.marksObtained"></td>
+                                                            <td class="px-3 py-1.5 text-right text-slate-700" x-text="subject.totalMarks"></td>
+                                                            <td class="px-3 py-1.5 text-right text-slate-700" x-text="subject.percentage + '%' "></td>
+                                                            <td class="px-3 py-1.5 text-center text-slate-800" x-text="gradeForPercentage(subject.percentage).grade"></td>
+                                                            <td class="px-3 py-1.5 text-slate-700" x-text="subject.remarks"></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white px-6 py-4 border-b border-slate-100 text-xs">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div class="font-semibold text-slate-800 mb-2">Overall Performance Summary</div>
+                                                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                                                    <table class="min-w-full text-[11px]">
+                                                        <thead class="bg-slate-50 text-slate-600">
+                                                            <tr>
+                                                                <th class="px-3 py-1.5 text-left font-medium">Category</th>
+                                                                <th class="px-3 py-1.5 text-left font-medium">Value</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="divide-y divide-slate-100">
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Total Marks Obtained</td>
+                                                                <td class="px-3 py-1.5 font-medium text-slate-800" x-text="currentStudent().totals.totalObtained"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Total Possible Marks</td>
+                                                                <td class="px-3 py-1.5 text-slate-700" x-text="currentStudent().totals.totalPossible"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Overall Percentage</td>
+                                                                <td class="px-3 py-1.5 text-slate-700" x-text="currentStudent().totals.percentage + '%' "></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Overall Grade</td>
+                                                                <td class="px-3 py-1.5 text-slate-700" x-text="overallGradeFromTotals(currentStudent())"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Class Position</td>
+                                                                <td class="px-3 py-1.5 text-slate-700" x-text="currentStudent().classPosition"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Result Status</td>
+                                                                <td class="px-3 py-1.5 text-slate-700" x-text="currentStudent().resultStatus"></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-slate-800 mb-2">Attendance Record</div>
+                                                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                                                    <table class="min-w-full text-[11px]">
+                                                        <thead class="bg-slate-50 text-slate-600">
+                                                            <tr>
+                                                                <th class="px-3 py-1.5 text-left font-medium">Item</th>
+                                                                <th class="px-3 py-1.5 text-left font-medium">Number</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="divide-y divide-slate-100">
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Total School Days</td>
+                                                                <td class="px-3 py-1.5 text-slate-700" x-text="currentStudent().attendance.totalDays"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Days Present</td>
+                                                                <td class="px-3 py-1.5 text-slate-700" x-text="currentStudent().attendance.daysPresent"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Days Absent</td>
+                                                                <td class="px-3 py-1.5 text-slate-700" x-text="currentStudent().attendance.daysAbsent"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Times Late</td>
+                                                                <td class="px-3 py-1.5 text-slate-700" x-text="currentStudent().attendance.timesLate"></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="px-3 py-1.5 text-slate-600">Attendance Percentage</td>
+                                                                <td class="px-3 py-1.5 text-slate-700" x-text="currentStudent().attendance.percentage + '%' "></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white px-6 py-4 border-b border-slate-100 text-xs space-y-3">
+                                        <div>
+                                            <div class="flex items-center justify-between gap-2 mb-1">
+                                                <div class="font-semibold text-slate-800">Teacher's Comment</div>
+                                                <button type="button" class="px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-[11px]" @click="saveComments()" x-show="(typeof canEditTeacherComment === 'function' && canEditTeacherComment()) || (typeof canEditHeadteacherComment === 'function' && canEditHeadteacherComment())" :disabled="commentsSaving">
+                                                    <span x-show="!commentsSaving">Save</span>
+                                                    <span x-show="commentsSaving" x-cloak>Saving...</span>
+                                                </button>
+                                            </div>
+                                            <template x-if="typeof canEditTeacherComment === 'function' && canEditTeacherComment()">
+                                                <textarea rows="3" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400" x-model="currentStudent().teacherComment" :disabled="commentsSaving"></textarea>
+                                            </template>
+                                            <template x-if="!(typeof canEditTeacherComment === 'function' && canEditTeacherComment())">
+                                                <p class="text-slate-700 leading-snug" x-text="currentStudent().teacherComment"></p>
+                                            </template>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold text-slate-800 mb-1">Headteacher's Comment</div>
+                                            <template x-if="typeof canEditHeadteacherComment === 'function' && canEditHeadteacherComment()">
+                                                <textarea rows="3" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-orange-400" x-model="currentStudent().headteacherComment" :disabled="commentsSaving"></textarea>
+                                            </template>
+                                            <template x-if="!(typeof canEditHeadteacherComment === 'function' && canEditHeadteacherComment())">
+                                                <p class="text-slate-700 leading-snug" x-text="currentStudent().headteacherComment"></p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white px-6 py-5 text-xs">
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-slate-700">
+                                            <div>
+                                                <div class="pb-4 mb-1">
+                                                    <template x-if="signatureUrls && signatureUrls.classTeacher">
+                                                        <img :src="signatureUrls.classTeacher" alt="Class Teacher Signature" class="h-10 max-w-full object-contain">
+                                                    </template>
+                                                    <template x-if="!signatureUrls || !signatureUrls.classTeacher">
+                                                        <div class="border-b border-slate-300"></div>
+                                                    </template>
+                                                </div>
+                                                <div class="text-[11px] text-slate-500">Class Teacher</div>
+                                            </div>
+                                            <div>
+                                                <div class="border-b border-slate-300 pb-4 mb-1"></div>
+                                                <div class="text-[11px] text-slate-500">Date</div>
+                                            </div>
+                                            <div>
+                                                <div class="pb-4 mb-1">
+                                                    <template x-if="signatureUrls && signatureUrls.headTeacher">
+                                                        <img :src="signatureUrls.headTeacher" alt="Headteacher Signature" class="h-10 max-w-full object-contain">
+                                                    </template>
+                                                    <template x-if="!signatureUrls || !signatureUrls.headTeacher">
+                                                        <div class="border-b border-slate-300"></div>
+                                                    </template>
+                                                </div>
+                                                <div class="text-[11px] text-slate-500">Headteacher</div>
+                                            </div>
+                                            <div>
+                                                <div class="border border-dashed border-slate-300 rounded-lg h-12 flex items-center justify-center text-[11px] text-slate-500">School Stamp</div>
+                                            </div>
+                                        </div>
+                                        <p class="text-[10px] text-slate-400 text-center mt-1">This is a computer-generated Shikola report card and does not require a manual signature.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section x-show="activeTab === 'result-cards'" x-cloak x-data="resultCardsData">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Result Cards</div>
+                                        <div class="text-xs text-slate-400 mt-1">View class test results for pupils in your assigned subjects.</div>
+                                    </div>
+                                    <div class="flex flex-wrap justify-end gap-2 text-xs">
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600" @click="resetResultFilters()">Reset</button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-900 text-white font-medium hover:bg-slate-800" @click="loadResultCards()">Load Results</button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5" @click="printResultCards()">
+                                            <i class="fas fa-print text-slate-500 text-xs"></i>
+                                            <span>Print</span>
+                                        </button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5" @click="downloadResultCardsPdf()">
+                                            <i class="fas fa-file-pdf text-rose-500 text-xs"></i>
+                                            <span>Download PDF</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs mb-4">
+                                    <div>
+                                        <label for="result-academic-year" class="block text-[11px] font-medium text-slate-600 mb-1">Academic Year</label>
+                                        <select id="result-academic-year" x-model="resultFilters.year" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Current Year</option>
+                                            <option value="2028">2028</option>
+                                            <option value="2027">2027</option>
+                                            <option value="2026">2026</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="result-exam-term" class="block text-[11px] font-medium text-slate-600 mb-1">Term</label>
+                                        <select id="result-exam-term" x-model="resultFilters.term" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">Select term</option>
+                                            <template x-for="term in examTerms" :key="term">
+                                                <option :value="term" x-text="term"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="result-class" class="block text-[11px] font-medium text-slate-600 mb-1">Class</label>
+                                        <select id="result-class" x-model="resultFilters.className" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All my classes</option>
+                                            <template x-for="className in classOptions" :key="className">
+                                                <option :value="className" x-text="className"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="border border-slate-200 rounded-xl overflow-auto">
+                                    <table class="min-w-full text-[11px]">
+                                        <thead class="bg-slate-50 text-slate-600">
+                                            <tr>
+                                                <th class="px-3 py-1.5 text-left font-medium">Student</th>
+                                                <th class="px-3 py-1.5 text-left font-medium">Class</th>
+                                                <th class="px-3 py-1.5 text-center font-medium">Subjects</th>
+                                                <th class="px-3 py-1.5 text-right font-medium">Total %</th>
+                                                <th class="px-3 py-1.5 text-center font-medium">Grade</th>
+                                                <th class="px-3 py-1.5 text-center font-medium">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            <template x-if="loading">
+                                                <tr>
+                                                    <td colspan="6" class="px-3 py-4 text-[11px] text-slate-500 text-center">Loading result cards...</td>
+                                                </tr>
+                                            </template>
+                                            <template x-if="!loading && !resultCards.length">
+                                                <tr>
+                                                    <td colspan="6" class="px-3 py-4 text-[11px] text-slate-500 text-center">No result cards found. Try adjusting your filters.</td>
+                                                </tr>
+                                            </template>
+                                            <template x-for="card in resultCards" :key="card.id">
+                                                <tr class="hover:bg-slate-50 cursor-pointer" @click="viewResultCardDetails(card)">
+                                                    <td class="px-3 py-1.5">
+                                                        <div class="font-medium text-slate-800" x-text="card.name"></div>
+                                                        <div class="text-[10px] text-slate-500" x-text="card.admissionNo"></div>
+                                                    </td>
+                                                    <td class="px-3 py-1.5 text-slate-700" x-text="card.className"></td>
+                                                    <td class="px-3 py-1.5 text-center text-slate-700">
+                                                        <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-medium" x-text="card.subjects ? card.subjects.length : 0"></span>
+                                                    </td>
+                                                    <td class="px-3 py-1.5 text-right font-medium text-slate-800" x-text="card.totals.percentage + '%'" ></td>
+                                                    <td class="px-3 py-1.5 text-center">
+                                                        <span class="px-2 py-1 rounded-full text-[10px] font-medium" :class="getGradeColor(card.overallGrade)" x-text="card.overallGrade"></span>
+                                                    </td>
+                                                    <td class="px-3 py-1.5 text-center">
+                                                        <span class="px-2 py-1 rounded-full text-[10px] font-medium" :class="card.resultStatus === 'Pass' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'" x-text="card.resultStatus"></span>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+                        <section x-show="activeTab === 'student-attendance-report'" x-cloak x-data="attendanceReports">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs text-slate-600">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800 mb-1">Pupils Monthly Attendance</div>
+                                        <p class="text-slate-400 mb-0.5">Summary of pupil attendance by month for pupils in your assigned classes, based on recorded attendance.</p>
+                                    </div>
+                                    <div class="flex flex-wrap justify-end gap-2 text-xs">
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600" @click="studentAttendanceFilters.year = '2026'; studentAttendanceFilters.className = ''; studentAttendanceFilters.month = 'June 2026'">Reset filters</button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5" @click="printStudentAttendance()">
+                                            <i class="fas fa-print text-slate-500 text-xs"></i>
+                                            <span>Print list</span>
+                                        </button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5" @click="downloadStudentAttendancePdf()">
+                                            <i class="fas fa-file-pdf text-rose-500 text-xs"></i>
+                                            <span>Download PDF</span>
+                                        </button>
+                                        <button type="button" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5" @click="downloadStudentAttendanceCsv()">
+                                            <i class="fas fa-file-csv text-emerald-500 text-xs"></i>
+                                            <span>Download CSV</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
+                                    <div>
+                                        <label for="student-att-year" class="block text-[11px] font-medium text-slate-600 mb-1">Academic Year</label>
+                                        <select id="student-att-year" x-model="studentAttendanceFilters.year" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All years</option>
+                                            <option value="2026">2026</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="student-att-class" class="block text-[11px] font-medium text-slate-600 mb-1">Class</label>
+                                        <select id="student-att-class" x-model="studentAttendanceFilters.className" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All my classes</option>
+                                            <template x-for="className in studentClassOptions" :key="className">
+                                                <option :value="className" x-text="className"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="student-att-month" class="block text-[11px] font-medium text-slate-600 mb-1">Month</label>
+                                        <select id="student-att-month" x-model="studentAttendanceFilters.month" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
+                                            <option value="">All months</option>
+                                            <option value="June 2026">June 2026</option>
+                                        </select>
+                                    </div>
+                                    <div></div>
+                                </div>
+                                <div class="border border-slate-200 rounded-xl mt-2 overflow-auto" x-ref="studentAttendanceTable">
+                                    <table class="min-w-full text-[11px]">
+                                        <thead class="bg-slate-50 text-slate-600">
+                                            <tr>
+                                                <th class="px-3 py-1.5 text-left font-medium">Month</th>
+                                                <th class="px-3 py-1.5 text-left font-medium">Class</th>
+                                                <th class="px-3 py-1.5 text-left font-medium">Pupil</th>
+                                                <th class="px-3 py-1.5 text-left font-medium">Pupil ID</th>
+                                                <th class="px-3 py-1.5 text-right font-medium">Days Present</th>
+                                                <th class="px-3 py-1.5 text-right font-medium">Days Absent</th>
+                                                <th class="px-3 py-1.5 text-right font-medium">Times Late</th>
+                                                <th class="px-3 py-1.5 text-right font-medium">Attendance %</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            <template x-if="!filteredStudentAttendance().length">
+                                                <tr>
+                                                    <td colspan="8" class="px-3 py-4 text-[11px] text-slate-500">No attendance records match the selected filters.</td>
+                                                </tr>
+                                            </template>
+                                            <template x-for="row in filteredStudentAttendance()" :key="row.studentId + row.className + row.month">
+                                                <tr>
+                                                    <td class="px-3 py-1.5 text-slate-700" x-text="row.month"></td>
+                                                    <td class="px-3 py-1.5 text-slate-700" x-text="row.className"></td>
+                                                    <td class="px-3 py-1.5 font-medium text-slate-800" x-text="row.studentName"></td>
+                                                    <td class="px-3 py-1.5 text-slate-700" x-text="row.studentId"></td>
+                                                    <td class="px-3 py-1.5 text-right text-slate-700" x-text="row.daysPresent"></td>
+                                                    <td class="px-3 py-1.5 text-right text-slate-700" x-text="row.daysAbsent"></td>
+                                                    <td class="px-3 py-1.5 text-right text-slate-700" x-text="row.timesLate"></td>
+                                                    <td class="px-3 py-1.5 text-right text-slate-700" x-text="row.percentage + '%' "></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="custom-cursor"></div>
+    <script src="../../shared-assets/js/script.js"></script>
+    <script>
+        // Real Teacher Reports API Integration
+        document.addEventListener('alpine:initialized', async function() {
+            console.log('Teacher Reports initialized with real backend API');
+            
+            // Load school settings and exam terms from real API
+            try {
+                if (window.ShikolaTeacherApi) {
+                    // Load school settings
+                    const schoolSettings = await window.ShikolaTeacherApi.getSchoolSettings();
+                    if (schoolSettings) {
+                        // Update all components with school settings
+                        document.querySelectorAll('[x-data*="studentReportCard"], [x-data*="resultCardsData"], [x-data*="attendanceReports"]').forEach(el => {
+                            if (el.__x) {
+                                el.__x.$data.schoolSettings = schoolSettings;
+                            }
+                        });
+                    }
+
+                    // Load exam terms
+                    const examTerms = await window.ShikolaTeacherApi.getExamTerms();
+                    if (examTerms && Array.isArray(examTerms)) {
+                        document.querySelectorAll('[x-data*="studentReportCard"], [x-data*="resultCardsData"]').forEach(el => {
+                            if (el.__x) {
+                                el.__x.$data.examTerms = examTerms;
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to load school settings or exam terms:', e);
+            }
+        });
+
+        // Real-time data synchronization between portals
+        if (window.SharedRealtimeSync) {
+            window.SharedRealtimeSync.subscribe('teacher-reports-updates', (data) => {
+                console.log('Real-time update received:', data);
+                // Refresh relevant data when updates occur
+                if (data.type === 'grades-updated') {
+                    // Refresh report cards and result cards
+                    document.querySelectorAll('[x-data*="studentReportCard"], [x-data*="resultCardsData"]').forEach(el => {
+                        if (el.__x && el.__x.$data.loadStudentData) {
+                            el.__x.$data.loadStudentData();
+                        }
+                    });
+                } else if (data.type === 'attendance-updated') {
+                    // Refresh attendance reports
+                    document.querySelectorAll('[x-data*="attendanceReports"]').forEach(el => {
+                        if (el.__x && el.__x.$data.loadAttendanceData) {
+                            el.__x.$data.loadAttendanceData();
+                        }
+                    });
+                }
+            });
+        }
+
+        // Export functions for global access
+        window.TeacherReports = {
+            refreshAllData: () => {
+                document.querySelectorAll('[x-data*="studentReportCard"], [x-data*="resultCardsData"], [x-data*="attendanceReports"]').forEach(el => {
+                    if (el.__x) {
+                        const data = el.__x.$data;
+                        if (data.loadStudentData) data.loadStudentData();
+                        if (data.loadResultCards) data.loadResultCards();
+                        if (data.loadAttendanceData) data.loadAttendanceData();
+                    }
+                });
+            },
+            exportToPDF: (elementId) => {
+                const element = document.getElementById(elementId);
+                if (element && window.html2pdf) {
+                    window.html2pdf().from(element).save();
+                }
+            },
+            printReport: () => {
+                window.print();
+            }
+        };
+    </script>    <script src="../../js/security.js"></script>
+
+</body>
+</html>

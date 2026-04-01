@@ -1,0 +1,28 @@
+fee_type,grade_level,amount,currency,due_date,description,status
+Tuition,Grade 1,3500,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 2,3500,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 3,3500,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 4,3800,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 5,3800,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 6,3800,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 7,4200,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 8,4500,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 9,4500,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 10,5000,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 11,5000,ZMW,2026-03-31,First Term Tuition Fee,Active
+Tuition,Grade 12,5000,ZMW,2026-03-31,First Term Tuition Fee,Active
+Registration,All,500,ZMW,2026-01-15,Annual Registration Fee,Active
+Development,All,800,ZMW,2026-02-28,School Development Fund,Active
+Library,Grade 1-7,200,ZMW,2026-02-28,Library Fee,Active
+Library,Grade 8-12,300,ZMW,2026-02-28,Library Fee,Active
+Laboratory,Grade 8-12,400,ZMW,2026-02-28,Science Laboratory Fee,Active
+Computer,Grade 8-12,350,ZMW,2026-02-28,Computer Lab Fee,Active
+Sports,All,250,ZMW,2026-02-28,Sports and Activities Fee,Active
+Uniform,All,600,ZMW,2026-01-31,Uniform Fee,Active
+Textbooks,Grade 1-7,300,ZMW,2026-01-31,Textbook Rental Fee,Active
+Textbooks,Grade 8-12,450,ZMW,2026-01-31,Textbook Rental Fee,Active
+Examination,Grade 7,400,ZMW,2026-05-15,Grade 7 Examination Fee,Active
+Examination,Grade 9,600,ZMW,2026-05-15,Grade 9 Examination Fee,Active
+Examination,Grade 12,800,ZMW,2026-05-15,Grade 12 Examination Fee,Active
+Transport,All,800,ZMW,2026-02-28,School Bus Transportation Fee,Active
+Boarding,All,3000,ZMW,2026-02-28,Boarding Fee (Optional),Active

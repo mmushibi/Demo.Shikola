@@ -1,0 +1,27 @@
+exam_id,exam_name,subject,grade_level,exam_date,total_marks,duration_minutes,exam_type,status
+EXM001,Mathematics Mid-Term,Mathematics,Grade 8A,2026-03-15,100,90,Formal Assessment,Active
+EXM002,English Mid-Term,English Language,Grade 8A,2026-03-16,100,90,Formal Assessment,Active
+EXM003,Physics Mid-Term,Physics,Grade 8A,2026-03-17,100,90,Formal Assessment,Active
+EXM004,Chemistry Mid-Term,Chemistry,Grade 8A,2026-03-18,100,90,Formal Assessment,Active
+EXM005,Biology Mid-Term,Biology,Grade 10A,2026-03-19,100,90,Formal Assessment,Active
+EXM006,History Mid-Term,History,Grade 8A,2026-03-20,80,60,Formal Assessment,Active
+EXM007,Geography Mid-Term,Geography,Grade 8A,2026-03-21,80,60,Formal Assessment,Active
+EXM008,Computer Studies Mid-Term,Computer Studies,Grade 8A,2026-03-22,100,90,Formal Assessment,Active
+EXM009,Agricultural Science Mid-Term,Agricultural Science,Grade 8B,2026-03-23,100,90,Formal Assessment,Active
+EXM010,Business Studies Mid-Term,Business Studies,Grade 10B,2026-03-24,100,90,Formal Assessment,Active
+EXM011,French Mid-Term,French,Grade 8A,2026-03-25,80,60,Formal Assessment,Active
+EXM012,Religious Education Mid-Term,Religious Education,Grade 7A,2026-03-26,80,60,Formal Assessment,Active
+EXM013,Mathematics Final,Mathematics,Grade 8A,2026-06-10,100,120,Final Examination,Active
+EXM014,English Final,English Language,Grade 8A,2026-06-11,100,120,Final Examination,Active
+EXM015,Physics Final,Physics,Grade 8A,2026-06-12,100,120,Final Examination,Active
+EXM016,Chemistry Final,Chemistry,Grade 8A,2026-06-13,100,120,Final Examination,Active
+EXM017,Biology Final,Biology,Grade 10A,2026-06-14,100,120,Final Examination,Active
+EXM018,History Final,History,Grade 8A,2026-06-15,80,90,Final Examination,Active
+EXM019,Geography Final,Geography,Grade 8A,2026-06-16,80,90,Final Examination,Active
+EXM020,Computer Studies Final,Computer Studies,Grade 8A,2026-06-17,100,120,Final Examination,Active
+EXM021,Grade 7 Mock Exams,All Subjects,Grade 7A,2026-10-15,600,360,Mock Examination,Active
+EXM022,Grade 9 Mock Exams,All Subjects,Grade 9A,2026-10-20,700,420,Mock Examination,Active
+EXM023,Grade 12 Mock Exams,All Subjects,Grade 12A,2026-10-25,800,480,Mock Examination,Active
+EXM024,ECZ Grade 7 Finals,All Subjects,Grade 7A,2026-11-10,600,360,National Examination,Active
+EXM025,ECZ Grade 9 Finals,All Subjects,Grade 9A,2026-11-15,700,420,National Examination,Active
+EXM026,ECZ Grade 12 Finals,All Subjects,Grade 12A,2026-11-20,800,480,National Examination,Active

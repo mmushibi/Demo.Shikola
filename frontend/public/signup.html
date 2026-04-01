@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+<html lang="en" class="bg-slate-50">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Start your Shikola subscription</title>
+  <meta name="description" content="Create a Shikola multi-school management account for your institution." />
+  <link rel="icon" type="image/png" href="../assets/images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Glacial+Indifference:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../shared-assets/js/shared-api-client.js"></script>
+  <script src="../shared/shared-universal-api.js"></script>
+  <script src="../shared-assets/js/shared-auth.js"></script>
+  <script src="../shared-assets/js/script.js"></script>
+  
+  <!-- Frontend Management Systems -->
+  <script src="../shared/shared-role-ui.js"></script>
+  <script src="../shared/subscription-ui.js"></script>
+  <script src="../shared/session-manager.js"></script>
+  <script src="../shared/subscription-enforcement.js"></script>
+  <script src="../shared/validation-helper.js"></script>
+  <script src="../shared/trial-manager.js"></script>
+  <script src="../shared/frontend-integration.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e'
+            },
+            accent: '#0ea5e9',
+            dark: '#082f49'
+          }
+        }
+      }
+    }
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    body { 
+      font-family: 'Glacial Indifference', sans-serif;
+      background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 45%, #bae6fd 100%);
+    }
+    .dark body {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 45%, rgba(15, 23, 42, 0.85) 100%);
+      color: #e2e8f0;
+    }
+    [x-cloak] { display: none !important; }
+    .glass-button {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      color: #0369a1;
+      transition: background 0.3s ease, border 0.3s ease, transform 0.3s ease;
+    }
+    .glass-button:hover {
+      background: rgba(255, 255, 255, 0.32);
+      border-color: rgba(14, 165, 233, 0.5);
+      transform: translateY(-2px);
+    }
+    .dark .glass-button {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      color: #e0f2fe;
+    }
+    .dark .glass-button:hover {
+      background: rgba(51, 65, 85, 0.7);
+      border-color: rgba(56, 189, 248, 0.55);
+    }
+    .dark .bg-white { background-color: rgba(15, 23, 42, 0.92) !important; color: #e2e8f0; }
+    .dark .bg-white\/95 { background-color: rgba(15, 23, 42, 0.9) !important; color: #e2e8f0; }
+    .dark .bg-white\/80 { background-color: rgba(15, 23, 42, 0.82) !important; color: #e2e8f0; }
+    .dark .bg-white\/60 { background-color: rgba(30, 41, 59, 0.7) !important; color: #e2e8f0; }
+    .dark .bg-primary-50\/60 { background-color: rgba(30, 64, 175, 0.35) !important; color: #e2e8f0; }
+    .dark .border-primary-100,
+    .dark .border-slate-200,
+    .dark .border-primary-200 { border-color: rgba(71, 85, 105, 0.65) !important; }
+    .dark .text-dark { color: #e2e8f0 !important; }
+    .dark .text-slate-600 { color: #cbd5f5 !important; }
+    .dark .text-slate-500 { color: #a5b4fc !important; }
+    .dark .text-slate-400 { color: #94a3b8 !important; }
+  </style>
+</head>
+<body class="h-full bg-white text-slate-700 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100" x-data="signupApp()" x-init="init()">
+  <div class="relative mx-auto flex min-h-screen max-w-7xl flex-col-reverse items-center gap-12 px-6 py-20 lg:flex-row lg:justify-between lg:px-12">
+    <div class="w-full max-w-md space-y-10">
+      <a href="index.html" class="inline-flex items-center gap-3">
+        <img src="../assets/images/logo.png" alt="Shikola logo" class="h-12 w-auto" />
+        <div class="leading-tight">
+          <p class="text-2xl font-semibold text-dark">Shikola</p>
+          <p class="text-xs uppercase tracking-[0.3em] text-primary-500">Complete School Management</p>
+        </div>
+      </a>
+      <div class="space-y-3">
+        <p class="hidden lg:block text-xs font-semibold uppercase tracking-widest text-primary-500">Begin your journey</p>
+        <h1 class="text-3xl font-semibold text-dark">Create your school workspace</h1>
+        <p class="text-sm text-slate-500">Spin up dedicated school portals, invite administrators, and enjoy a 21-day guided onboarding sprint with professional support.</p>
+      </div>
+      <div class="rounded-3xl border border-primary-100 bg-white p-8 shadow-lg shadow-primary-100">
+        <div class="flex items-center gap-4">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5.5 12.5l1.793-1.793a1 1 0 011.414 0L12 14.5l2.293-2.293a1 1 0 011.414 0L18.5 15.5m-13-9.75L12 4l6.5 1.75M12 4v5" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 19h16" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-dark">Launch in under 20 minutes</p>
+            <p class="text-xs text-slate-500">School workspace provisioning, branding, and role setup included.</p>
+          </div>
+        </div>
+        <div class="mt-6 grid gap-3 text-xs text-slate-500">
+          <p class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-primary-400"></span> Includes Growth plan trial</p>
+          <p class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-primary-400"></span> Professional onboarding support</p>
+          <p class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-primary-400"></span> Secure school isolation & backups</p>
+          <p class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-primary-400"></span> Secure tenant isolation & backups</p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-500">Already onboarded? <a href="signin.html" class="font-semibold text-primary-500 hover:text-primary-600">Sign in to your console</a></p>
+      <div class="text-center">
+        <a href="index.html" class="glass-button inline-flex items-center justify-center gap-2 rounded-full px-6 py-2 text-sm font-semibold text-primary-700">
+          <span>Back to Home</span>
+        </a>
+      </div>
+    </div>
+
+    <form class="w-full max-w-xl space-y-8 rounded-[2.5rem] border border-primary-100 bg-white/95 p-10 shadow-2xl shadow-primary-100 backdrop-blur" @submit.prevent="submitForm">
+      <div class="space-y-4">
+        <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-primary-500">
+          <span>Step <span x-text="step"></span> of 3</span>
+          <span x-text="stepTitles[step - 1]" class="tracking-normal text-slate-400"></span>
+        </div>
+        <div class="h-2 w-full rounded-full bg-primary-50">
+          <div class="h-full rounded-full bg-primary-500 transition-all duration-300" :style="{ width: (step * 33.33) + '%' }"></div>
+        </div>
+      </div>
+
+      <div class="relative overflow-hidden">
+        <!-- Step 1: School Info -->
+        <div x-show="step === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform translate-x-0" x-transition:leave-end="opacity-0 transform -translate-x-4">
+          <div class="grid gap-6 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <label for="school-name" class="text-xs font-semibold uppercase tracking-widest text-slate-500">School Name</label>
+              <input id="school-name" type="text" placeholder="e.g. Shikola Academy" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" x-model="form.schoolName" @input.debounce.500="checkAvailability()" required />
+            </div>
+            <div class="sm:col-span-2">
+              <label for="address" class="text-xs font-semibold uppercase tracking-widest text-slate-500">Address</label>
+              <input id="address" type="text" placeholder="e.g. Plot 1234, Independance Avenue" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" x-model="form.address" required />
+            </div>
+            <div>
+              <label for="province" class="text-xs font-semibold uppercase tracking-widest text-slate-500">Province</label>
+              <select id="province" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" x-model="form.province" @change="updateTowns()" required>
+                <option value="">Select province</option>
+                <option value="central">Central Province</option>
+                <option value="copperbelt">Copperbelt Province</option>
+                <option value="eastern">Eastern Province</option>
+                <option value="luapula">Luapula Province</option>
+                <option value="lusaka">Lusaka Province</option>
+                <option value="muchinga">Muchinga Province</option>
+                <option value="northern">Northern Province</option>
+                <option value="northwestern">North-Western Province</option>
+                <option value="southern">Southern Province</option>
+                <option value="western">Western Province</option>
+              </select>
+            </div>
+            <div>
+              <label for="town" class="text-xs font-semibold uppercase tracking-widest text-slate-500">Town</label>
+              <select id="town" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" x-model="form.town" required>
+                <option value="">Select town</option>
+                <template x-for="town in availableTowns" :key="town">
+                  <option :value="town" x-text="town"></option>
+                </template>
+              </select>
+            </div>
+            <div>
+              <label for="pupils" class="text-xs font-semibold uppercase tracking-widest text-slate-500">Estimated Active Pupils</label>
+              <input id="pupils" type="number" min="50" max="10000" placeholder="50 - 10000" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" x-model="form.pupils" required />
+              <p class="mt-2 text-xs text-slate-400">System will automatically assign tier based on pupil count</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Admin Credentials -->
+        <div x-show="step === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform translate-x-0" x-transition:leave-end="opacity-0 transform -translate-x-4">
+          <div class="grid gap-6 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <label for="admin-name" class="text-xs font-semibold uppercase tracking-widest text-slate-500">Administrator Name</label>
+              <input id="admin-name" type="text" placeholder="Full name" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" x-model="form.adminName" required />
+            </div>
+            <div>
+              <label for="admin-email" class="text-xs font-semibold uppercase tracking-widest text-slate-500">Email or Username</label>
+              <input id="admin-email" type="email" placeholder="name@school.org" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" x-model="form.adminEmail" @input.debounce.500="checkAvailability()" required />
+            </div>
+            <div>
+              <label for="admin-phone" class="text-xs font-semibold uppercase tracking-widest text-slate-500">Phone Number</label>
+              <input id="admin-phone" type="tel" placeholder="e.g. +260 977 000 000" class="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100" x-model="form.adminPhone" @input.debounce.500="checkAvailability()" />
+            </div>
+            <div class="sm:col-span-2">
+              <label for="password" class="text-xs font-semibold uppercase tracking-widest text-slate-500">Create Password</label>
+              <div class="mt-2 relative">
+                <input id="password" :type="passwordVisible ? 'text' : 'password'" placeholder="Minimum 8 characters" class="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-600 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 pr-10" x-model="form.password" required autocomplete="new-password">
+                <button type="button" @click="passwordVisible = !passwordVisible" class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600" :title="passwordVisible ? 'Hide password' : 'Show password'" aria-label="Toggle password visibility">
+                  <svg x-show="!passwordVisible" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                  </svg>
+                  <svg x-show="passwordVisible" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Confirmation -->
+        <div x-show="step === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-x-4" x-transition:enter-end="opacity-100 transform translate-x-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 transform translate-x-0" x-transition:leave-end="opacity-0 transform -translate-x-4">
+          <div class="space-y-6">
+            <div class="rounded-3xl border border-primary-100 bg-primary-50/60 p-4 text-xs text-slate-500">
+              <div class="flex items-center gap-2 text-primary-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="font-semibold">School Admin Onboarding</span>
+              </div>
+              <p class="mt-2">Your account will be created as a School Administrator with access to all school management features. The system will automatically assign your tier based on the estimated number of pupils.</p>
+            </div>
+            <div class="space-y-3 rounded-3xl border border-primary-100 bg-white/80 p-6 text-xs text-slate-500">
+              <label class="flex items-center gap-3">
+                <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-200" x-model="form.acceptTerms" />
+                <span>We agree to Sepio Corp's data protection and tenant segregation policies.</span>
+              </label>
+              <label class="flex items-center gap-3">
+                <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-200" x-model="form.acceptMarketing" />
+                <span>Keep me updated on onboarding resources and provincial success stories.</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <button type="button" class="glass-button rounded-full px-6 py-3 text-sm font-semibold" x-show="step > 1" @click="prevStep">Previous</button>
+        <div class="flex-1"></div>
+        <template x-if="step < 3">
+          <button type="button" class="glass-button rounded-full px-6 py-3 text-sm font-semibold" @click="nextStep">Continue</button>
+        </template>
+        <template x-if="step === 3">
+          <button type="submit" class="glass-button rounded-full px-6 py-3 text-sm font-semibold">School Admin Onboarding</button>
+        </template>
+      </div>
+      <p class="text-xs text-slate-400">By submitting, you agree to Shikola's terms and data processing policies.</p>
+    </form>
+  </div>
+
+  <script>
+    function signupApp() {
+      return {
+        step: 1,
+        stepTitles: ['School info', 'Admin credentials', 'Confirmation'],
+        passwordVisible: false,
+        form: {
+          schoolName: '',
+          address: '',
+          province: '',
+          town: '',
+          pupils: 100,
+          adminName: '',
+          adminEmail: '',
+          adminPhone: '',
+          password: '',
+          acceptTerms: false,
+          acceptMarketing: true
+        },
+        availability: {
+          schoolNameAvailable: true,
+          emailAvailable: true,
+          phoneAvailable: true,
+          canProceed: true
+        },
+        availableTowns: [],
+        provinceTowns: {
+          central: ['Kabwe', 'Kapiri Mposhi', 'Mumbwa', 'Serenje', 'Mpika', 'Chinsali', 'Kasama'],
+          copperbelt: ['Ndola', 'Kitwe', 'Mufulira', 'Chingola', 'Luanshya', 'Chililabombwe', 'Kalulushi'],
+          eastern: ['Chipata', 'Lundazi', 'Katete', 'Petauke', 'Sinda', 'Mambwe', 'Chama'],
+          luapula: ['Mansa', 'Kawambwa', 'Samfya', 'Mwense', 'Milenge', 'Chembe'],
+          lusaka: ['Lusaka', 'Kafue', 'Chongwe', 'Rufunsa', 'Luangwa'],
+          muchinga: ['Chinsali', 'Isoka', 'Mpika', 'Nakonde', 'Muyombe'],
+          northern: ['Kasama', 'Mbala', 'Mpulungu', 'Mporokoso', 'Luwingu', 'Chilubi'],
+          northwestern: ['Solwezi', 'Kansanshi', 'Mufulira', 'Kasempa', 'Mwinilunga', 'Kabompo'],
+          southern: ['Livingstone', 'Mazabuka', 'Monze', 'Choma', 'Kalomo', 'Siavonga', 'Gwembe'],
+          western: ['Mongu', 'Kaoma', 'Sesheke', 'Senanga', 'Shangombo', 'Lukulu']
+        },
+        
+        init() {
+          console.log('Signup app initialized');
+          this.loadSharedData();
+        },
+
+        nextStep() {
+          if (this.step === 1 && (!this.form.schoolName || !this.form.address || !this.form.province || !this.form.town || !this.form.pupils)) {
+            alert('Please fill in all required school information fields.');
+            return;
+          }
+          if (this.step === 2 && (!this.form.adminName || !this.form.adminEmail || !this.form.password)) {
+            alert('Please fill in all required admin credential fields.');
+            return;
+          }
+          if (this.step < 3) {
+            this.step++;
+          }
+        },
+
+        prevStep() {
+          if (this.step > 1) {
+            this.step--;
+          }
+        },
+
+        updateTowns() {
+          this.availableTowns = this.provinceTowns[this.form.province] || [];
+          this.form.town = '';
+        },
+
+        determineTier() {
+          const pupils = parseInt(this.form.pupils);
+          if (pupils >= 1 && pupils <= 1000) return 'growth';
+          if (pupils >= 1001 && pupils <= 3000) return 'pro';
+          if (pupils >= 3001 && pupils <= 10000) return 'ultimate';
+          return 'growth';
+        },
+
+        async checkAvailability() {
+          if (!this.form.schoolName && !this.form.adminEmail && !this.form.adminPhone) {
+            return;
+          }
+
+          try {
+            const base = window.SHIKOLA_API_BASE || '/api';
+            const response = await fetch(`${base}/simpleschoolregistration/check-availability`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                schoolName: this.form.schoolName,
+                email: this.form.adminEmail,
+                phone: this.form.adminPhone
+              })
+            });
+
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+              // Store availability for form validation
+              this.availability = {
+                schoolNameAvailable: result.schoolNameAvailable,
+                emailAvailable: result.emailAvailable,
+                phoneAvailable: result.phoneAvailable,
+                canProceed: result.canProceed
+              };
+              
+              if (!result.schoolNameAvailable && this.form.schoolName) {
+                this.showFieldError('school-name', 'School name already exists');
+              }
+              if (!result.emailAvailable && this.form.adminEmail) {
+                this.showFieldError('admin-email', 'Email already registered');
+              }
+              if (!result.phoneAvailable && this.form.adminPhone) {
+                this.showFieldError('admin-phone', 'Phone number already registered');
+              }
+            }
+          } catch (error) {
+            console.error('Availability check error:', error);
+          }
+        },
+
+        async submitForm() {
+          if (!this.form.acceptTerms) {
+            alert('Please accept the data protection policy to continue.');
+            return;
+          }
+
+          try {
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating School Admin Account...';
+
+            const signupData = {
+              schoolName: this.form.schoolName,
+              address: this.form.address,
+              province: this.form.province,
+              town: this.form.town,
+              adminName: this.form.adminName,
+              adminEmail: this.form.adminEmail,
+              adminPhone: this.form.adminPhone,
+              password: this.form.password,
+              estimatedPupils: parseInt(this.form.pupils),
+              tier: this.determineTier(),
+              acceptTerms: this.form.acceptTerms,
+              acceptMarketing: this.form.acceptMarketing
+            };
+
+            const base = window.SHIKOLA_API_BASE || '/api';
+            const response = await fetch(`${base}/simpleschoolregistration/register-school`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(signupData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+              // Store authentication data
+              if (result.authData?.token) {
+                localStorage.setItem('authToken', result.authData.token);
+              }
+
+              // Store user session
+              if (result.authData?.user) {
+                localStorage.setItem('shikola_session', JSON.stringify({
+                  user: {
+                    id: result.authData.user.id,
+                    name: result.authData.user.profile?.fullName || this.form.adminName,
+                    email: result.authData.user.email,
+                    role: result.authData.user.role,
+                    avatar: 'fas fa-user-shield',
+                    schoolId: result.authData.user.schoolId,
+                    schoolName: result.authData.user.schoolName
+                  },
+                  portal: 'school-admin',
+                  sessionId: this.generateSessionId(),
+                  loginTime: new Date().toISOString(),
+                  lastActivity: new Date().toISOString()
+                }));
+              }
+
+              // Store signup details
+              localStorage.setItem('shikola_signup_data', JSON.stringify({
+                acceptMarketing: this.form.acceptMarketing,
+                signupDate: new Date().toISOString(),
+                province: this.form.province,
+                town: this.form.town,
+                address: this.form.address,
+                tier: this.determineTier()
+              }));
+
+              alert('School Administrator account created successfully! Welcome to your 21-day trial with ' + this.determineTier() + ' tier access.');
+              window.location.href = '../portals/school-admin/dashboard.html';
+            } else {
+              throw new Error(result.message || 'Registration failed');
+            }
+          } catch (error) {
+            console.error('Signup error:', error);
+            alert('Signup failed: ' + error.message);
+            
+            const submitBtn = document.querySelector('button[type="submit"]');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'School Admin Onboarding';
+          }
+        },
+
+        async loadSharedData() {
+          const sharedData = sessionStorage.getItem('shikola_shared_signup_data');
+          if (sharedData) {
+            try {
+              const data = JSON.parse(sharedData);
+              
+              if (data.schoolName) this.form.schoolName = data.schoolName;
+              if (data.adminName) this.form.adminName = data.adminName;
+              if (data.adminEmail) this.form.adminEmail = data.adminEmail;
+              if (data.adminPhone) this.form.adminPhone = data.adminPhone;
+              if (data.address) this.form.address = data.address;
+              if (data.province) {
+                this.form.province = data.province;
+                this.updateTowns();
+              }
+              if (data.town) this.form.town = data.town;
+              if (data.pupils) this.form.pupils = data.pupils;
+              
+              sessionStorage.removeItem('shikola_shared_signup_data');
+              
+              this.showNotification('Form pre-filled with data from ' + (data.source || 'another portal'));
+            } catch (error) {
+              console.error('Error loading shared data:', error);
+            }
+          }
+        },
+
+        showNotification(message) {
+          const notification = document.createElement('div');
+          notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300';
+          notification.textContent = message;
+          
+          document.body.appendChild(notification);
+          
+          setTimeout(() => {
+            notification.remove();
+          }, 3000);
+        },
+
+        generateSessionId() {
+          return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        },
+
+        showFieldError(fieldId, message) {
+          const field = document.getElementById(fieldId);
+          if (field) {
+            const existingError = field.parentNode.querySelector('.field-error');
+            if (existingError) {
+              existingError.remove();
+            }
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error text-red-500 text-xs mt-1';
+            errorDiv.textContent = message;
+            field.parentNode.appendChild(errorDiv);
+            
+            field.classList.add('border-red-500');
+            
+            setTimeout(() => {
+              errorDiv.remove();
+              field.classList.remove('border-red-500');
+            }, 5000);
+          }
+        }
+      }
+    }
+  </script>    <script src="../js/security.js"></script>
+
+</body>
+</html>

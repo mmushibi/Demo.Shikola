@@ -1,0 +1,2440 @@
+<!DOCTYPE html><!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shikola - My Timetable</title>
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../../shared-assets/js/shared-realtime-sync.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../../../config/config.js"></script>
+    <script src="../../../shared-assets/js/shared-api-client.js"></script>
+    <script src="../../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../../shared-assets/js/shared-school-profile.js" defer></script>
+    <script src="pupil-timetable-api.js"></script>
+    <script src="zambian-events-api.js"></script>
+    <script src="pupil-functionality.js" defer></script>
+    <script src="pupil-security.js"></script>
+    <script src="../../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+<body class="dashboard-page">
+    <div x-data="pupilTimetablePage()" x-init="init()" class="min-h-screen flex">
+        <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
+                <div class="flex justify-center mb-10">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                </div>
+
+                <nav class="space-y-1 text-sm">
+                    <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                        <span class="font-medium flex-1">Dashboard</span>
+                    </a>
+                    <a href="admission-letter.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-envelope-open-text"></i></span>
+                        <span class="flex-1">Admission Letter</span>
+                    </a>
+                    <a href="paid-fee-receipt.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-receipt"></i></span>
+                        <span class="flex-1">Paid Fee Receipt</span>
+                    </a>
+                    <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                        <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="flex-1">My Timetable</span>
+                    </a>
+                    <a href="my-report-card.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                        <span class="flex-1">My Report Card</span>
+                    </a>
+                    <a href="exam-result.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-file-invoice"></i></span>
+                        <span class="flex-1">Exam Result</span>
+                    </a>
+                    <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
+                        <span class="flex-1">Home Assignments</span>
+                    </a>
+                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                        <span class="flex-1">Messaging</span>
+                    </a>
+                    <a href="live-class.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-video"></i></span>
+                        <span class="flex-1">Live Class</span>
+                    </a>
+                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                        <span class="w-6 flex justify-center"><i class="fas fa-user-circle"></i></span>
+                        <span class="flex-1">Profile</span>
+                    </a>
+                </nav>
+
+                <div class="mt-auto pt-8 border-t border-slate-100">
+                    <div class="flex items-center justify-center px-2">
+                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <div x-show="sidebarOpen" x-cloak class="fixed inset-0 z-50 flex lg:hidden">
+                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
+                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
+                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                    <div class="flex justify-center mb-10">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    </div>
+
+                    <nav class="space-y-1 text-sm">
+                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
+                            <span class="font-medium flex-1">Dashboard</span>
+                        </a>
+                        <a href="admission-letter.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-envelope-open-text"></i></span>
+                            <span class="flex-1">Admission Letter</span>
+                        </a>
+                        <a href="paid-fee-receipt.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-receipt"></i></span>
+                            <span class="flex-1">Paid Fee Receipt</span>
+                        </a>
+                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
+                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
+                            <span class="flex-1">My Timetable</span>
+                        </a>
+                        <a href="my-report-card.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
+                            <span class="flex-1">My Report Card</span>
+                        </a>
+                        <a href="exam-result.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-file-invoice"></i></span>
+                            <span class="flex-1">Exam Result</span>
+                        </a>
+                        <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
+                            <span class="flex-1">Home Assignments</span>
+                        </a>
+                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
+                            <span class="flex-1">Messaging</span>
+                        </a>
+                        <a href="live-class.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-video"></i></span>
+                            <span class="flex-1">Live Class</span>
+                        </a>
+                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                            <span class="w-6 flex justify-center"><i class="fas fa-user-circle"></i></span>
+                            <span class="flex-1">Profile</span>
+                        </a>
+                    </nav>
+
+                    <div class="mt-auto pt-8 border-t border-slate-100">
+                        <div class="flex items-center justify-center px-2">
+                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                                <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
+                <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div class="flex items-center justify-center w-full lg:w-auto lg:justify-start gap-3">
+                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-14 w-auto rounded-2xl lg:hidden">
+                            <div class="text-center lg:text-left">
+                                <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">My Timetable</h1>
+                                <p class="hidden sm:block text-xs sm:text-sm text-slate-400 mt-1">View your class schedule and upcoming lessons.</p>
+                            </div>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-3">
+                            <div class="hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-56">
+                                <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
+                                <input type="text" placeholder="Search timetable..." class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1">
+                            </div>
+                            <button class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" type="button" aria-label="Notifications">
+                                <i class="far fa-bell"></i>
+                            </button>
+                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open">
+                                    <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="hidden sm:block text-left">
+                                        <div class="text-xs font-medium text-slate-700">Shikola</div>
+                                        <div class="text-[10px] text-slate-400">Pupil</div>
+                                    </div>
+                                </button>
+                                <div
+                                    x-show="open"
+                                    x-cloak
+                                    class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
+                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
+                                        <span class="w-4 flex justify-center text-slate-400">
+                                            <i class="fas fa-user-circle"></i>
+                                        </span>
+                                        <span>View Profile</span>
+                                    </a>
+                                    <div class="my-1 border-t border-slate-100"></div>
+                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                        <span class="w-4 flex justify-center">
+                                            <i class="fas fa-right-from-bracket"></i>
+                                        </span>
+                                        <span>Logout</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div x-show="loading" x-cloak class="flex items-center justify-center py-8">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-spinner fa-spin text-orange-500"></i>
+                            <span class="text-sm text-slate-600">Loading timetable...</span>
+                        </div>
+                    </div>
+
+
+                    <div class="mt-6 flex flex-wrap gap-2 text-xs sm:text-sm">
+                        <button type="button" @click="activeView = 'today'" :class="activeView === 'today' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <span class="w-5 flex justify-center"><i class="fas fa-calendar-day"></i></span>
+                            <span>Today</span>
+                        </button>
+                        <button type="button" @click="activeView = 'week'" :class="activeView === 'week' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <span class="w-5 flex justify-center"><i class="fas fa-calendar-week"></i></span>
+                            <span>Week View</span>
+                        </button>
+                        <button type="button" @click="activeView = 'month'" :class="activeView === 'month' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <span class="w-5 flex justify-center"><i class="fas fa-calendar"></i></span>
+                            <span>Month View</span>
+                        </button>
+                        <button type="button" @click="activeView = 'activities'" :class="activeView === 'activities' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <span class="w-5 flex justify-center"><i class="fas fa-calendar-plus"></i></span>
+                            <span>Activities</span>
+                        </button>
+                        <button type="button" @click="activeView = 'study'" :class="activeView === 'study' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <span class="w-5 flex justify-center"><i class="fas fa-book"></i></span>
+                            <span>Study Timetable</span>
+                        </button>
+                    </div>
+
+                    <!-- Filter Controls - Hidden for Activities and Study Timetable -->
+                    <div class="mt-4 flex flex-wrap items-center gap-2 text-xs sm:text-sm" x-show="activeView === 'today' || activeView === 'week' || activeView === 'month'">
+                        <label class="text-[11px] text-slate-500">Class</label>
+                        <select
+                            x-model="selectedClass"
+                            @change="onFiltersChange()"
+                            aria-label="Select class"
+                            :disabled="lockClassSelection"
+                            class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400 min-w-[140px]">
+                            <option value="">Select class</option>
+                            <template x-for="cls in classOptions" :key="cls">
+                                <option :value="cls" x-text="cls"></option>
+                            </template>
+                        </select>
+                        
+                        <label class="text-[11px] text-slate-500">Academic Year</label>
+                        <select
+                            x-model="selectedAcademicYear"
+                            @change="onFiltersChange()"
+                            aria-label="Select academic year"
+                            class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400 min-w-[120px]">
+                            <option value="">All Years</option>
+                            <template x-for="year in academicYearOptions" :key="year">
+                                <option :value="year" x-text="year"></option>
+                            </template>
+                        </select>
+                        
+                        <label class="text-[11px] text-slate-500">Term</label>
+                        <select
+                            x-model="selectedTerm"
+                            @change="onFiltersChange()"
+                            aria-label="Select term"
+                            class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400 min-w-[100px]">
+                            <option value="">All Terms</option>
+                            <option value="Term 1">Term 1</option>
+                            <option value="Term 2">Term 2</option>
+                            <option value="Term 3">Term 3</option>
+                        </select>
+                        
+                        <button @click="toggleAdvancedFilters()" class="text-[11px] text-orange-600 hover:text-orange-700 font-medium" title="Toggle advanced filters">
+                            <i class="fas fa-filter mr-1"></i>
+                            <span x-text="showAdvancedFilters ? 'Hide Filters' : 'More Filters'"></span>
+                        </button>
+                        
+                        <span class="text-[11px] text-slate-400" x-show="lockClassSelection && !selectedClass">
+                            No class is linked to your account yet. Please contact your school admin.
+                        </span>
+                        <span class="text-[11px] text-slate-400" x-show="selectedClass" x-text="'Showing timetable for ' + selectedClass"></span>
+                    </div>
+
+                    <!-- Advanced Filters - Hidden for Activities and Study Timetable -->
+                    <div x-show="showAdvancedFilters && (activeView === 'today' || activeView === 'week' || activeView === 'month')" x-cloak class="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs sm:text-sm">
+                            <!-- Subject Filter -->
+                            <div>
+                                <label class="text-[11px] text-slate-500 block mb-1">Subjects</label>
+                                <select
+                                    x-model="selectedSubjects"
+                                    @change="onFiltersChange()"
+                                    multiple
+                                    aria-label="Select subjects"
+                                    class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400 w-full"
+                                    size="3">
+                                    <template x-for="subject in subjectOptions" :key="subject.id">
+                                        <option :value="subject.id" x-text="subject.name"></option>
+                                    </template>
+                                </select>
+                                <div class="text-[10px] text-slate-400 mt-1">Hold Ctrl/Cmd to select multiple</div>
+                            </div>
+                            
+                            <!-- Teacher Filter -->
+                            <div>
+                                <label class="text-[11px] text-slate-500 block mb-1">Teachers</label>
+                                <select
+                                    x-model="selectedTeachers"
+                                    @change="onFiltersChange()"
+                                    multiple
+                                    aria-label="Select teachers"
+                                    class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400 w-full"
+                                    size="3">
+                                    <template x-for="teacher in teacherOptions" :key="teacher.id">
+                                        <option :value="teacher.id" x-text="teacher.name"></option>
+                                    </template>
+                                </select>
+                                <div class="text-[10px] text-slate-400 mt-1">Hold Ctrl/Cmd to select multiple</div>
+                            </div>
+                            
+                            <!-- Room Filter -->
+                            <div>
+                                <label class="text-[11px] text-slate-500 block mb-1">Rooms</label>
+                                <select
+                                    x-model="selectedRooms"
+                                    @change="onFiltersChange()"
+                                    multiple
+                                    aria-label="Select rooms"
+                                    class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400 w-full"
+                                    size="3">
+                                    <template x-for="room in roomOptions" :key="room.id">
+                                        <option :value="room.id" x-text="room.name"></option>
+                                    </template>
+                                </select>
+                                <div class="text-[10px] text-slate-400 mt-1">Hold Ctrl/Cmd to select multiple</div>
+                            </div>
+                            
+                            <!-- Display Options -->
+                            <div>
+                                <label class="text-[11px] text-slate-500 block mb-1">Display Options</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" x-model="includeBreaks" @change="onFiltersChange()" class="rounded text-orange-500 focus:ring-orange-400">
+                                        <span class="text-xs text-slate-600">Include Breaks</span>
+                                    </label>
+                                    <label class="flex items-center gap-2">
+                                        <input type="checkbox" x-model="includeOptional" @change="onFiltersChange()" class="rounded text-orange-500 focus:ring-orange-400">
+                                        <span class="text-xs text-slate-600">Include Optional</span>
+                                    </label>
+                                    <div>
+                                        <label class="text-xs text-slate-500 block mb-1">Sort By</label>
+                                        <select x-model="sortBy" @change="onFiltersChange()" class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 w-full" title="Sort timetable by">
+                                            <option value="time">Time</option>
+                                            <option value="subject">Subject</option>
+                                            <option value="teacher">Teacher</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Clear Filters Button -->
+                        <div class="mt-4 flex items-center justify-between">
+                            <div class="text-[11px] text-slate-500">
+                                <span x-text="getActiveFiltersCount()"></span> filter(s) active
+                            </div>
+                            <button @click="clearAllFilters()" class="text-[11px] text-red-600 hover:text-red-700 font-medium">
+                                <i class="fas fa-times mr-1"></i>Clear All Filters
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex-1 text-sm">
+                        <!-- Today View -->
+                        <div x-show="activeView === 'today'" x-cloak class="space-y-4">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Today's Schedule</div>
+                                        <div class="text-xs text-slate-400 mt-1" x-text="todayLabel || ''"></div>
+                                    </div>
+                                    <div class="text-xs text-slate-500" x-text="selectedClass || 'No class selected'"></div>
+                                </div>
+                                <div class="space-y-3">
+                                    <div x-show="!hasTimetable && !loading" class="text-xs text-slate-400 text-center py-4">
+                                        No generated timetable is available yet. Please ask your school admin to create one.
+                                    </div>
+                                    <div x-show="hasTimetable && !selectedClass && !loading" class="text-xs text-slate-400 text-center py-4">
+                                        Select your class to see today's lessons.
+                                    </div>
+                                    <template x-for="slot in todaySlots" :key="slot.id">
+                                        <div class="flex items-start gap-3 p-3 rounded-xl transition-all"
+                                             :class="{
+                                                'bg-green-50 border-l-4 border-green-400': getClassStatus(slot) === 'in-progress',
+                                                'bg-blue-50 border-l-4 border-blue-400': getClassStatus(slot) === 'upcoming',
+                                                'bg-slate-50 border-l-4 border-slate-400': getClassStatus(slot) === 'completed',
+                                                'bg-slate-50 border-l-4 border-slate-400': !slot || getClassStatus(slot) === ''
+                                             }">
+                                            <div class="text-center flex-shrink-0">
+                                                <div class="text-xs font-medium text-slate-600" x-text="slot.startLabel"></div>
+                                                <div class="text-[10px] text-slate-500 mt-1" x-text="getTimeUntilClass(slot.startTime)"></div>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex items-center gap-2">
+                                                    <div class="font-medium text-slate-800 text-sm" x-text="slot.subjectName || slot.subjectCode"></div>
+                                                    <span x-show="getClassStatus(slot) === 'in-progress'" class="px-2 py-1 bg-green-100 text-green-700 text-[10px] rounded-full font-medium">
+                                                        <i class="fas fa-circle text-green-500 mr-1" style="font-size: 6px;"></i>In Progress
+                                                    </span>
+                                                    <span x-show="getClassStatus(slot) === 'upcoming'" class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] rounded-full font-medium">
+                                                        <i class="fas fa-clock text-blue-500 mr-1" style="font-size: 8px;"></i>Upcoming
+                                                    </span>
+                                                </div>
+                                                <div class="text-[11px] text-slate-600 mt-1" x-text="slot.periodTime"></div>
+                                                <div class="flex items-center gap-2 mt-2">
+                                                    <span class="text-[10px] text-slate-500"><i class="fas fa-user mr-1"></i><span x-text="slot.teacherName"></span></span>
+                                                    <span class="text-[10px] text-slate-500"><i class="fas fa-map-marker-alt mr-1"></i><span x-text="slot.roomName"></span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div x-show="hasTimetable && selectedClass && !todaySlots.length && !loading" class="text-xs text-slate-400 text-center py-4">
+                                        No lessons scheduled for today.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Week View -->
+                        <div x-show="activeView === 'week'" x-cloak class="space-y-4">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Weekly Schedule</div>
+                                        <div class="text-xs text-slate-400 mt-1" x-text="academicTerm && academicYear ? (academicTerm + ' ' + academicYear) : ''"></div>
+                                    </div>
+                                    <div class="text-xs text-slate-500" x-text="selectedClass || 'No class selected'"></div>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-xs">
+                                        <thead>
+                                            <tr class="bg-slate-50">
+                                                <th class="px-2 py-2 text-left font-medium text-slate-600">Time</th>
+                                                <template x-for="day in weekdays" :key="day.key">
+                                                    <th class="px-2 py-2 text-center font-medium text-slate-600" x-text="day.label"></th>
+                                                </template>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            <template x-for="row in weekGrid" :key="row.periodId">
+                                                <tr>
+                                                    <td class="px-2 py-2 font-medium text-slate-600" x-text="row.label"></td>
+                                                    <template x-for="cell in row.cells" :key="cell.dayKey">
+                                                        <td class="px-2 py-2">
+                                                            <template x-if="cell.slot">
+                                                                <div>
+                                                                    <div class="bg-slate-100 text-slate-700 p-1 rounded text-center font-medium" x-text="cell.slot.subjectCode"></div>
+                                                                    <div class="text-[11px] text-slate-500 mt-1" x-text="cell.slot.roomName"></div>
+                                                                </div>
+                                                            </template>
+                                                        </td>
+                                                    </template>
+                                                </tr>
+                                            </template>
+                                            <tr x-show="hasTimetable && selectedClass && !weekGrid.length">
+                                                <td colspan="7" class="px-2 py-3 text-center text-slate-400">No weekly timetable available for this class.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Month View -->
+                        <div x-show="activeView === 'month'" x-cloak class="space-y-4">
+                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <div class="text-sm font-semibold text-slate-800">Calendar</div>
+                                        <div class="text-xs text-slate-400 mt-1">Your timetable and key events</div>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                                        <button type="button" class="h-7 w-7 flex items-center justify-center rounded-full hover:bg-slate-100" aria-label="Previous month" @click="prevMonth()">
+                                            <i class="fas fa-chevron-left text-[11px]"></i>
+                                        </button>
+                                        <span class="font-medium min-w-[120px] text-center" x-text="monthLabel || ''"></span>
+                                        <button type="button" class="h-7 w-7 flex items-center justify-center rounded-full hover:bg-slate-100" aria-label="Next month" @click="nextMonth()">
+                                            <i class="fas fa-chevron-right text-[11px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="text-[11px] text-slate-400 grid grid-cols-7 gap-1 mb-1">
+                                    <span class="text-center">Sun</span>
+                                    <span class="text-center">Mon</span>
+                                    <span class="text-center">Tue</span>
+                                    <span class="text-center">Wed</span>
+                                    <span class="text-center">Thu</span>
+                                    <span class="text-center">Fri</span>
+                                    <span class="text-center">Sat</span>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1 text-xs">
+                                    <template x-for="(week, wIndex) in monthWeeks" :key="wIndex">
+                                        <template x-for="(cell, cIndex) in week" :key="wIndex + '-' + cIndex">
+                                            <div class="relative">
+                                                <!-- Calendar Cell -->
+                                                <div
+                                                    class="relative flex flex-col items-center justify-center h-10 rounded-lg border cursor-pointer transition-all hover:bg-slate-100"
+                                                    :class="[
+                                                        cell.currentMonth ? 'bg-slate-50 text-slate-700' : 'bg-slate-50/40 text-slate-400',
+                                                        cell.isToday ? 'border-orange-400 font-semibold text-orange-700' : 'border-slate-100',
+                                                        (cell.hasClasses || cell.hasEvents || cell.isZambiaHoliday) ? 'shadow-[0_0_0_1px_rgba(249,115,22,0.15)]' : ''
+                                                    ]"
+                                                    :title="cell.zambianEvents && cell.zambianEvents.length > 0 ? cell.zambianEvents.map(e => e.label).join(', ') : ''"
+                                                    @click="toggleDayDropdown(cell)"
+                                                >
+                                                    <div x-text="cell.day"></div>
+                                                    <div class="flex items-center justify-center gap-1">
+                                                        <span x-show="cell.hasClasses" class="w-1.5 h-1.5 rounded-full bg-indigo-400" title="Timetable classes"></span>
+                                                        <span x-show="cell.hasEvents" class="w-1.5 h-1.5 rounded-full bg-emerald-400" title="School events"></span>
+                                                        <span x-show="cell.isZambiaHoliday" class="w-1.5 h-1.5 rounded-full bg-red-400" title="Zambian holiday"></span>
+                                                        <span x-show="cell.hasBirthday" class="w-1.5 h-1.5 rounded-full bg-pink-400" title="Birthday"></span>
+                                                    </div>
+                                                    <!-- Zambian Events Tooltip -->
+                                                    <div x-show="cell.zambianEvents && cell.zambianEvents.length > 0" x-cloak class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg opacity-0 hover:opacity-100 transition-opacity pointer-events-none z-50 whitespace-nowrap">
+                                                        <template x-for="event in cell.zambianEvents" :key="event.id">
+                                                            <div class="flex items-center gap-1">
+                                                                <i class="fas fa-calendar-day text-[8px]"></i>
+                                                                <span x-text="event.label"></span>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Day Dropdown -->
+                                                <div x-show="cell.showDropdown" x-cloak 
+                                                     class="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 w-80 bg-white rounded-lg shadow-xl border border-slate-200 z-50 overflow-hidden"
+                                                     @click.outside="cell.showDropdown = false">
+                                                    
+                                                    <!-- Dropdown Header -->
+                                                    <div class="bg-gradient-to-r from-orange-500 to-pink-500 text-white p-3">
+                                                        <div class="font-semibold text-sm" x-text="cell.date ? cell.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : ''"></div>
+                                                        <div class="text-xs opacity-90">Click outside to close</div>
+                                                    </div>
+                                                    
+                                                    <!-- Quick Add Section -->
+                                                    <div class="p-3 border-b border-slate-100">
+                                                        <div class="text-xs font-semibold text-slate-700 mb-2">Quick Add</div>
+                                                        <div class="grid grid-cols-2 gap-2">
+                                                            <button @click.stop="openEventPopup(cell, 'activity')" 
+                                                                    class="px-2 py-1.5 bg-orange-100 text-orange-700 rounded text-xs hover:bg-orange-200 transition">
+                                                                <i class="fas fa-plus mr-1"></i>Activity
+                                                            </button>
+                                                            <button @click.stop="openEventPopup(cell, 'study')" 
+                                                                    class="px-2 py-1.5 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200 transition">
+                                                                <i class="fas fa-plus mr-1"></i>Study
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Events List -->
+                                                    <div class="max-h-60 overflow-y-auto">
+                                                        <template x-for="event in getEventsForCell(cell)" :key="event.id">
+                                                            <div class="p-2 border-b border-slate-50 last:border-b-0">
+                                                                <div class="flex items-start gap-2">
+                                                                    <div class="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                                                                         :class="getEventIconClass(event.type)">
+                                                                        <i class="fas text-[8px]" :class="getEventIcon(event.type)"></i>
+                                                                    </div>
+                                                                    <div class="flex-1 min-w-0">
+                                                                        <div class="text-xs font-medium text-slate-800 truncate" x-text="event.title || event.label"></div>
+                                                                        <div class="text-[10px] text-slate-500">
+                                                                            <span x-text="event.time || 'All day'"></span>
+                                                                            <span x-show="event.category" class="ml-1" x-text="'• ' + event.category"></span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <button x-show="event.type === 'activity' || event.type === 'study'" 
+                                                                            @click.stop="editEventFromCell(event)"
+                                                                            class="text-blue-600 hover:text-blue-700 text-xs">
+                                                                        <i class="fas fa-edit"></i>
+                                                                    </button>
+                                                                    <button x-show="event.type === 'activity' || event.type === 'study'" 
+                                                                            @click.stop="deleteEventFromCell(event.id, event.type)"
+                                                                            class="text-red-600 hover:text-red-700 text-xs ml-1">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </template>
+                                                        
+                                                        <!-- No Events Message -->
+                                                        <div x-show="!getEventsForCell(cell).length" class="p-4 text-center text-slate-400">
+                                                            <i class="fas fa-calendar-day text-lg mb-2"></i>
+                                                            <div class="text-xs">No events</div>
+                                                            <div class="text-[10px]">Add an event above</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </div>
+                                <div class="mt-4 p-3 bg-orange-50 rounded-lg">
+                                    <div class="text-xs font-medium text-orange-700 mb-2">Key Events This Month</div>
+                                    <div class="space-y-1" x-show="keyEvents.length" x-cloak>
+                                        <template x-for="event in keyEvents" :key="event.id">
+                                            <div class="flex items-center justify-between text-[11px] text-slate-700">
+                                                <span x-text="event.label"></span>
+                                                <span class="text-[10px] text-slate-500" x-text="event.dateLabel"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="text-[11px] text-slate-500" x-show="!keyEvents.length">
+                                        No key events have been published for this month yet.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Creation Popup Modal -->
+                    <div x-show="showEventPopup" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-slate-800" x-text="'Add ' + (newEventPopup.type === 'activity' ? 'Activity' : 'Study Session')"></h3>
+                                    <p class="text-sm text-slate-400 mt-1" x-text="newEventPopup.date ? newEventPopup.date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : ''"></p>
+                                </div>
+                                <button @click="closeEventPopup()" class="text-slate-400 hover:text-slate-600" title="Close">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Title/Subject -->
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        <span x-text="newEventPopup.type === 'activity' ? 'Activity Title' : 'Subject'"></span> *
+                                    </label>
+                                    <input type="text" x-model="newEventPopup.title" 
+                                           :placeholder="newEventPopup.type === 'activity' ? 'Enter activity title' : 'Enter subject'"
+                                           :title="newEventPopup.type === 'activity' ? 'Enter activity title' : 'Enter subject'"
+                                           class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                </div>
+
+                                <!-- Time -->
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Time</label>
+                                    <input type="time" x-model="newEventPopup.time" 
+                                           title="Select event time"
+                                           placeholder="Select time"
+                                           class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                </div>
+
+                                <!-- Additional fields based on type -->
+                                <div x-show="newEventPopup.type === 'activity'">
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                                    <select x-model="newEventPopup.category" title="Select activity category" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                        <option value="Other">Other</option>
+                                        <option value="Sports">Sports</option>
+                                        <option value="Music">Music</option>
+                                        <option value="Art">Art</option>
+                                        <option value="Club">Club</option>
+                                        <option value="Social">Social</option>
+                                        <option value="Academic">Academic</option>
+                                    </select>
+                                </div>
+
+                                <div x-show="newEventPopup.type === 'study'">
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Duration</label>
+                                    <select x-model="newEventPopup.duration" title="Select study duration" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                        <option value="30 mins">30 mins</option>
+                                        <option value="1 hour">1 hour</option>
+                                        <option value="1.5 hours">1.5 hours</option>
+                                        <option value="2 hours">2 hours</option>
+                                        <option value="3 hours">3 hours</option>
+                                    </select>
+                                </div>
+
+                                <!-- Description/Topic -->
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        <span x-text="newEventPopup.type === 'activity' ? 'Description' : 'Topic'"></span>
+                                    </label>
+                                    <textarea x-model="newEventPopup.description" 
+                                              :placeholder="newEventPopup.type === 'activity' ? 'Enter activity description' : 'Enter study topic'"
+                                              :title="newEventPopup.type === 'activity' ? 'Enter activity description' : 'Enter study topic'"
+                                              rows="3"
+                                              class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"></textarea>
+                                </div>
+
+                                <!-- Location (for study sessions) -->
+                                <div x-show="newEventPopup.type === 'study'">
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                                    <input type="text" x-model="newEventPopup.location" 
+                                           placeholder="Enter study location"
+                                           class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="flex gap-3 pt-4">
+                                    <button @click="closeEventPopup()" 
+                                            class="flex-1 px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 text-sm">
+                                        Cancel
+                                    </button>
+                                    <button @click="saveNewEvent()" 
+                                            class="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm">
+                                        <i class="fas fa-plus mr-1"></i>Add Event
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <!-- Activities View -->
+                    <div x-show="activeView === 'activities'" x-cloak class="space-y-4">
+                        <!-- Activity Form (Spreadsheet Style) -->
+                        <div x-show="showActivityForm" x-cloak class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Add New Activity</div>
+                                    <div class="text-xs text-slate-400 mt-1">Fill in the details below</div>
+                                </div>
+                                <button @click="showActivityForm = false; resetActivityForm()" class="text-slate-400 hover:text-slate-600" title="Close form">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Title *</label>
+                                    <input type="text" x-model="newActivity.title" placeholder="Activity title" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Date *</label>
+                                    <input type="date" x-model="newActivity.date" title="Activity date" placeholder="Select activity date" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Time</label>
+                                    <input type="time" x-model="newActivity.time" title="Activity time" placeholder="Select activity time" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Category</label>
+                                    <select x-model="newActivity.category" title="Activity category" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                        <option value="">Select category</option>
+                                        <option value="Sports">Sports</option>
+                                        <option value="Clubs">Clubs</option>
+                                        <option value="Music">Music</option>
+                                        <option value="Art">Art</option>
+                                        <option value="Study">Study</option>
+                                        <option value="Social">Social</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Description</label>
+                                    <input type="text" x-model="newActivity.description" placeholder="Activity description" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                                </div>
+                                <div class="flex gap-2">
+                                    <button @click="addActivity()" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm">
+                                        <i class="fas fa-save mr-1"></i>Save
+                                    </button>
+                                    <button @click="showActivityForm = false; resetActivityForm()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 text-sm">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Activities Table -->
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">My Activities</div>
+                                    <div class="text-xs text-slate-400 mt-1">Your personal activities and events</div>
+                                </div>
+                                <button @click="showActivityForm = !showActivityForm" class="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600">
+                                    <i class="fas fa-plus mr-1"></i>Add Activity
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs">
+                                    <thead>
+                                        <tr class="border-b border-slate-200">
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Title</th>
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Date</th>
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Time</th>
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Category</th>
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Description</th>
+                                            <th class="text-center py-2 px-2 font-medium text-slate-700">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr x-show="!activities.length">
+                                            <td colspan="6" class="text-center py-8 text-slate-400">
+                                                <i class="fas fa-calendar-plus text-2xl text-slate-300 mb-2 block"></i>
+                                                No activities added yet. Click "Add Activity" to get started.
+                                            </td>
+                                        </tr>
+                                        <template x-for="activity in activities" :key="activity.id">
+                                            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                                <td class="py-3 px-2">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
+                                                            <i class="fas fa-calendar-check text-orange-600 text-xs"></i>
+                                                        </div>
+                                                        <span class="font-medium text-slate-800" x-text="activity.title"></span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 px-2 text-slate-600" x-text="activity.date"></td>
+                                                <td class="py-3 px-2 text-slate-600" x-text="activity.time || 'All day'"></td>
+                                                <td class="py-3 px-2">
+                                                    <span class="px-2 py-1 rounded-full text-xs font-medium" 
+                                                          :class="getActivityCategoryStyle(activity.category)"
+                                                          x-text="activity.category || 'Other'"></span>
+                                                </td>
+                                                <td class="py-3 px-2 text-slate-500 text-[10px]" x-text="activity.description || '-'"></td>
+                                                <td class="py-3 px-2">
+                                                    <div class="flex items-center justify-center gap-2">
+                                                        <button @click="editActivity(activity)" class="text-blue-600 hover:text-blue-700" title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button @click="deleteActivity(activity.id)" class="text-red-600 hover:text-red-700" title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Study Timetable View -->
+                    <div x-show="activeView === 'study'" x-cloak class="space-y-4">
+                        <!-- Study Session Form (Spreadsheet Style) -->
+                        <div x-show="showStudyForm" x-cloak class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Add New Study Session</div>
+                                    <div class="text-xs text-slate-400 mt-1">Fill in the details below</div>
+                                </div>
+                                <button @click="showStudyForm = false; resetStudySessionForm()" class="text-slate-400 hover:text-slate-600" title="Close form">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3 items-end">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Subject *</label>
+                                    <input type="text" x-model="newStudySession.subject" placeholder="Subject name" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Topic *</label>
+                                    <input type="text" x-model="newStudySession.topic" placeholder="Study topic" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Date *</label>
+                                    <input type="date" x-model="newStudySession.date" title="Study session date" placeholder="Select study session date" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Time *</label>
+                                    <input type="time" x-model="newStudySession.time" title="Study session time" placeholder="Select study session time" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Duration</label>
+                                    <select x-model="newStudySession.duration" title="Study session duration" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                        <option value="30 mins">30 mins</option>
+                                        <option value="1 hour">1 hour</option>
+                                        <option value="1.5 hours">1.5 hours</option>
+                                        <option value="2 hours">2 hours</option>
+                                        <option value="3 hours">3 hours</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-700 mb-1">Location</label>
+                                    <input type="text" x-model="newStudySession.location" placeholder="Library, Home, etc." class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                </div>
+                                <div class="flex gap-2">
+                                    <button @click="addStudySession()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm">
+                                        <i class="fas fa-save mr-1"></i>Save
+                                    </button>
+                                    <button @click="showStudyForm = false; resetStudySessionForm()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 text-sm">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Study Sessions Table -->
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm font-semibold text-slate-800">Study Timetable</div>
+                                    <div class="text-xs text-slate-400 mt-1">Your personal study schedule</div>
+                                </div>
+                                <button @click="showStudyForm = !showStudyForm" class="text-xs bg-blue-500 text-white px-3 py-1.5 rounded-lg hover:bg-blue-600">
+                                    <i class="fas fa-plus mr-1"></i>Add Study Session
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs">
+                                    <thead>
+                                        <tr class="border-b border-slate-200">
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Subject</th>
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Topic</th>
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Date</th>
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Time</th>
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Duration</th>
+                                            <th class="text-left py-2 px-2 font-medium text-slate-700">Location</th>
+                                            <th class="text-center py-2 px-2 font-medium text-slate-700">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr x-show="!studySessions.length">
+                                            <td colspan="7" class="text-center py-8 text-slate-400">
+                                                <i class="fas fa-book text-2xl text-slate-300 mb-2 block"></i>
+                                                No study sessions scheduled yet. Click "Add Study Session" to create your study plan.
+                                            </td>
+                                        </tr>
+                                        <template x-for="session in studySessions" :key="session.id">
+                                            <tr class="border-b border-slate-100 hover:bg-slate-50">
+                                                <td class="py-3 px-2">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                                                            <i class="fas fa-book-open text-blue-600 text-xs"></i>
+                                                        </div>
+                                                        <span class="font-medium text-slate-800" x-text="session.subject"></span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 px-2 text-slate-600" x-text="session.topic"></td>
+                                                <td class="py-3 px-2 text-slate-600" x-text="session.date"></td>
+                                                <td class="py-3 px-2 text-slate-600" x-text="session.time"></td>
+                                                <td class="py-3 px-2">
+                                                    <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700" x-text="session.duration"></span>
+                                                </td>
+                                                <td class="py-3 px-2 text-slate-500 text-[10px]" x-text="session.location || '-'"></td>
+                                                <td class="py-3 px-2">
+                                                    <div class="flex items-center justify-center gap-2">
+                                                        <button @click="editStudySession(session)" class="text-blue-600 hover:text-blue-700" title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button @click="deleteStudySession(session.id)" class="text-red-600 hover:text-red-700" title="Delete">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function pupilTimetablePage() {
+            return {
+                sidebarOpen: false,
+                chatOpen: false,
+                activeView: 'today',
+                selectedClass: '',
+                lockClassSelection: false,
+                classOptions: [],
+                weekdays: [],
+                academicYear: '',
+                academicTerm: '',
+                todayLabel: '',
+                todaySlots: [],
+                weekGrid: [],
+                hasTimetable: false,
+                monthNames: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+                calendarLoading: false,
+                todayDate: null,
+                currentYear: null,
+                currentMonth: null,
+                monthLabel: '',
+                monthWeeks: [],
+                keyEvents: [],
+                zambiaHolidays: [
+                    { month: 0, day: 1, label: "New Year's Day" },
+                    { month: 2, day: 8, label: "International Women's Day" },
+                    { month: 2, day: 12, label: 'Youth Day' },
+                    { month: 4, day: 1, label: 'Labour Day' },
+                    { month: 9, day: 24, label: 'Independence Day' }
+                ],
+                realTimeUpdatesEnabled: false,
+                loading: false,
+                error: null,
+                
+                // Activities and Study Timetable properties
+                activities: [],
+                studySessions: [],
+                showActivityForm: false,
+                showStudyForm: false,
+                showEventPopup: false,
+                newEventPopup: {
+                    type: 'activity',
+                    date: null,
+                    title: '',
+                    time: '',
+                    category: 'Other',
+                    duration: '1 hour',
+                    description: '',
+                    location: ''
+                },
+                zambianEvents: [],
+                zambianEventsAPI: null,
+                teacherEvents: [],
+                schoolAdminEvents: [],
+                pupilBirthdays: [],
+                classMates: [],
+                newActivity: {
+                    title: '',
+                    description: '',
+                    date: '',
+                    time: '',
+                    category: ''
+                },
+                newStudySession: {
+                    subject: '',
+                    topic: '',
+                    date: '',
+                    time: '',
+                    duration: '1 hour',
+                    location: ''
+                },
+                
+                // Filter properties
+                showAdvancedFilters: false,
+                selectedAcademicYear: '',
+                selectedTerm: '',
+                selectedSubjects: [],
+                selectedTeachers: [],
+                selectedRooms: [],
+                includeBreaks: true,
+                includeOptional: true,
+                sortBy: 'time',
+                academicYearOptions: [],
+                subjectOptions: [],
+                teacherOptions: [],
+                roomOptions: [],
+                
+                init: function () {
+                    var self = this;
+                    
+                    // Restore active view from URL parameter
+                    this.restoreActiveViewFromURL();
+                    
+                    this.initMonthCalendar();
+                    this.loadClassOptions();
+                    this.loadActivities();
+                    this.loadStudySessions();
+                    this.initZambianEvents();
+                    this.loadKeyEvents();
+                    this.loadTeacherEvents();
+                    this.loadSchoolAdminEvents();
+                    this.loadPupilBirthdays();
+                    this.setupRealTimeUpdates();
+                    
+                    try {
+                        this.$watch('selectedClass', function () {
+                            self.loadTimetableData();
+                        });
+                        this.$watch('activeView', function (newView) {
+                            // Save active view to URL when it changes
+                            self.saveActiveViewToURL(newView);
+                            
+                            if (self.activeView === 'activities' || self.activeView === 'study') {
+                                // Load data for activities and study views
+                                self.loadActivities();
+                                self.loadStudySessions();
+                            } else {
+                                self.loadTimetableData();
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Error setting up watchers:', e);
+                    }
+                },
+
+                // Save active view to URL parameter
+                saveActiveViewToURL(view) {
+                    if (view && view !== 'today') {
+                        const url = new URL(window.location);
+                        url.searchParams.set('view', view);
+                        window.history.replaceState({}, '', url);
+                    } else {
+                        // Remove view parameter if it's the default view
+                        const url = new URL(window.location);
+                        url.searchParams.delete('view');
+                        window.history.replaceState({}, '', url);
+                    }
+                },
+
+                // Restore active view from URL parameter
+                restoreActiveViewFromURL() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const viewParam = urlParams.get('view');
+                    
+                    if (viewParam && ['today', 'week', 'month', 'activities', 'study'].includes(viewParam)) {
+                        this.activeView = viewParam;
+                    } else {
+                        this.activeView = 'today'; // default view
+                    }
+                },
+
+                // Initialize Zambian Events API
+                initZambianEvents() {
+                    if (window.ZambianEventsAPI) {
+                        this.zambianEventsAPI = new window.ZambianEventsAPI();
+                        // Load events in background without blocking calendar display
+                        this.loadZambianEvents();
+                    } else {
+                        // Initialize with empty events array
+                        this.zambianEvents = [];
+                    }
+                },
+
+                // Load Zambian events for current year
+                async loadZambianEvents() {
+                    if (!this.zambianEventsAPI) return;
+                    
+                    try {
+                        const currentYear = new Date().getFullYear();
+                        const events = await this.zambianEventsAPI.getEventsForYear(currentYear);
+                        this.zambianEvents = events;
+                        console.log('Zambian events loaded:', events.length);
+                        
+                        // Update calendar with new events
+                        if (this.currentYear && this.currentMonth !== null) {
+                            this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                        }
+                    } catch (error) {
+                        console.error('Error loading Zambian events:', error);
+                        this.zambianEvents = [];
+                    }
+                },
+
+                // Load key events for the calendar
+                async loadKeyEvents() {
+                    try {
+                        // This would typically load from an API
+                        // For now, we'll use some sample events or load from localStorage
+                        const savedEvents = localStorage.getItem('pupil_key_events');
+                        if (savedEvents) {
+                            this.keyEvents = JSON.parse(savedEvents);
+                        } else {
+                            // Initialize with some sample events for demonstration
+                            this.keyEvents = [
+                                {
+                                    id: 1,
+                                    title: 'Term 1 Begins',
+                                    date: new Date(this.currentYear, 0, 15), // January 15
+                                    type: 'academic'
+                                },
+                                {
+                                    id: 2,
+                                    title: 'Mid-Term Break',
+                                    date: new Date(this.currentYear, 2, 20), // March 20
+                                    type: 'holiday'
+                                },
+                                {
+                                    id: 3,
+                                    title: 'End of Term 1',
+                                    date: new Date(this.currentYear, 3, 5), // April 5
+                                    type: 'academic'
+                                }
+                            ];
+                        }
+                        
+                        // Update calendar with key events
+                        if (this.currentYear && this.currentMonth !== null) {
+                            this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                        }
+                        
+                        console.log('Key events loaded:', this.keyEvents.length);
+                    } catch (error) {
+                        console.error('Error loading key events:', error);
+                        this.keyEvents = [];
+                    }
+                },
+
+                // Load teacher events
+                async loadTeacherEvents() {
+                    try {
+                        if (window.ShikolaAPI) {
+                            const response = await window.ShikolaAPI.get('/api/pupil/teacher-events');
+                            if (response.success) {
+                                this.teacherEvents = response.data.map(event => ({
+                                    ...event,
+                                    date: new Date(event.date)
+                                }));
+                                console.log('Teacher events loaded:', this.teacherEvents.length);
+                                
+                                // Update calendar
+                                if (this.currentYear && this.currentMonth !== null) {
+                                    this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading teacher events:', error);
+                        this.teacherEvents = [];
+                    }
+                },
+
+                // Load school admin events
+                async loadSchoolAdminEvents() {
+                    try {
+                        if (window.ShikolaAPI) {
+                            const response = await window.ShikolaAPI.get('/api/pupil/school-events');
+                            if (response.success) {
+                                this.schoolAdminEvents = response.data.map(event => ({
+                                    ...event,
+                                    date: new Date(event.date)
+                                }));
+                                console.log('School admin events loaded:', this.schoolAdminEvents.length);
+                                
+                                // Update calendar
+                                if (this.currentYear && this.currentMonth !== null) {
+                                    this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading school admin events:', error);
+                        this.schoolAdminEvents = [];
+                    }
+                },
+
+                // Load pupil birthdays and classmates
+                async loadPupilBirthdays() {
+                    try {
+                        if (window.ShikolaAPI) {
+                            // Get classmates first
+                            const classResponse = await window.ShikolaAPI.get('/api/pupil/classmates');
+                            if (classResponse.success) {
+                                this.classMates = classResponse.data;
+                                
+                                // Extract birthdays from classmates
+                                this.pupilBirthdays = this.classMates
+                                    .filter(pupil => pupil.dateOfBirth)
+                                    .map(pupil => ({
+                                        id: 'birthday-' + pupil.id,
+                                        pupilId: pupil.id,
+                                        pupilName: pupil.fullName || pupil.name,
+                                        date: new Date(pupil.dateOfBirth),
+                                        type: 'birthday',
+                                        age: this.calculateAge(new Date(pupil.dateOfBirth))
+                                    }));
+                                
+                                console.log('Pupil birthdays loaded:', this.pupilBirthdays.length);
+                                
+                                // Update calendar
+                                if (this.currentYear && this.currentMonth !== null) {
+                                    this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading pupil birthdays:', error);
+                        this.pupilBirthdays = [];
+                        this.classMates = [];
+                    }
+                },
+
+                // Calculate age from birth date
+                calculateAge(birthDate) {
+                    const today = new Date();
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const monthDiff = today.getMonth() - birthDate.getMonth();
+                    
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+                    
+                    return age;
+                },
+
+                // Get Zambian events for a specific date
+                getZambianEventsForDate(date) {
+                    if (!this.zambianEventsAPI || !this.zambianEvents.length) return [];
+                    
+                    return this.zambianEvents.filter(event => {
+                        if (event.date) {
+                            return this.zambianEventsAPI.isSameDay(event.date, date);
+                        } else if (event.start && event.end) {
+                            return date >= event.start && date <= event.end;
+                        }
+                        return false;
+                    });
+                },
+
+                // Check if a date has Zambian events
+                hasZambianEvents(date) {
+                    return this.getZambianEventsForDate(date).length > 0;
+                },
+                
+                async loadClassOptions() {
+                    try {
+                        this.loading = true;
+                        this.error = null;
+                        
+                        const classData = await window.pupilTimetableAPI.getClassOptions();
+                        
+                        if (classData && classData.availableClasses) {
+                            this.classOptions = classData.availableClasses.map(c => c.name);
+                            this.selectedClass = classData.currentClassName;
+                            this.lockClassSelection = true; // Lock to pupil's actual class
+                            this.hasTimetable = classData.hasTimetableAccess;
+                            
+                            // Set academic year options
+                            this.academicYearOptions = this.generateAcademicYearOptions();
+                            this.selectedAcademicYear = window.pupilTimetableAPI.getCurrentAcademicYear();
+                            
+                            if (classData.currentClassName) {
+                                await this.loadFilterOptions();
+                                await this.loadTimetableData();
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error loading class options:', error);
+                        this.error = 'Failed to load class information';
+                        this.hasTimetable = false;
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                async loadFilterOptions() {
+                    try {
+                        // Load filter options from timetable data
+                        const timetableData = await window.pupilTimetableAPI.getTimetable({
+                            classId: this.getSelectedClassId(),
+                            academicYear: this.selectedAcademicYear,
+                            term: this.selectedTerm
+                        });
+                        
+                        if (timetableData && timetableData.metadata) {
+                            // Extract unique subjects, teachers, and rooms from timetable
+                            const subjects = new Set();
+                            const teachers = new Set();
+                            const rooms = new Set();
+                            
+                            // Process weekly timetable to extract options
+                            Object.values(timetableData.weeklyTimetable || {}).forEach(slots => {
+                                slots.forEach(slot => {
+                                    if (slot.subjectId && slot.subjectName) {
+                                        subjects.add(JSON.stringify({ id: slot.subjectId, name: slot.subjectName }));
+                                    }
+                                    if (slot.teacherId && slot.teacherName) {
+                                        teachers.add(JSON.stringify({ id: slot.teacherId, name: slot.teacherName }));
+                                    }
+                                    if (slot.roomId && slot.roomName) {
+                                        rooms.add(JSON.stringify({ id: slot.roomId, name: slot.roomName }));
+                                    }
+                                });
+                            });
+                            
+                            this.subjectOptions = Array.from(subjects).map(s => JSON.parse(s));
+                            this.teacherOptions = Array.from(teachers).map(t => JSON.parse(t));
+                            this.roomOptions = Array.from(rooms).map(r => JSON.parse(r));
+                        }
+                    } catch (error) {
+                        console.error('Error loading filter options:', error);
+                        // Set empty options on error
+                        this.subjectOptions = [];
+                        this.teacherOptions = [];
+                        this.roomOptions = [];
+                    }
+                },
+                
+                generateAcademicYearOptions() {
+                    const currentYear = new Date().getFullYear();
+                    const years = [];
+                    
+                    // Generate options for current year and 3 years back
+                    for (let i = 0; i <= 3; i++) {
+                        const year = currentYear - i;
+                        years.push(year.toString());
+                    }
+                    
+                    return years;
+                },
+                
+                getSelectedClassId() {
+                    if (!this.selectedClass || !this.classOptions.length) return null;
+                    
+                    // Find class ID from class name (this would need to be enhanced based on actual data structure)
+                    return this.selectedClass;
+                },
+                
+                toggleAdvancedFilters() {
+                    this.showAdvancedFilters = !this.showAdvancedFilters;
+                },
+                
+                onFiltersChange() {
+                    // Clear cache when filters change
+                    window.pupilTimetableAPI.clearCache();
+                    this.loadTimetableData();
+                },
+                
+                getActiveFiltersCount() {
+                    let count = 0;
+                    
+                    if (this.selectedAcademicYear) count++;
+                    if (this.selectedTerm) count++;
+                    if (this.selectedSubjects.length > 0) count++;
+                    if (this.selectedTeachers.length > 0) count++;
+                    if (this.selectedRooms.length > 0) count++;
+                    
+                    return count;
+                },
+                
+                clearAllFilters() {
+                    this.selectedAcademicYear = window.pupilTimetableAPI.getCurrentAcademicYear();
+                    this.selectedTerm = '';
+                    this.selectedSubjects = [];
+                    this.selectedTeachers = [];
+                    this.selectedRooms = [];
+                    this.includeBreaks = true;
+                    this.includeOptional = true;
+                    this.sortBy = 'time';
+                    
+                    this.onFiltersChange();
+                },
+                
+                async loadTimetableData() {
+                    if (!this.selectedClass) return;
+                    
+                    try {
+                        this.loading = true;
+                        this.error = null;
+                        
+                        switch (this.activeView) {
+                            case 'today':
+                                await this.loadTodaySchedule();
+                                break;
+                            case 'week':
+                                await this.loadWeekSchedule();
+                                break;
+                            case 'month':
+                                await this.loadMonthSchedule();
+                                break;
+                            default:
+                                await this.loadTodaySchedule();
+                        }
+                    } catch (error) {
+                        console.error('Error loading timetable data:', error);
+                        this.error = 'Failed to load timetable data';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                async loadTodaySchedule() {
+                    try {
+                        const todayData = await window.pupilTimetableAPI.getTodaySchedule();
+                        
+                        if (todayData) {
+                            // Apply filters to today's slots
+                            let filteredSlots = this.applyFiltersToSlots(todayData.slots || []);
+                            
+                            this.todayLabel = todayData.todayLabel || new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+                            this.todaySlots = filteredSlots;
+                            this.weekdays = this.buildWeekdaysFromSlots(filteredSlots);
+                            this.hasTimetable = filteredSlots.length > 0;
+                        }
+                    } catch (error) {
+                        console.error('Error loading today\'s schedule:', error);
+                        throw error;
+                    }
+                },
+                
+                async loadWeekSchedule() {
+                    try {
+                        const weekData = await window.pupilTimetableAPI.getWeekSchedule(this.selectedAcademicYear);
+                        
+                        if (weekData) {
+                            // Apply filters to week grid
+                            let filteredWeekGrid = this.applyFiltersToWeekGrid(weekData.weekGrid || []);
+                            
+                            this.academicYear = weekData.academicYear || '';
+                            this.academicTerm = weekData.term || '';
+                            this.weekdays = weekData.weekdays || [];
+                            this.weekGrid = this.transformWeekGrid(filteredWeekGrid);
+                            this.hasTimetable = this.weekGrid.length > 0;
+                        }
+                    } catch (error) {
+                        console.error('Error loading week schedule:', error);
+                        throw error;
+                    }
+                },
+                
+                async loadMonthSchedule() {
+                    try {
+                        const monthData = await window.pupilTimetableAPI.getMonthSchedule(this.currentYear, this.currentMonth + 1);
+                        
+                        if (monthData && monthData.calendar) {
+                            // Apply filters to month calendar
+                            let filteredCalendar = this.applyFiltersToCalendar(monthData.calendar);
+                            
+                            this.monthWeeks = filteredCalendar.weeks || [];
+                            this.monthLabel = monthData.calendar.monthLabel || this.monthNames[this.currentMonth] + ' ' + this.currentYear;
+                            this.keyEvents = this.transformKeyEvents(monthData.calendar.keyEvents || [], monthData.calendar.holidays || []);
+                            this.hasTimetable = this.monthWeeks.some(week => week.some(day => day.hasClasses));
+                        }
+                    } catch (error) {
+                        console.error('Error loading month schedule:', error);
+                        throw error;
+                    }
+                },
+                
+                buildWeekdaysFromSlots(slots) {
+                    const dayKeys = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+                    const weekdays = [];
+                    
+                    for (let i = 0; i < 7; i++) {
+                        const dayKey = dayKeys[i];
+                        const hasClasses = slots.some(slot => slot.dayKey === dayKey);
+                        
+                        weekdays.push({
+                            key: dayKey,
+                            label: this.dayKeyToFullName(dayKey),
+                            enabled: hasClasses,
+                            dayOfWeek: i === 0 ? 7 : i // Convert Sunday to 7
+                        });
+                    }
+                    
+                    return weekdays;
+                },
+                
+                transformWeekGrid(backendGrid) {
+                    return backendGrid.map(row => ({
+                        periodId: row.periodId,
+                        label: row.label,
+                        cells: row.cells.map(cell => ({
+                            dayKey: cell.dayKey,
+                            slot: cell.slot ? {
+                                id: cell.slot.id,
+                                subjectCode: cell.slot.subjectCode,
+                                teacherName: cell.slot.teacherName,
+                                roomName: cell.slot.roomName,
+                                periodTime: cell.slot.periodTime
+                            } : null
+                        }))
+                    }));
+                },
+                
+                transformKeyEvents(events, holidays) {
+                    const transformedEvents = [];
+                    
+                    // Add holidays
+                    if (holidays && holidays.length > 0) {
+                        holidays.forEach(holiday => {
+                            if (holiday.month === this.currentMonth) {
+                                const date = new Date(this.currentYear, holiday.month, holiday.day);
+                                transformedEvents.push({
+                                    id: 'holiday-' + holiday.day,
+                                    type: 'holiday',
+                                    label: holiday.label,
+                                    date: date,
+                                    dateLabel: date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+                                });
+                            }
+                        });
+                    }
+                    
+                    // Add other events (if any)
+                    if (events && events.length > 0) {
+                        events.forEach(event => {
+                            transformedEvents.push({
+                                id: event.id,
+                                type: event.type,
+                                label: event.title,
+                                date: new Date(event.date),
+                                dateLabel: new Date(event.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+                            });
+                        });
+                    }
+                    
+                    return transformedEvents.slice(0, 10); // Limit to 10 events
+                },
+                
+                setupRealTimeUpdates() {
+                    if (!this.realTimeUpdatesEnabled) {
+                        this.realTimeUpdatesEnabled = true;
+                        
+                        // Set up real-time updates
+                        window.pupilTimetableAPI.enableRealTimeUpdates((data, type) => {
+                            if (type === 'today' && this.activeView === 'today') {
+                                this.todaySlots = data.slots || [];
+                                this.todayLabel = data.todayLabel || this.todayLabel;
+                            }
+                        }).catch(error => {
+                            console.error('Error setting up real-time updates:', error);
+                        });
+                    }
+                },
+                
+                initMonthCalendar: function () {
+                    var self = this;
+                    
+                    // Initialize calendar immediately with local date
+                    var today = new Date();
+                    this.todayDate = today;
+                    this.currentYear = today.getFullYear();
+                    this.currentMonth = today.getMonth();
+                    this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                    
+                    // Set loading to false immediately so calendar shows
+                    this.calendarLoading = false;
+                    
+                    // Then try to get accurate time in background
+                    var applyAccurateDate = function (d) {
+                        if (d && (d.getFullYear() !== today.getFullYear() || d.getMonth() !== today.getMonth())) {
+                            // Only rebuild if month/year changed
+                            self.todayDate = d;
+                            self.currentYear = d.getFullYear();
+                            self.currentMonth = d.getMonth();
+                            self.buildMonthCalendar(self.currentYear, self.currentMonth);
+                        }
+                    };
+                    
+                    // Try to get accurate time from API in background
+                    try {
+                        fetch('https://worldtimeapi.org/api/ip', { cache: 'no-store' })
+                            .then(function (res) {
+                                if (!res.ok) throw new Error('time api failed');
+                                return res.json();
+                            })
+                            .then(function (data) {
+                                var iso = data.datetime || data.utc_datetime;
+                                if (iso) {
+                                    applyAccurateDate(new Date(iso));
+                                }
+                            })
+                            .catch(function () {
+                                // Keep using local time
+                                console.log('Using local time for calendar');
+                            });
+                    } catch (e) {
+                        console.log('Time API failed, using local time');
+                    }
+                },
+                
+                buildMonthCalendar: function (year, month) {
+                    if (year === null || typeof month !== 'number') {
+                        return;
+                    }
+                    this.currentYear = year;
+                    this.currentMonth = month;
+                    this.monthLabel = this.monthNames[month] + ' ' + year;
+                    
+                    var firstDay = new Date(year, month, 1);
+                    var lastDay = new Date(year, month + 1, 0);
+                    var startDate = new Date(firstDay);
+                    startDate.setDate(startDate.getDate() - firstDay.getDay());
+                    var endDate = new Date(lastDay);
+                    endDate.setDate(endDate.getDate() + (6 - lastDay.getDay()));
+                    
+                    var weeks = [];
+                    var currentWeek = [];
+                    var currentDate = new Date(startDate);
+                    
+                    while (currentDate <= endDate) {
+                        var cell = {
+                            day: currentDate.getDate(),
+                            month: currentDate.getMonth(),
+                            year: currentDate.getFullYear(),
+                            date: new Date(currentDate), // Add date object
+                            currentMonth: currentDate.getMonth() === month,
+                            isToday: this.isToday(currentDate),
+                            hasClasses: false,
+                            hasEvents: false,
+                            isZambiaHoliday: false,
+                            hasBirthday: false,
+                            zambianEvents: [],
+                            showDropdown: false
+                        };
+                        
+                        // Check for Zambian events on this date
+                        var zambianEvents = this.getZambianEventsForDate(currentDate);
+                        if (zambianEvents.length > 0) {
+                            cell.hasEvents = true;
+                            cell.isZambiaHoliday = zambianEvents.some(event => event.type === 'public_holiday');
+                            cell.zambianEvents = zambianEvents;
+                        }
+                        
+                        // Check for regular school events (existing logic)
+                        if (this.keyEvents && this.keyEvents.length > 0) {
+                            for (var i = 0; i < this.keyEvents.length; i++) {
+                                var event = this.keyEvents[i];
+                                if (event.date && this.isSameDay(event.date, currentDate)) {
+                                    cell.hasEvents = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Check for activities on this date
+                        if (this.activities && this.activities.length > 0) {
+                            for (var i = 0; i < this.activities.length; i++) {
+                                var activity = this.activities[i];
+                                if (activity.date && this.isSameDay(new Date(activity.date), currentDate)) {
+                                    cell.hasEvents = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Check for study sessions on this date
+                        if (this.studySessions && this.studySessions.length > 0) {
+                            for (var i = 0; i < this.studySessions.length; i++) {
+                                var session = this.studySessions[i];
+                                if (session.date && this.isSameDay(new Date(session.date), currentDate)) {
+                                    cell.hasEvents = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Check for teacher events on this date
+                        if (this.teacherEvents && this.teacherEvents.length > 0) {
+                            for (var i = 0; i < this.teacherEvents.length; i++) {
+                                var teacherEvent = this.teacherEvents[i];
+                                if (teacherEvent.date && this.isSameDay(teacherEvent.date, currentDate)) {
+                                    cell.hasEvents = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Check for school admin events on this date
+                        if (this.schoolAdminEvents && this.schoolAdminEvents.length > 0) {
+                            for (var i = 0; i < this.schoolAdminEvents.length; i++) {
+                                var adminEvent = this.schoolAdminEvents[i];
+                                if (adminEvent.date && this.isSameDay(adminEvent.date, currentDate)) {
+                                    cell.hasEvents = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Check for pupil birthdays on this date
+                        if (this.pupilBirthdays && this.pupilBirthdays.length > 0) {
+                            for (var i = 0; i < this.pupilBirthdays.length; i++) {
+                                var birthday = this.pupilBirthdays[i];
+                                if (birthday.date && this.isSameDay(birthday.date, currentDate)) {
+                                    cell.hasEvents = true;
+                                    cell.hasBirthday = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        currentWeek.push(cell);
+                        
+                        if (currentWeek.length === 7) {
+                            weeks.push(currentWeek);
+                            currentWeek = [];
+                        }
+                        
+                        currentDate.setDate(currentDate.getDate() + 1);
+                    }
+                    
+                    if (currentWeek.length > 0) {
+                        weeks.push(currentWeek);
+                    }
+                    
+                    this.monthWeeks = weeks;
+                },
+                
+                // Date comparison helper functions
+                isToday: function(date) {
+                    var today = new Date();
+                    return date.getDate() === today.getDate() &&
+                           date.getMonth() === today.getMonth() &&
+                           date.getFullYear() === today.getFullYear();
+                },
+                
+                isSameDay: function(date1, date2) {
+                    if (!date1 || !date2) return false;
+                    return date1.getDate() === date2.getDate() &&
+                           date1.getMonth() === date2.getMonth() &&
+                           date1.getFullYear() === date2.getFullYear();
+                },
+                
+                markCalendarHighlights: function (cells, year, month) {
+                    if (!Array.isArray(cells)) {
+                        return;
+                    }
+                    var classDays = {};
+                    try {
+                        if (this.selectedClass && this.weekdays && this.weekdays.length > 0) {
+                            this.weekdays.forEach(function (day) {
+                                if (day.enabled) {
+                                    classDays[day.key] = true;
+                                }
+                            });
+                        }
+                    } catch (e) {
+                    }
+                    var holidays = Array.isArray(this.zambiaHolidays) ? this.zambiaHolidays : [];
+                    for (var idx = 0; idx < cells.length; idx++) {
+                        var cell = cells[idx];
+                        if (!cell || !cell.currentMonth || !cell.day) continue;
+                        var dateObj = new Date(Date.UTC(year, month, cell.day));
+                        var dow = dateObj.getUTCDay();
+                        var keyMap = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+                        var dayKey = keyMap[dow] || null;
+                        if (dayKey && classDays[dayKey]) {
+                            cell.hasClasses = true;
+                        }
+                        for (var h = 0; h < holidays.length; h++) {
+                            var zh = holidays[h];
+                            if (zh && zh.month === month && zh.day === cell.day) {
+                                cell.isZambiaHoliday = true;
+                                break;
+                            }
+                        }
+                        cell.hasEvents = cell.hasEvents || false;
+                    }
+                },
+                
+                prevMonth: function () {
+                    if (this.currentMonth === null || this.currentYear === null) {
+                        return;
+                    }
+                    if (this.currentMonth === 0) {
+                        this.currentMonth = 11;
+                        this.currentYear -= 1;
+                    } else {
+                        this.currentMonth -= 1;
+                    }
+                    if (this.activeView === 'month') {
+                        this.loadMonthSchedule();
+                    } else {
+                        this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                        this.refreshKeyEvents();
+                    }
+                },
+                
+                nextMonth: function () {
+                    if (this.currentMonth === null || this.currentYear === null) {
+                        return;
+                    }
+                    if (this.currentMonth === 11) {
+                        this.currentMonth = 0;
+                        this.currentYear += 1;
+                    } else {
+                        this.currentMonth += 1;
+                    }
+                    if (this.activeView === 'month') {
+                        this.loadMonthSchedule();
+                    } else {
+                        this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                        this.refreshKeyEvents();
+                    }
+                },
+                
+                refreshKeyEvents: function () {
+                    // This is now handled by loadMonthSchedule
+                    if (this.activeView === 'month') {
+                        this.loadMonthSchedule();
+                    }
+                },
+                
+                dayKeyToFullName: function (dayKey) {
+                    const dayMap = {
+                        'MON': 'Monday',
+                        'TUE': 'Tuesday',
+                        'WED': 'Wednesday',
+                        'THU': 'Thursday',
+                        'FRI': 'Friday',
+                        'SAT': 'Saturday',
+                        'SUN': 'Sunday'
+                    };
+                    return dayMap[dayKey] || dayKey;
+                },
+                
+                formatTime: function (timeString) {
+                    return window.pupilTimetableAPI.formatTime(timeString);
+                },
+                
+                getTimeUntilClass: function (startTime) {
+                    return window.pupilTimetableAPI.getTimeUntilClass(startTime);
+                },
+                
+                getClassStatus: function (slot) {
+                    if (!slot) return '';
+                    return window.pupilTimetableAPI.getClassSlotStatus(slot);
+                },
+                
+                refreshData: function () {
+                    // Clear cache and reload data
+                    window.pupilTimetableAPI.clearCache();
+                    this.loadTimetableData();
+                },
+                
+                // Filter application methods
+                applyFiltersToSlots(slots) {
+                    if (!slots || slots.length === 0) return slots;
+                    
+                    return slots.filter(slot => {
+                        // Subject filter
+                        if (this.selectedSubjects.length > 0 && slot.subjectId) {
+                            if (!this.selectedSubjects.includes(slot.subjectId)) return false;
+                        }
+                        
+                        // Teacher filter
+                        if (this.selectedTeachers.length > 0 && slot.teacherId) {
+                            if (!this.selectedTeachers.includes(slot.teacherId)) return false;
+                        }
+                        
+                        // Room filter
+                        if (this.selectedRooms.length > 0 && slot.roomId) {
+                            if (!this.selectedRooms.includes(slot.roomId)) return false;
+                        }
+                        
+                        // Break filter
+                        if (!this.includeBreaks && slot.isBreak) return false;
+                        
+                        // Optional filter
+                        if (!this.includeOptional && slot.isOptional) return false;
+                        
+                        return true;
+                    }).sort((a, b) => {
+                        // Sort by selected criteria
+                        switch (this.sortBy) {
+                            case 'subject':
+                                return (a.subjectName || '').localeCompare(b.subjectName || '');
+                            case 'teacher':
+                                return (a.teacherName || '').localeCompare(b.teacherName || '');
+                            case 'time':
+                            default:
+                                // Sort by time
+                                return (a.startTime || '').localeCompare(b.startTime || '');
+                        }
+                    });
+                },
+                
+                applyFiltersToWeekGrid(weekGrid) {
+                    if (!weekGrid || weekGrid.length === 0) return weekGrid;
+                    
+                    return weekGrid.map(row => ({
+                        ...row,
+                        cells: row.cells.map(cell => ({
+                            ...cell,
+                            slot: this.applyFiltersToSlots([cell.slot]).length > 0 ? cell.slot : null
+                        }))
+                    }));
+                },
+                
+                applyFiltersToCalendar(calendar) {
+                    if (!calendar) return calendar;
+                    
+                    return {
+                        ...calendar,
+                        weeks: calendar.weeks.map(week => 
+                            week.map(day => ({
+                                ...day,
+                                hasClasses: this.shouldShowDayClasses(day)
+                            }))
+                        )
+                    };
+                },
+                
+                shouldShowDayClasses(day) {
+                    if (!day || !day.currentMonth) return day.hasClasses;
+                    
+                    // For calendar filtering, we need to check if any classes on this day match the filters
+                    // This is a simplified approach - in a real implementation, you'd need to check
+                    // the actual classes for that specific date
+                    return day.hasClasses;
+                },
+
+                // Calendar navigation functions
+                prevMonth() {
+                    if (this.currentMonth === 0) {
+                        this.currentMonth = 11;
+                        this.currentYear--;
+                    } else {
+                        this.currentMonth--;
+                    }
+                    this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                },
+
+                nextMonth() {
+                    if (this.currentMonth === 11) {
+                        this.currentMonth = 0;
+                        this.currentYear++;
+                    } else {
+                        this.currentMonth++;
+                    }
+                    this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                },
+
+                // Day View Dropdown Functions
+                toggleDayDropdown(cell) {
+                    // Close all other dropdowns first
+                    this.closeAllDropdowns();
+                    
+                    // Toggle this dropdown
+                    cell.showDropdown = !cell.showDropdown;
+                },
+
+                closeAllDropdowns() {
+                    // Iterate through all weeks and cells to close dropdowns
+                    if (this.monthWeeks) {
+                        for (var w = 0; w < this.monthWeeks.length; w++) {
+                            for (var c = 0; c < this.monthWeeks[w].length; c++) {
+                                this.monthWeeks[w][c].showDropdown = false;
+                            }
+                        }
+                    }
+                },
+
+                getEventsForCell(cell) {
+                    if (!cell || !cell.date) return [];
+                    
+                    var events = [];
+                    
+                    // Add Zambian events
+                    if (cell.zambianEvents && cell.zambianEvents.length > 0) {
+                        cell.zambianEvents.forEach(function(event) {
+                            events.push({
+                                id: 'zambian-' + event.id,
+                                title: event.label || event.title,
+                                type: 'zambian',
+                                time: '',
+                                category: event.type === 'public_holiday' ? 'Public Holiday' : 'National Event'
+                            });
+                        });
+                    }
+                    
+                    // Add school events
+                    if (this.keyEvents && this.keyEvents.length > 0) {
+                        this.keyEvents.forEach(function(event) {
+                            if (event.date && this.isSameDay(new Date(event.date), cell.date)) {
+                                events.push({
+                                    id: 'school-' + event.id,
+                                    title: event.title,
+                                    type: 'school',
+                                    time: '',
+                                    category: event.type || 'School Event'
+                                });
+                            }
+                        }.bind(this));
+                    }
+                    
+                    // Add activities
+                    if (this.activities && this.activities.length > 0) {
+                        this.activities.forEach(function(activity) {
+                            if (activity.date && this.isSameDay(new Date(activity.date), cell.date)) {
+                                events.push({
+                                    id: 'activity-' + activity.id,
+                                    title: activity.title,
+                                    type: 'activity',
+                                    time: activity.time || '',
+                                    category: activity.category || 'Other',
+                                    originalData: activity
+                                });
+                            }
+                        }.bind(this));
+                    }
+                    
+                    // Add study sessions
+                    if (this.studySessions && this.studySessions.length > 0) {
+                        this.studySessions.forEach(function(session) {
+                            if (session.date && this.isSameDay(new Date(session.date), cell.date)) {
+                                events.push({
+                                    id: 'study-' + session.id,
+                                    title: session.subject,
+                                    type: 'study',
+                                    time: session.time || '',
+                                    category: session.duration || '1 hour',
+                                    originalData: session
+                                });
+                            }
+                        }.bind(this));
+                    }
+                    
+                    // Add teacher events
+                    if (this.teacherEvents && this.teacherEvents.length > 0) {
+                        this.teacherEvents.forEach(function(event) {
+                            if (event.date && this.isSameDay(event.date, cell.date)) {
+                                events.push({
+                                    id: 'teacher-' + event.id,
+                                    title: event.title,
+                                    type: 'teacher',
+                                    time: event.time || '',
+                                    category: event.category || 'Teacher Event',
+                                    originalData: event
+                                });
+                            }
+                        }.bind(this));
+                    }
+                    
+                    // Add school admin events
+                    if (this.schoolAdminEvents && this.schoolAdminEvents.length > 0) {
+                        this.schoolAdminEvents.forEach(function(event) {
+                            if (event.date && this.isSameDay(event.date, cell.date)) {
+                                events.push({
+                                    id: 'admin-' + event.id,
+                                    title: event.title,
+                                    type: 'admin',
+                                    time: event.time || '',
+                                    category: event.category || 'School Event',
+                                    originalData: event
+                                });
+                            }
+                        }.bind(this));
+                    }
+                    
+                    // Add pupil birthdays
+                    if (this.pupilBirthdays && this.pupilBirthdays.length > 0) {
+                        this.pupilBirthdays.forEach(function(birthday) {
+                            if (birthday.date && this.isSameDay(birthday.date, cell.date)) {
+                                events.push({
+                                    id: 'birthday-' + birthday.id,
+                                    title: birthday.pupilName + "'s Birthday",
+                                    type: 'birthday',
+                                    time: '',
+                                    category: 'Age ' + birthday.age,
+                                    originalData: birthday
+                                });
+                            }
+                        }.bind(this));
+                    }
+                    
+                    return events;
+                },
+
+                getEventIcon(type) {
+                    const icons = {
+                        'zambian': 'fa-flag',
+                        'school': 'fa-school',
+                        'activity': 'fa-calendar-check',
+                        'study': 'fa-book-open',
+                        'teacher': 'fa-chalkboard-teacher',
+                        'admin': 'fa-user-tie',
+                        'birthday': 'fa-birthday-cake'
+                    };
+                    return icons[type] || 'fa-calendar';
+                },
+
+                getEventIconClass(type) {
+                    const classes = {
+                        'zambian': 'bg-red-100 text-red-600',
+                        'school': 'bg-blue-100 text-blue-600',
+                        'activity': 'bg-orange-100 text-orange-600',
+                        'study': 'bg-indigo-100 text-indigo-600',
+                        'teacher': 'bg-green-100 text-green-600',
+                        'admin': 'bg-purple-100 text-purple-600',
+                        'birthday': 'bg-pink-100 text-pink-600'
+                    };
+                    return classes[type] || 'bg-slate-100 text-slate-600';
+                },
+
+                quickAddEventToCell(cell, eventType) {
+                    if (!cell || !cell.date) return;
+                    
+                    // Initialize popup data
+                    this.newEventPopup.type = eventType;
+                    this.newEventPopup.date = cell.date;
+                    this.newEventPopup.title = '';
+                    this.newEventPopup.time = '';
+                    this.newEventPopup.category = 'Other';
+                    this.newEventPopup.duration = '1 hour';
+                    this.newEventPopup.description = '';
+                    this.newEventPopup.location = '';
+                    
+                    // Show popup
+                    this.showEventPopup = true;
+                    
+                    // Close dropdown
+                    cell.showDropdown = false;
+                },
+
+                openEventPopup(cell, eventType) {
+                    this.quickAddEventToCell(cell, eventType);
+                },
+
+                closeEventPopup() {
+                    this.showEventPopup = false;
+                    this.newEventPopup = {
+                        type: 'activity',
+                        date: null,
+                        title: '',
+                        time: '',
+                        category: 'Other',
+                        duration: '1 hour',
+                        description: '',
+                        location: ''
+                    };
+                },
+
+                saveNewEvent() {
+                    if (!this.newEventPopup.title || !this.newEventPopup.date) {
+                        alert('Please fill in the required fields');
+                        return;
+                    }
+                    
+                    var eventDate = this.newEventPopup.date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+                    
+                    if (this.newEventPopup.type === 'activity') {
+                        var activity = {
+                            id: Date.now(),
+                            title: this.newEventPopup.title,
+                            date: eventDate,
+                            time: this.newEventPopup.time || '',
+                            category: this.newEventPopup.category || 'Other',
+                            description: this.newEventPopup.description || '',
+                            createdAt: new Date().toISOString()
+                        };
+                        
+                        this.activities.push(activity);
+                        this.saveActivities();
+                        this.updateCalendarWithActivities();
+                    } else if (this.newEventPopup.type === 'study') {
+                        var session = {
+                            id: Date.now(),
+                            subject: this.newEventPopup.title,
+                            topic: this.newEventPopup.description || '',
+                            date: eventDate,
+                            time: this.newEventPopup.time || '',
+                            duration: this.newEventPopup.duration || '1 hour',
+                            location: this.newEventPopup.location || '',
+                            createdAt: new Date().toISOString()
+                        };
+                        
+                        this.studySessions.push(session);
+                        this.saveStudySessions();
+                        this.updateCalendarWithStudySessions();
+                    }
+                    
+                    // Close popup
+                    this.closeEventPopup();
+                },
+
+                editEventFromCell(event) {
+                    if (event.type === 'activity' && event.originalData) {
+                        this.editActivity(event.originalData);
+                    } else if (event.type === 'study' && event.originalData) {
+                        this.editStudySession(event.originalData);
+                    }
+                },
+
+                deleteEventFromCell(eventId, eventType) {
+                    var id = parseInt(eventId.toString().replace(/^[a-z-]+/, ''));
+                    
+                    if (eventType === 'activity') {
+                        this.deleteActivity(id);
+                    } else if (eventType === 'study') {
+                        this.deleteStudySession(id);
+                    }
+                },
+
+                // Activities methods
+                addActivity() {
+                    if (!this.newActivity.title || !this.newActivity.date) {
+                        alert('Please fill in the required fields (Title and Date)');
+                        return;
+                    }
+                    
+                    const activity = {
+                        id: Date.now(),
+                        ...this.newActivity,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    this.activities.push(activity);
+                    this.saveActivities();
+                    this.resetActivityForm();
+                    this.showActivityForm = false;
+                    this.updateCalendarWithActivities();
+                },
+
+                editActivity(activity) {
+                    this.newActivity = { ...activity };
+                    this.showActivityForm = true;
+                },
+
+                deleteActivity(id) {
+                    if (confirm('Are you sure you want to delete this activity?')) {
+                        this.activities = this.activities.filter(a => a.id !== id);
+                        this.saveActivities();
+                        this.updateCalendarWithActivities();
+                    }
+                },
+
+                resetActivityForm() {
+                    this.newActivity = {
+                        title: '',
+                        description: '',
+                        date: '',
+                        time: '',
+                        category: ''
+                    };
+                },
+
+                getActivityCategoryStyle(category) {
+                    const styles = {
+                        'Sports': 'bg-green-100 text-green-700',
+                        'Clubs': 'bg-blue-100 text-blue-700',
+                        'Music': 'bg-purple-100 text-purple-700',
+                        'Art': 'bg-pink-100 text-pink-700',
+                        'Study': 'bg-indigo-100 text-indigo-700',
+                        'Social': 'bg-orange-100 text-orange-700',
+                        'Other': 'bg-slate-100 text-slate-700'
+                    };
+                    return styles[category] || 'bg-slate-100 text-slate-700';
+                },
+
+                saveActivities() {
+                    localStorage.setItem('pupil_activities', JSON.stringify(this.activities));
+                },
+
+                loadActivities() {
+                    const saved = localStorage.getItem('pupil_activities');
+                    if (saved) {
+                        this.activities = JSON.parse(saved);
+                    }
+                    this.updateCalendarWithActivities();
+                },
+
+                // Study Sessions methods
+                addStudySession() {
+                    if (!this.newStudySession.subject || !this.newStudySession.topic || !this.newStudySession.date || !this.newStudySession.time) {
+                        alert('Please fill in the required fields (Subject, Topic, Date, and Time)');
+                        return;
+                    }
+                    
+                    const session = {
+                        id: Date.now(),
+                        ...this.newStudySession,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    this.studySessions.push(session);
+                    this.saveStudySessions();
+                    this.resetStudySessionForm();
+                    this.showStudyForm = false;
+                    this.updateCalendarWithStudySessions();
+                },
+
+                editStudySession(session) {
+                    this.newStudySession = { ...session };
+                    this.showStudyForm = true;
+                },
+
+                deleteStudySession(id) {
+                    if (confirm('Are you sure you want to delete this study session?')) {
+                        this.studySessions = this.studySessions.filter(s => s.id !== id);
+                        this.saveStudySessions();
+                        this.updateCalendarWithStudySessions();
+                    }
+                },
+
+                resetStudySessionForm() {
+                    this.newStudySession = {
+                        subject: '',
+                        topic: '',
+                        date: '',
+                        time: '',
+                        duration: '1 hour',
+                        location: ''
+                    };
+                },
+
+                saveStudySessions() {
+                    localStorage.setItem('pupil_study_sessions', JSON.stringify(this.studySessions));
+                },
+
+                loadStudySessions() {
+                    const saved = localStorage.getItem('pupil_study_sessions');
+                    if (saved) {
+                        this.studySessions = JSON.parse(saved);
+                    }
+                    this.updateCalendarWithStudySessions();
+                },
+
+                // Calendar integration methods
+                updateCalendarWithActivities() {
+                    // Rebuild calendar to include activities
+                    if (this.currentYear && this.currentMonth !== null) {
+                        this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                    }
+                    console.log('Activities updated:', this.activities);
+                },
+
+                updateCalendarWithStudySessions() {
+                    // Rebuild calendar to include study sessions
+                    if (this.currentYear && this.currentMonth !== null) {
+                        this.buildMonthCalendar(this.currentYear, this.currentMonth);
+                    }
+                    console.log('Study sessions updated:', this.studySessions);
+                },
+
+                // Dashboard integration
+                getUpcomingActivities() {
+                    const today = new Date();
+                    return this.activities.filter(activity => {
+                        const activityDate = new Date(activity.date);
+                        return activityDate >= today;
+                    }).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
+                },
+
+                getUpcomingStudySessions() {
+                    const today = new Date();
+                    return this.studySessions.filter(session => {
+                        const sessionDate = new Date(session.date);
+                        return sessionDate >= today;
+                    }).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 3);
+                }
+            };
+        }
+    </script>
+</body>
+</html>

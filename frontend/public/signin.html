@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<!--
+Copyright (c) 2026 Sepio Corp. All Rights Reserved.
+
+This software and its associated documentation files (the "Software") 
+are the sole and exclusive property of Sepio Corp. Unauthorized copying, 
+modification, distribution, or use of this Software is strictly prohibited.
+
+Sepio Corp retains all intellectual property rights to this Software.
+No license is granted to use, reproduce, or distribute this Software 
+without the express written consent of Sepio Corp.
+
+For inquiries regarding licensing, please contact:
+Sepio Corp
+Email: legal@sepiocorp.com
+-->
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in | Shikola</title>
+  <meta name="description" content="Access your Shikola multi-school management workspace." />
+  <link rel="icon" type="image/png" href="../assets/images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Glacial+Indifference:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="../shared-assets/js/shared-api-client.js"></script>
+  <script src="../shared-assets/js/shared-auth.js"></script>
+  <script src="../shared/shared-universal-api.js"></script>
+  <script src="../shared-assets/js/script.js"></script>
+  
+  <!-- Frontend Management Systems -->
+  <script src="../shared/shared-role-ui.js"></script>
+  <script src="../shared/subscription-ui.js"></script>
+  <script src="../shared/session-manager.js"></script>
+  <script src="../shared/subscription-enforcement.js"></script>
+  <script src="../shared/validation-helper.js"></script>
+  <script src="../shared/trial-manager.js"></script>
+  <script src="../shared/frontend-integration.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e'
+            },
+            accent: '#0ea5e9',
+            dark: '#082f49'
+          }
+        }
+      }
+    }
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    body { 
+      font-family: 'Glacial Indifference', sans-serif;
+      background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 45%, #bae6fd 100%);
+    }
+    .dark body {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 45%, rgba(15, 23, 42, 0.85) 100%);
+      color: #e2e8f0;
+    }
+    [x-cloak] { display: none !important; }
+    .glass-button {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      color: #0369a1;
+      transition: background 0.3s ease, border 0.3s ease, transform 0.3s ease;
+    }
+    .glass-button:hover {
+      background: rgba(255, 255, 255, 0.32);
+      border-color: rgba(14, 165, 233, 0.5);
+      transform: translateY(-2px);
+    }
+    .dark .glass-button {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      color: #e0f2fe;
+    }
+    .dark .glass-button:hover {
+      background: rgba(51, 65, 85, 0.7);
+      border-color: rgba(56, 189, 248, 0.55);
+    }
+    .auth-bg {
+      background: radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 60%),
+                  radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 50%),
+                  linear-gradient(135deg, rgba(224, 242, 254, 0.8), rgba(255,255,255,0.95));
+    }
+    .dark .auth-bg {
+      background: radial-gradient(circle at top left, rgba(14, 165, 233, 0.25), transparent 60%),
+                  radial-gradient(circle at bottom right, rgba(8, 47, 73, 0.55), transparent 50%),
+                  linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.94));
+      color: #e2e8f0;
+    }
+    .form-field:focus-within {
+      border-color: rgba(14, 165, 233, 0.55);
+      transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .login-button {
+      position: relative;
+      overflow: hidden;
+      color: #0369a1;
+      font-weight: 600;
+    }
+    .login-button::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.5) 45%, transparent 90%);
+      transform: translateX(-120%);
+      transition: transform 0.6s ease;
+    }
+    .login-button:hover::after {
+      transform: translateX(100%);
+    }
+    .dark .bg-white { background-color: rgba(15, 23, 42, 0.92) !important; color: #e2e8f0; }
+    .dark .bg-white\/90 { background-color: rgba(15, 23, 42, 0.9) !important; color: #e2e8f0; }
+    .dark .text-dark { color: #e2e8f0 !important; }
+    .dark .text-slate-600 { color: #cbd5f5 !important; }
+    .dark .text-slate-500 { color: #a5b4fc !important; }
+    .dark .border-slate-200 { border-color: rgba(71, 85, 105, 0.65) !important; }
+  </style>
+</head>
+<body class="h-full bg-white text-slate-700 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100" x-data="signinApp()" x-init="init()">
+  <div class="flex min-h-full flex-col lg:flex-row">
+    <aside class="relative hidden flex-1 overflow-hidden bg-gradient-to-br from-primary-600 via-primary-500 to-primary-400 p-12 text-white lg:flex">
+      <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+      <div class="relative z-10 flex flex-col justify-between">
+        <div>
+          <a href="index.html" class="inline-flex items-center gap-3">
+            <img src="../assets/images/logo.png" alt="Shikola logo" class="h-14 w-auto" />
+          </a>
+          <h1 class="mt-16 text-4xl font-semibold leading-tight">Shape the future of Zambian schools</h1>
+          <p class="mt-6 max-w-md text-sm text-white/80">Access school dashboards, reconcile billing, and keep every guardian connected from one digital headquarters.</p>
+        </div>
+        <div class="space-y-3 text-sm text-white/80">
+          <p class="font-medium text-white">Need help?</p>
+          <p>Sepio Corp Support • +260 976 735 481</p>
+          <p>Email <a href="mailto:support@shikola.zm" class="underline">support@shikola.zm</a></p>
+        </div>
+      </div>
+    </aside>
+    <main class="auth-bg flex flex-1 items-center justify-center px-6 py-12 lg:px-16">
+      <div class="relative w-full max-w-md space-y-10">
+        <div class="flex items-center justify-center gap-3 lg:hidden">
+          <img src="../assets/images/logo.png" alt="Shikola logo" class="h-12 w-auto" />
+        </div>
+        <div class="space-y-3">
+          <h2 class="text-3xl font-semibold text-dark">Welcome back</h2>
+          <p class="text-sm text-slate-500">Sign in to manage your school workspaces, guardians, and campus operations.</p>
+        </div>
+        <form id="loginForm" class="space-y-6 rounded-[2rem] border border-primary-100 bg-white/90 p-8 shadow-xl shadow-primary-100 backdrop-blur" @submit.prevent="handleSubmit">
+          <div id="loginError" class="hidden rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200"></div>
+          <div class="form-field rounded-2xl border border-slate-200 px-4 py-3">
+            <label for="login" class="text-xs font-semibold uppercase tracking-widest text-slate-500">Email or Username</label>
+            <input id="login" name="identifier" type="text" autocomplete="email" placeholder="Email or Username" class="mt-1 w-full border-0 bg-transparent text-sm text-slate-600 focus:outline-none" required />
+          </div>
+          <div class="form-field rounded-2xl border border-slate-200 px-4 py-3">
+            <div class="flex items-center justify-between">
+              <label for="password" class="text-xs font-semibold uppercase tracking-widest text-slate-500">Password</label>
+              <button type="button" @click="passwordVisible = !passwordVisible" class="text-xs text-primary-600 hover:text-primary-700">
+                <span x-show="!passwordVisible">Show</span>
+                <span x-show="passwordVisible">Hide</span>
+              </button>
+            </div>
+            <input id="password" name="password" :type="passwordVisible ? 'text' : 'password'" autocomplete="current-password" placeholder="Enter your password" class="mt-1 w-full border-0 bg-transparent text-sm text-slate-600 focus:outline-none" required />
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <label class="flex items-center gap-2 text-slate-600">
+              <input type="checkbox" class="rounded border-slate-300 text-primary-500 focus:ring-primary-200" />
+              <span>Remember me</span>
+            </label>
+            <button type="button" class="text-primary-600 hover:text-primary-700 font-medium">Forgot password?</button>
+          </div>
+          <button type="submit" class="login-button w-full rounded-full bg-primary-500 px-4 py-3 text-center font-semibold text-white shadow-lg transition-all duration-300 hover:bg-primary-600 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed" :disabled="isSubmitting">
+            <span x-show="!isSubmitting">Sign In</span>
+            <span x-show="isSubmitting">Signing in...</span>
+          </button>
+        </form>
+        
+        <div class="text-center">
+          <p class="text-sm text-slate-600">
+            Don't have an account? 
+            <a href="signup.html" class="font-semibold text-primary-600 hover:text-primary-700">Get started</a>
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 rounded-2xl border border-primary-100 bg-white/80 p-6">
+          <div class="text-center">
+            <div class="mx-auto mb-2 h-12 w-12 rounded-full bg-primary-50 flex items-center justify-center">
+              <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <h3 class="font-semibold text-dark">Multi-School</h3>
+            <p class="mt-1 text-xs text-slate-500">Manage multiple schools from one account</p>
+          </div>
+          <div class="text-center">
+            <div class="mx-auto mb-2 h-12 w-12 rounded-full bg-primary-50 flex items-center justify-center">
+              <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h3 class="font-semibold text-dark">Secure</h3>
+            <p class="mt-1 text-xs text-slate-500">Bank-level security for your data</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function signinApp() {
+      return {
+        isSubmitting: false,
+        passwordVisible: false,
+        
+        init() {
+          this.checkForAuthError();
+        },
+        
+        async handleSubmit() {
+          this.isSubmitting = true;
+          
+          // Clear previous errors
+          const errorDiv = document.getElementById('loginError');
+          errorDiv.classList.add('hidden');
+          errorDiv.textContent = '';
+          
+          try {
+            const formData = new FormData(document.getElementById('loginForm'));
+            const identifier = formData.get('email') || document.getElementById('login').value;
+            const password = formData.get('password') || document.getElementById('password').value;
+            
+            if (!identifier || !password) {
+              throw new Error('Email/Username and password are required');
+            }
+            
+            // Connect to real C# backend API
+            const base = window.SHIKOLA_API_BASE || '/api';
+            const response = await fetch(`${base}/api/simpleauth/login`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                identifier: identifier,
+                password: password
+              })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+              // Store authentication data
+              if (result.token) {
+                localStorage.setItem('authToken', result.token);
+              }
+              
+              // Store user session
+              if (result.user) {
+                localStorage.setItem('shikola_session', JSON.stringify({
+                  user: {
+                    id: result.user.id,
+                    name: result.user.profile?.fullName || identifier.split('@')[0],
+                    email: result.user.email,
+                    role: result.user.role,
+                    avatar: this.resolveAvatarForRole(result.user.role),
+                    schoolId: result.user.schoolId,
+                    schoolName: result.user.schoolName
+                  },
+                  portal: this.determinePortalFromRole(result.user.role),
+                  sessionId: this.generateSessionId(),
+                  loginTime: new Date().toISOString(),
+                  lastActivity: new Date().toISOString()
+                }));
+              }
+              
+              // Redirect based on user role
+              this.redirectBasedOnRole(result.user.role);
+            } else {
+              throw new Error(result.message || 'Login failed');
+            }
+          } catch (error) {
+            console.error('Login error:', error);
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = error.message || 'An error occurred during login. Please try again.';
+            errorDiv.classList.remove('hidden');
+          } finally {
+            this.isSubmitting = false;
+          }
+        },
+        
+        redirectBasedOnRole(role) {
+          const roleRedirects = {
+            'admin': '../portals/school-admin/dashboard.html',
+            'teacher': '../portals/teacher-portal/dashboard.html',
+            'accountant': '../portals/accountant-portal/dashboard.html',
+            'pupil': '../portals/pupil-portal/dashboard.html',
+          };
+          
+          const redirectUrl = roleRedirects[role] || '../index.html';
+          window.location.href = redirectUrl;
+        },
+        
+        checkForAuthError() {
+          const authError = sessionStorage.getItem('authError');
+          if (authError) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = authError;
+            errorDiv.classList.remove('hidden');
+            sessionStorage.removeItem('authError');
+          }
+        },
+        
+        resolveAvatarForRole(role) {
+          const r = String(role || '').toLowerCase();
+          return r === 'admin' ? 'fas fa-user-shield'
+              : r === 'teacher' ? 'fas fa-chalkboard-teacher'
+              : r === 'pupil' ? 'fas fa-user-graduate'
+              : r === 'accountant' ? 'fas fa-user-tie'
+              : 'fas fa-user';
+        },
+        
+        determinePortalFromRole(role) {
+          const r = String(role || '').toLowerCase();
+          if (r === 'accountant') return 'accountant-portal';
+          if (r === 'pupil') return 'pupil-portal';
+          return 'school-admin'; // Default for admin/teacher
+        },
+        
+        generateSessionId() {
+          return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+      }
+    }
+  </script>    <script src="../js/security.js"></script>
+
+</body>
+</html>
