@@ -29,6 +29,11 @@ class ExamResultsAPI {
     }
 
     async request(endpoint, options = {}) {
+        // Skip API calls in demo mode
+        if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+            throw new Error('API not configured - demo mode');
+        }
+
         const url = `${this.baseURL}/api/examresults${endpoint}`;
         const config = {
             headers: {

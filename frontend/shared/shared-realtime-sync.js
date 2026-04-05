@@ -47,7 +47,15 @@ Email: legal@sepiocorp.com
     // WebSocket connection
     function connectWebSocket() {
         try {
-            ws = new WebSocket(SYNC_CONFIG.websocketUrl);
+            // Check if WebSocket URL is properly configured
+            const wsUrl = SYNC_CONFIG.websocketUrl;
+            if (!wsUrl || wsUrl === '/ws') {
+                console.warn('WebSocket URL not configured, using polling mode');
+                startPollingMode();
+                return;
+            }
+
+            ws = new WebSocket(wsUrl);
             
             ws.onopen = function() {
                 console.log('Real-time sync connected');
@@ -75,12 +83,15 @@ Email: legal@sepiocorp.com
             };
 
             ws.onerror = function(error) {
-                console.error('WebSocket error:', error);
+                // Reduce WebSocket error logging frequency
+                if (reconnectAttempts === 0) {
+                    console.warn('WebSocket connection not available, using polling mode');
+                }
+                // Don't spam console with repeated WebSocket errors
             };
 
         } catch (e) {
-            console.error('Failed to create WebSocket connection:', e);
-            // Fallback to polling
+            console.warn('WebSocket not supported, using polling mode');
             startPollingMode();
         }
     }
@@ -115,6 +126,12 @@ Email: legal@sepiocorp.com
             const token = localStorage.getItem('authToken');
             if (!token) return;
 
+            // Only attempt polling if API base is configured
+            if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                // Skip polling for demo mode
+                return;
+            }
+
             const response = await fetch(`${window.SHIKOLA_API_BASE}/api/sync/${dataType}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -137,9 +154,15 @@ Email: legal@sepiocorp.com
             } else if (response.status === 304) {
                 // No updates
                 lastSyncTimes[dataType] = new Date().toISOString();
+            } else if (response.status === 404) {
+                // Endpoint not found - skip further polling for this type
+                console.debug(`Sync endpoint not available for ${dataType}`);
             }
         } catch (e) {
-            console.error(`Failed to poll for ${dataType} updates:`, e);
+            // Silently handle network errors in demo mode
+            if (window.SHIKOLA_API_BASE && window.SHIKOLA_API_BASE !== 'http://localhost:3000') {
+                console.debug(`Failed to poll for ${dataType} updates:`, e.message);
+            }
         }
     }
 

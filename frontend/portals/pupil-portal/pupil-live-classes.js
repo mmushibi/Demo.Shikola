@@ -29,6 +29,11 @@ class PupilLiveClassesAPI {
     }
 
     async request(endpoint, options = {}) {
+        // Skip API calls in demo mode
+        if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+            throw new Error('API not configured - demo mode');
+        }
+
         const url = `${this.baseURL}/api/pupilliveclasses${endpoint}`;
         const config = {
             headers: {
@@ -53,7 +58,7 @@ class PupilLiveClassesAPI {
 
             return await response.json();
         } catch (error) {
-            console.error('Live classes API error:', error);
+            console.error('Pupil live classes API error:', error);
             throw error;
         }
     }

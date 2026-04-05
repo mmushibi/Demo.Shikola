@@ -22,6 +22,8 @@ Email: legal@sepiocorp.com
     <title>Shikola - Timetables</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="../../config.js"></script>
+    <script src="../../shared-assets/js/shared-auth.js"></script>
+    <script src="../../public/admin-mock-data.js"></script>
     <script src="timetables-api.js" defer></script>
     <script src="timetables-api-enhanced.js" defer></script>
     <script src="timetables-data-loader.js" defer></script>
@@ -74,7 +76,8 @@ Email: legal@sepiocorp.com
         chatOpen: false,
         mobileSearchOpen: false,
         mobileNotificationsOpen: false,
-        mobileProfileOpen: false
+        mobileProfileOpen: false,
+        activeTab: 'create-timetable'
     }" x-init="init()" class="min-h-screen flex">
         <div class="flex-1 flex gap-4 lg:gap-8 w-full">
             <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
@@ -696,12 +699,6 @@ Email: legal@sepiocorp.com
 
                     <div class="mt-6">
                         <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 text-xs sm:text-sm">
-                            <button type="button" @click="activeTab = 'setup'" :class="activeTab === 'setup' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
-                                <span class="w-5 flex justify-center">
-                                    <i class="fas fa-sliders-h"></i>
-                                </span>
-                                <span>Setup (Weekdays, Periods &amp; Rooms)</span>
-                            </button>
                             <button type="button" @click="activeTab = 'create-timetable'" :class="activeTab === 'create-timetable' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
                                 <span class="w-5 flex justify-center">
                                     <i class="fas fa-plus"></i>
@@ -726,154 +723,10 @@ Email: legal@sepiocorp.com
                                 </span>
                                 <span>Master Timetable</span>
                             </button>
-                            <button type="button" @click="activeTab = 'shikola-intelligence'" :class="activeTab === 'shikola-intelligence' ? 'bg-gradient-to-r from-sky-400 to-cyan-500 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
-                                <span class="w-5 flex justify-center">
-                                    <i class="fas fa-brain"></i>
-                                </span>
-                                <span>Shikola Intelligence</span>
-                            </button>
                         </div>
                     </div>
 
                     <div class="mt-6 flex-1 space-y-6 text-sm">
-                        <section x-show="activeTab === 'setup'" x-cloak>
-                            <div class="space-y-6">
-                                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div>
-                                            <div class="text-sm font-semibold text-slate-800">Weekdays</div>
-                                            <div class="text-xs text-slate-400 mt-1">Choose which days count as teaching days for timetable generation.</div>
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 text-xs">
-                                        <template x-for="day in weekdays" :key="day.key">
-                                            <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                                                <span class="sr-only" x-text="'Enable ' + day.label"></span>
-                                                <input type="checkbox" class="h-3.5 w-3.5 rounded border-slate-300 text-orange-500 focus:ring-orange-400" x-model="day.enabled" :id="'day-' + day.key" :title="'Enable ' + day.label">
-                                                <span class="text-slate-700" x-text="day.label"></span>
-                                            </label>
-                                        </template>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div>
-                                            <div class="text-sm font-semibold text-slate-800">Time Periods</div>
-                                            <div class="text-xs text-slate-400 mt-1">Define lesson periods used when building the timetable.</div>
-                                        </div>
-                                    </div>
-                                    <div class="rounded-2xl border border-slate-100 bg-slate-50/60 p-3 text-xs space-y-3">
-                                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3">
-                                            <div class="text-xs font-medium text-blue-800 mb-2">Period Types Explained:</div>
-                                            <ul class="space-y-1 text-xs text-blue-700">
-                                                <li><strong>Lesson:</strong> Regular teaching periods where subjects are scheduled</li>
-                                                <li><strong>Break:</strong> Short recess periods (10-20 minutes) between lessons</li>
-                                                <li><strong>Lunch:</strong> Longer meal breaks (30-60 minutes), usually midday</li>
-                                            </ul>
-                                        </div>
-                                        <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
-                                            <div>
-                                                <label class="block text-[11px] font-medium text-slate-600 mb-1" for="newPeriodName">Name</label>
-                                                <input type="text" x-model="newPeriodName" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-orange-400" id="newPeriodName" placeholder="e.g. Period 5" title="Enter period name">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-medium text-slate-600 mb-1" for="newPeriodStart">Start</label>
-                                                <input type="time" x-model="newPeriodStart" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-orange-400" id="newPeriodStart" title="Enter period start time">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-medium text-slate-600 mb-1" for="newPeriodEnd">End</label>
-                                                <input type="time" x-model="newPeriodEnd" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-orange-400" id="newPeriodEnd" title="Enter period end time">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-medium text-slate-600 mb-1" for="newPeriodType">Type</label>
-                                                <select x-model="newPeriodType" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-orange-400" id="newPeriodType" title="Select period type">
-                                                    <option value="lesson">Lesson</option>
-                                                    <option value="break">Break</option>
-                                                    <option value="lunch">Lunch</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <button type="button" class="w-full px-3 py-2 rounded-xl bg-slate-900 text-white text-[11px] font-medium hover:bg-slate-800" @click="addPeriod()">Add period</button>
-                                            </div>
-                                        </div>
-                                        <div class="grid grid-cols-12 gap-2 mb-2 text-[11px] font-medium text-slate-500">
-                                            <div class="col-span-3">Name</div>
-                                            <div class="col-span-2">Start Time</div>
-                                            <div class="col-span-2">End Time</div>
-                                            <div class="col-span-2">Type</div>
-                                            <div class="col-span-3 text-right">Slot / Actions</div>
-                                        </div>
-                                        <div class="divide-y divide-slate-100 text-xs bg-white rounded-xl border border-slate-100 overflow-hidden">
-                                            <template x-for="period in periods" :key="period.id">
-                                                <div class="grid grid-cols-12 gap-2 px-3 py-2 items-center">
-                                                    <div class="col-span-3 text-slate-700" x-text="period.name"></div>
-                                                    <div class="col-span-2 text-slate-500" x-text="period.start"></div>
-                                                    <div class="col-span-2 text-slate-500" x-text="period.end"></div>
-                                                    <div class="col-span-2">
-                                                        <span x-show="period.type === 'lesson'" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Lesson</span>
-                                                        <span x-show="period.type === 'break'" class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">Break</span>
-                                                        <span x-show="period.type === 'lunch'" class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">Lunch</span>
-                                                    </div>
-                                                    <div class="col-span-3 flex items-center justify-end gap-2 text-slate-400">
-                                                        <span x-text="period.id"></span>
-                                                        <button type="button" class="h-6 w-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200" @click="removePeriod(period.id)" aria-label="Remove period">
-                                                            <i class="fas fa-trash text-[10px]"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div>
-                                            <div class="text-sm font-semibold text-slate-800">Class Rooms</div>
-                                            <div class="text-xs text-slate-400 mt-1">Maintain the list of rooms available when assigning lessons.</div>
-                                        </div>
-                                    </div>
-                                    <div class="space-y-3 text-xs">
-                                        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-                                            <div>
-                                                <label class="block text-[11px] font-medium text-slate-600 mb-1" for="newRoomName">Room Name</label>
-                                                <input type="text" x-model="newRoomName" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-orange-400" id="newRoomName" placeholder="e.g. Block C - Room 2" title="Enter room name">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-medium text-slate-600 mb-1" for="newRoomCapacity">Capacity</label>
-                                                <input type="number" min="0" x-model="newRoomCapacity" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-orange-400" id="newRoomCapacity" placeholder="e.g. 40" title="Enter room capacity">
-                                            </div>
-                                            <div>
-                                                <label class="block text-[11px] font-medium text-slate-600 mb-1" for="newRoomDescription">Description</label>
-                                                <input type="text" x-model="newRoomDescription" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-orange-400" id="newRoomDescription" placeholder="Short note (optional)" title="Enter room description">
-                                            </div>
-                                            <div>
-                                                <button type="button" class="w-full px-3 py-2 rounded-xl bg-slate-900 text-white text-[11px] font-medium hover:bg-slate-800" @click="addRoom()">Add room</button>
-                                            </div>
-                                        </div>
-                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <template x-for="room in rooms" :key="room.name">
-                                                <div class="rounded-xl border border-slate-100 bg-slate-50 p-3">
-                                                    <div class="flex items-center justify-between mb-1">
-                                                        <div>
-                                                            <div class="font-semibold text-slate-700" x-text="room.name"></div>
-                                                            <div class="text-slate-500 text-[11px]" x-text="room.description"></div>
-                                                        </div>
-                                                        <div class="flex items-center gap-1">
-                                                            <span class="text-[11px] text-slate-400" x-text="'Cap ' + room.capacity"></span>
-                                                            <button type="button" class="h-6 w-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200" @click="removeRoom(room.name)" aria-label="Remove room">
-                                                                <i class="fas fa-trash text-[10px]"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
 
                         <section x-show="activeTab === 'create-timetable'" x-cloak>
                             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
@@ -1335,165 +1188,6 @@ Email: legal@sepiocorp.com
                                                 <template x-for="(item, index) in conflicts" :key="index">
                                                     <div class="text-[11px] text-red-600" x-text="item.type === 'unscheduled' ? ('Could not place ' + (item.remaining || 1) + ' of ' + ((item.lesson && item.lesson.sessionsPerWeek) ? item.lesson.sessionsPerWeek : '?') + ' sessions for ' + (item.lesson ? item.lesson.subjectCode : '') + ' - ' + (item.lesson ? item.lesson.className : '') + ' (' + (item.lesson ? item.lesson.teacherName : '') + ').') : item.message"></div>
                                                 </template>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section x-show="activeTab === 'shikola-intelligence'" x-cloak>
-                            <div class="space-y-6">
-                                <div class="bg-gradient-to-r from-sky-50 to-cyan-50 rounded-2xl border border-sky-100 shadow-sm p-6">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <div class="w-12 h-12 bg-gradient-to-r from-sky-400 to-cyan-500 rounded-xl flex items-center justify-center">
-                                            <i class="fas fa-brain text-white text-lg"></i>
-                                        </div>
-                                        <div>
-                                            <div class="text-lg font-semibold text-slate-800">Shikola Intelligence</div>
-                                            <div class="text-sm text-slate-600">AI-powered timetable generation with smart optimization</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        <div class="bg-white rounded-xl border border-slate-100 p-4">
-                                            <div class="flex items-center gap-2 mb-3">
-                                                <i class="fas fa-magic text-sky-500"></i>
-                                                <h3 class="font-semibold text-slate-700">Smart Generation</h3>
-                                            </div>
-                                            <p class="text-sm text-slate-600 mb-4">Our AI analyzes your school's constraints and automatically generates optimal timetables that minimize conflicts and maximize efficiency.</p>
-                                            
-                                            <div class="space-y-3">
-                                                <div>
-                                                    <label class="block text-xs font-medium text-slate-600 mb-1">Academic Year</label>
-                                                    <select x-model="aiAcademicYear" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-400" title="Select academic year for AI generation">
-                                                        <option value="">Select year</option>
-                                                        <option value="2028">2028</option>
-                                                        <option value="2027">2027</option>
-                                                        <option value="2026">2026</option>
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label class="block text-xs font-medium text-slate-600 mb-1">Term</label>
-                                                    <select x-model="aiAcademicTerm" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-400" title="Select academic term for AI generation">
-                                                        <option value="">Select term</option>
-                                                        <option>Term 1</option>
-                                                        <option>Term 2</option>
-                                                        <option>Term 3</option>
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label class="block text-xs font-medium text-slate-600 mb-1">Generation Priority</label>
-                                                    <select x-model="aiPriority" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-400" title="Select generation priority for AI optimization">
-                                                        <option value="balanced">Balanced (recommended)</option>
-                                                        <option value="teacher-workload">Minimize Teacher Workload</option>
-                                                        <option value="student-experience">Optimize Student Experience</option>
-                                                        <option value="room-efficiency">Maximize Room Utilization</option>
-                                                    </select>
-                                                </div>
-                                                <button type="button" @click="generateAITimetable()" class="w-full bg-gradient-to-r from-sky-400 to-cyan-500 text-white rounded-lg py-2 px-4 text-xs font-medium hover:from-sky-500 hover:to-cyan-600 transition-all duration-200 shadow-sm">
-                                                    <i class="fas fa-sparkles mr-2"></i>Generate Smart Timetable
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="bg-white rounded-xl border border-slate-100 p-4">
-                                            <div class="flex items-center gap-2 mb-3">
-                                                <i class="fas fa-cogs text-cyan-500"></i>
-                                                <h3 class="font-semibold text-slate-700">AI Configuration</h3>
-                                            </div>
-                                            <p class="text-sm text-slate-600 mb-4">Fine-tune the AI algorithm for your school's specific needs and constraints.</p>
-                                            
-                                            <div class="space-y-3">
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-xs text-slate-600">Consider Teacher Preferences</span>
-                                                    <input type="checkbox" x-model="aiConsiderTeacherPrefs" class="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400" title="Consider teacher preferences in AI generation">
-                                                </div>
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-xs text-slate-600">Balance Subject Distribution</span>
-                                                    <input type="checkbox" x-model="aiBalanceSubjects" class="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400" title="Balance subject distribution in AI generation">
-                                                </div>
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-xs text-slate-600">Avoid Consecutive Heavy Subjects</span>
-                                                    <input type="checkbox" x-model="aiAvoidHeavyConsecutive" class="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400" title="Avoid consecutive heavy subjects in AI generation">
-                                                </div>
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-xs text-slate-600">Optimize Room Changes</span>
-                                                    <input type="checkbox" x-model="aiOptimizeRoomChanges" class="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400" title="Optimize room changes in AI generation">
-                                                </div>
-                                                <div>
-                                                    <label class="block text-xs font-medium text-slate-600 mb-1">Optimization Level</label>
-                                                    <select x-model="aiOptimizationLevel" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-sky-400" title="Select optimization level for AI generation">
-                                                        <option value="fast">Fast (Basic)</option>
-                                                        <option value="balanced">Balanced (Recommended)</option>
-                                                        <option value="thorough">Thorough (Advanced)</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                                    <div class="flex items-center gap-2 mb-4">
-                                        <i class="fas fa-chart-line text-sky-500"></i>
-                                        <h3 class="font-semibold text-slate-700">AI Insights & Analytics</h3>
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                        <div class="bg-gradient-to-br from-sky-50 to-sky-100 rounded-xl p-4">
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <i class="fas fa-clock text-sky-600"></i>
-                                                <span class="text-xs font-medium text-sky-700">Time Efficiency</span>
-                                            </div>
-                                            <div class="text-2xl font-bold text-sky-800" x-text="getTimeEfficiency() + '%'">-</div>
-                                            <div class="text-xs text-sky-600">Optimal time utilization</div>
-                                        </div>
-                                        <div class="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-4">
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <i class="fas fa-users text-cyan-600"></i>
-                                                <span class="text-xs font-medium text-cyan-700">Conflict Reduction</span>
-                                            </div>
-                                            <div class="text-2xl font-bold text-cyan-800" x-text="getConflictReduction() + '%'">-</div>
-                                            <div class="text-xs text-cyan-600">Fewer scheduling conflicts</div>
-                                        </div>
-                                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <i class="fas fa-smile text-blue-600"></i>
-                                                <span class="text-xs font-medium text-blue-700">Satisfaction Score</span>
-                                            </div>
-                                            <div class="text-2xl font-bold text-blue-800" x-text="getSatisfactionScore()">-</div>
-                                            <div class="text-xs text-blue-600">Teacher & student feedback</div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="bg-slate-50 rounded-xl p-4">
-                                        <h4 class="font-medium text-slate-700 mb-3">Recent AI Generations</h4>
-                                        <div class="space-y-2">
-                                            <template x-for="generation in recentGenerations" :key="generation.id">
-                                                <div class="flex items-center justify-between bg-white rounded-lg p-3 border border-slate-100">
-                                                    <div class="flex items-center gap-3">
-                                                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
-                                                             :class="generation.status === 'optimal' ? 'bg-green-100' : generation.status === 'issues' ? 'bg-yellow-100' : 'bg-red-100'">
-                                                            <i class="fas"
-                                                               :class="generation.status === 'optimal' ? 'fa-check text-green-600' : generation.status === 'issues' ? 'fa-exclamation text-yellow-600' : 'fa-times text-red-600'"
-                                                               class="text-xs"></i>
-                                                        </div>
-                                                        <div>
-                                                            <div class="text-sm font-medium text-slate-700" x-text="generation.title"></div>
-                                                            <div class="text-xs text-slate-500" x-text="generation.timestamp"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="text-xs px-2 py-1 rounded-full"
-                                                              :class="generation.status === 'optimal' ? 'bg-green-100 text-green-700' : generation.status === 'issues' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'"
-                                                              x-text="generation.statusLabel"></span>
-                                                        <button type="button" class="text-xs text-sky-600 hover:text-sky-700" @click="viewGeneration(generation)">View</button>
-                                                    </div>
-                                                </div>
-                                            </template>
-                                            <div x-show="!recentGenerations.length" class="text-center text-xs text-slate-400 py-4">
-                                                No AI generations yet. Generate your first timetable to see insights.
                                             </div>
                                         </div>
                                     </div>

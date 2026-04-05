@@ -41,6 +41,13 @@ function resultCardsData() {
         
         async loadClassOptions() {
             try {
+                // Skip API calls in demo mode
+                if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                    // Use mock class options for demo
+                    this.classOptions = ['Grade 1A', 'Grade 1B', 'Grade 2A', 'Grade 2B', 'Grade 3A', 'Grade 3B'];
+                    return;
+                }
+
                 if (window.ShikolaTeacherApi && typeof window.ShikolaTeacherApi.getMyClasses === 'function') {
                     const classes = await window.ShikolaTeacherApi.getMyClasses();
                     if (Array.isArray(classes)) {
@@ -48,7 +55,12 @@ function resultCardsData() {
                     }
                 }
             } catch (error) {
-                console.error('Failed to load class options:', error);
+                // Only log errors in production mode
+                if (window.SHIKOLA_API_BASE && window.SHIKOLA_API_BASE !== 'http://localhost:3000') {
+                    console.error('Failed to load class options:', error);
+                }
+                // Fallback to mock options
+                this.classOptions = ['Grade 1A', 'Grade 1B', 'Grade 2A', 'Grade 2B', 'Grade 3A', 'Grade 3B'];
             }
         },
         

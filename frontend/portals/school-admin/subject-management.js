@@ -68,6 +68,12 @@ function subjectManagement() {
 
         async loadSubjects() {
             try {
+                // Skip API calls in demo mode
+                if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                    this.subjects = [];
+                    return;
+                }
+
                 const response = await fetch('/api/admin/subjects');
                 const data = await response.json();
                 this.subjects = data.data || [];
@@ -79,6 +85,12 @@ function subjectManagement() {
 
         async loadClasses() {
             try {
+                // Skip API calls in demo mode
+                if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                    this.classes = [];
+                    return;
+                }
+
                 const response = await fetch('/api/admin/classes');
                 const data = await response.json();
                 this.classes = data.data || [];
@@ -90,6 +102,12 @@ function subjectManagement() {
 
         async loadTeachers() {
             try {
+                // Skip API calls in demo mode
+                if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                    this.teachers = [];
+                    return;
+                }
+
                 const response = await fetch('/api/admin/teachers');
                 const data = await response.json();
                 this.teachers = data.data || [];
@@ -101,7 +119,13 @@ function subjectManagement() {
 
         async loadClassSubjectConfigs() {
             try {
-                const response = await fetch('/api/admin/class-subject-configurations');
+                // Skip API calls in demo mode
+                if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                    this.classSubjectConfigs = [];
+                    return;
+                }
+
+                const response = await fetch('/api/admin/class-subject-configs');
                 const data = await response.json();
                 this.classSubjectConfigs = data.data || [];
             } catch (error) {
@@ -112,7 +136,13 @@ function subjectManagement() {
 
         async loadTeacherAssignments() {
             try {
-                const response = await fetch('/api/admin/subject-teacher-assignments');
+                // Skip API calls in demo mode
+                if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                    this.teacherAssignments = [];
+                    return;
+                }
+
+                const response = await fetch('/api/admin/teacher-assignments');
                 const data = await response.json();
                 this.teacherAssignments = data.data || [];
             } catch (error) {
@@ -123,7 +153,13 @@ function subjectManagement() {
 
         async loadPupilEnrollments() {
             try {
-                const response = await fetch('/api/admin/pupil-subject-enrollments');
+                // Skip API calls in demo mode
+                if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                    this.pupilEnrollments = [];
+                    return;
+                }
+
+                const response = await fetch('/api/admin/pupil-enrollments');
                 const data = await response.json();
                 this.pupilEnrollments = data.data || [];
             } catch (error) {
@@ -139,6 +175,12 @@ function subjectManagement() {
             }
 
             try {
+                // Skip API calls in demo mode
+                if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                    this.classPupils = [];
+                    return;
+                }
+
                 const response = await fetch(`/api/admin/classes/${this.enrollmentForm.class_id}/pupils`);
                 const data = await response.json();
                 this.classPupils = data.data || [];
@@ -158,6 +200,14 @@ function subjectManagement() {
             }
 
             try {
+                // Skip API calls in demo mode
+                if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                    this.classPupils = [];
+                    this.classOptionalSubjects = [];
+                    this.classPupilsWithEnrollments = [];
+                    return;
+                }
+
                 // Load class pupils
                 const pupilsResponse = await fetch(`/api/admin/classes/${this.selectedEnrollmentClass}/pupils`);
                 const pupilsData = await pupilsResponse.json();
@@ -199,6 +249,12 @@ function subjectManagement() {
             }
 
             try {
+                // Skip API calls in demo mode
+                if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                    this.availableOptionalSubjects = [];
+                    return;
+                }
+
                 const response = await fetch(`/api/admin/classes/${this.enrollmentForm.class_id}/available-optional-subjects`);
                 const data = await response.json();
                 this.availableOptionalSubjects = data.data || [];

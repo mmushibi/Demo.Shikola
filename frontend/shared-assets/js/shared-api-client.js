@@ -22,6 +22,10 @@ class ApiClient {
     }
 
     async request(endpoint, options = {}) {
+        // Disable API requests in demo mode
+        console.log(`API request disabled in demo mode: ${endpoint}`);
+        throw new Error('API disabled in demo mode');
+        
         const url = `${this.baseUrl}${endpoint}`;
         const config = {
             headers: {

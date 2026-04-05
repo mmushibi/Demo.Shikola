@@ -388,43 +388,19 @@ Email: legal@sepiocorp.com
                                 <span class="w-5 flex justify-center">
                                     <i class="fas fa-file-alt"></i>
                                 </span>
-                                <span>Students Report Card</span>
-                            </button>
-                            <button type="button" @click="activeTab = 'student-info-report'" :class="activeTab === 'student-info-report' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
-                                <span class="w-5 flex justify-center">
-                                    <i class="fas fa-users"></i>
-                                </span>
-                                <span>Students Info Report</span>
-                            </button>
-                            <button type="button" @click="activeTab = 'parent-info-report'" :class="activeTab === 'parent-info-report' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
-                                <span class="w-5 flex justify-center">
-                                    <i class="fas fa-people-roof"></i>
-                                </span>
-                                <span>Parents Info Report</span>
+                                <span>Pupils Report Card</span>
                             </button>
                             <button type="button" @click="activeTab = 'student-attendance-report'" :class="activeTab === 'student-attendance-report' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
                                 <span class="w-5 flex justify-center">
                                     <i class="fas fa-calendar-check"></i>
                                 </span>
-                                <span>Students Monthly Attendance</span>
+                                <span>Pupils Monthly Attendance</span>
                             </button>
                             <button type="button" @click="activeTab = 'staff-attendance-report'" :class="activeTab === 'staff-attendance-report' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
                                 <span class="w-5 flex justify-center">
                                     <i class="fas fa-user-clock"></i>
                                 </span>
                                 <span>Staff Monthly Attendance</span>
-                            </button>
-                            <button type="button" @click="activeTab = 'generate-certificate'" :class="activeTab === 'generate-certificate' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
-                                <span class="w-5 flex justify-center">
-                                    <i class="fas fa-file-signature"></i>
-                                </span>
-                                <span>Generate Certificate</span>
-                            </button>
-                            <button type="button" @click="activeTab = 'certificate-templates'" :class="activeTab === 'certificate-templates' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
-                                <span class="w-5 flex justify-center">
-                                    <i class="fas fa-award"></i>
-                                </span>
-                                <span>Certificate Templates</span>
                             </button>
                         </div>
                     </div>
@@ -434,7 +410,7 @@ Email: legal@sepiocorp.com
                             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                                     <div>
-                                        <div class="text-sm font-semibold text-slate-800">Students Report Card</div>
+                                        <div class="text-sm font-semibold text-slate-800">Pupil Report Card</div>
                                         <p class="text-sm text-slate-500 mt-1">Pupil ID: P2026001</p>
                                         <div class="text-xs text-slate-400 mt-1">Generate subject-wise report cards for a specific exam, class and student.</div>
                                     </div>
@@ -484,7 +460,7 @@ Email: legal@sepiocorp.com
                                         </select>
                                     </div>
                                     <div class="relative" @click.outside="showSuggestions = false">
-                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Student</label>
+                                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Pupil</label>
                                         <input
                                             type="text"
                                             x-model="searchQuery"
@@ -495,7 +471,7 @@ Email: legal@sepiocorp.com
                                             @keydown.arrow-up.prevent="moveSelection(-1)"
                                             @keydown.enter.prevent="selectHighlighted()"
                                             class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400"
-                                            placeholder="Search by name or admission no." title="Search student by name or admission number">
+                                            placeholder="Search by name or admission no." title="Search Pupil by name or admission number">
                                         <div
                                             x-show="showSuggestions && filteredStudents().length"
                                             x-cloak
@@ -588,48 +564,48 @@ Email: legal@sepiocorp.com
                                     </div>
 
                                     <div class="bg-white px-6 py-4 border-b border-slate-100 text-xs">
-                                        <div class="font-semibold text-slate-800 mb-2">Student Information</div>
+                                        <div class="font-semibold text-slate-800 mb-2">Pupil Information</div>
                                         <div class="border border-slate-200 rounded-xl overflow-hidden">
                                             <table class="min-w-full text-[11px]">
                                                 <tbody>
                                                     <tr class="divide-x divide-slate-200">
                                                         <td class="bg-slate-50 px-3 py-2 align-top">
-                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Student Name</div>
-                                                            <div class="mt-0.5 font-semibold text-slate-800" x-text="currentStudent().name"></div>
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Pupil Name</div>
+                                                            <div class="mt-0.5 font-semibold text-slate-800" x-text="currentStudent().name">Yohano Mushibi</div>
                                                         </td>
                                                         <td class="bg-slate-50 px-3 py-2 align-top">
                                                             <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Gender</div>
-                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().gender"></div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().gender">Male</div>
                                                         </td>
                                                         <td class="bg-slate-50 px-3 py-2 align-top">
                                                             <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Date of Birth</div>
-                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().dob"></div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().dob">14/02/2014</div>
                                                         </td>
                                                         <td class="bg-slate-50 px-3 py-2 align-top">
                                                             <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Admission No.</div>
-                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().admissionNo"></div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().admissionNo">SKL-4102241</div>
                                                         </td>
                                                         <td class="bg-slate-50 px-3 py-2 align-top">
-                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Student ID</div>
-                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().id"></div>
+                                                            <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Pupil ID</div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().id">2610270068</div>
                                                         </td>
                                                     </tr>
                                                     <tr class="divide-x divide-slate-200">
                                                         <td class="bg-slate-50 px-3 py-2 align-top">
                                                             <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Grade</div>
-                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().grade"></div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().grade">Form 1</div>
                                                         </td>
                                                         <td class="bg-slate-50 px-3 py-2 align-top">
                                                             <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Class / Section</div>
-                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().classSection"></div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().classSection">B</div>
                                                         </td>
                                                         <td class="bg-slate-50 px-3 py-2 align-top">
                                                             <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Level</div>
-                                                            <div class="mt-0.5 text-slate-700" x-text="currentLevel()"></div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentLevel()">Junior Secondary</div>
                                                         </td>
                                                         <td class="bg-slate-50 px-3 py-2 align-top">
                                                             <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Campus</div>
-                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().campus"></div>
+                                                            <div class="mt-0.5 text-slate-700" x-text="currentStudent().campus">Main</div>
                                                         </td>
                                                         <td class="bg-slate-50 px-3 py-2 align-top">
                                                             <div class="text-[10px] font-medium text-slate-600 uppercase tracking-wide">Term</div>
@@ -814,232 +790,6 @@ Email: legal@sepiocorp.com
                                             This is a computer-generated Shikola report card and does not require a manual signature.
                                         </p>
                                     </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section x-show="activeTab === 'student-info-report'" x-cloak x-data="studentReportCard">
-                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs text-slate-600">
-                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                                    <div>
-                                        <div class="text-sm font-semibold text-slate-800 mb-1">Students Info Report</div>
-                                        <p class="text-slate-400">
-                                            Demo pupils list with filters by academic year, term and class, grouped by class.
-                                        </p>
-                                    </div>
-                                    <div class="flex flex-wrap justify-end gap-2 text-xs">
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600"
-                                            @click="filters.year = ''; filters.term = ''; filters.className = ''">
-                                            Clear filters
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="printInfoList()">
-                                            <i class="fas fa-print text-slate-500 text-xs"></i>
-                                            <span>Print list</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="downloadInfoPdf()">
-                                            <i class="fas fa-file-pdf text-rose-500 text-xs"></i>
-                                            <span>Download PDF</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="downloadInfoCsv()">
-                                            <i class="fas fa-file-csv text-emerald-500 text-xs"></i>
-                                            <span>Download CSV</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
-                                    <div>
-                                        <label for="info-filter-academic-year" class="block text-[11px] font-medium text-slate-600 mb-1">Academic Year</label>
-                                        <select id="info-filter-academic-year" x-model="filters.year" title="Filter by academic year" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                            <option value="">All years</option>
-                                            <option value="2028">2028</option>
-                                            <option value="2027">2027</option>
-                                            <option value="2026">2026</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="info-filter-exam-term" class="block text-[11px] font-medium text-slate-600 mb-1">Exam Term</label>
-                                        <select id="info-filter-exam-term" x-model="filters.term" title="Filter by exam term" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                            <option value="">All terms</option>
-                                            <option value="Term 1">Term 1</option>
-                                            <option value="Term 2">Term 2</option>
-                                            <option value="Term 3">Term 3</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="info-filter-class" class="block text-[11px] font-medium text-slate-600 mb-1">Class</label>
-                                        <select id="info-filter-class" x-model="filters.className" title="Filter by class" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                            <option value="">All classes</option>
-                                            <template x-for="className in classOptions" :key="className">
-                                                <option :value="className" x-text="className"></option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                    <div></div>
-                                </div>
-
-                                <div class="border border-slate-200 rounded-xl mt-2 overflow-auto" x-ref="infoList">
-                                    <table class="min-w-full text-[11px]">
-                                        <thead class="bg-slate-50 text-slate-600">
-                                            <tr>
-                                                <th class="px-3 py-1.5 text-left font-medium">Pupil</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Student ID</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Admission No.</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Gender</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Date of Birth</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Grade</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Class</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Campus</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Parent / Guardian</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Term / Year</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100">
-                                            <template x-if="!infoFilteredStudents().length">
-                                                <tr>
-                                                    <td colspan="10" class="px-3 py-4 text-[11px] text-slate-500">
-                                                        No pupils match the selected filters.
-                                                    </td>
-                                                </tr>
-                                            </template>
-                                            <template x-for="student in infoFilteredStudents()" :key="student.id">
-                                                <tr>
-                                                    <td class="px-3 py-1.5 font-medium text-slate-800" x-text="student.name"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.id"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.admissionNo"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.gender"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.dob"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.grade"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.className"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.campus"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.parentName || '—'"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.term + ' ' + student.year"></td>
-                                                </tr>
-                                            </template>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section x-show="activeTab === 'parent-info-report'" x-cloak x-data="studentReportCard">
-                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs text-slate-600">
-                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                                    <div>
-                                        <div class="text-sm font-semibold text-slate-800 mb-1">Parents Info Report</div>
-                                        <p class="text-slate-400">
-                                            Demo list of parents and guardians for enrolled pupils, with filters by academic year, term and class.
-                                        </p>
-                                    </div>
-                                    <div class="flex flex-wrap justify-end gap-2 text-xs">
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600"
-                                            @click="filters.year = ''; filters.term = ''; filters.className = ''">
-                                            Clear filters
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="printParentsList()">
-                                            <i class="fas fa-print text-slate-500 text-xs"></i>
-                                            <span>Print list</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="downloadParentsPdf()">
-                                            <i class="fas fa-file-pdf text-rose-500 text-xs"></i>
-                                            <span>Download PDF</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="downloadParentsCsv()">
-                                            <i class="fas fa-file-csv text-emerald-500 text-xs"></i>
-                                            <span>Download CSV</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
-                                    <div>
-                                        <label for="parent-filter-academic-year" class="block text-[11px] font-medium text-slate-600 mb-1">Academic Year</label>
-                                        <select id="parent-filter-academic-year" x-model="filters.year" title="Filter by academic year" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                            <option value="">All years</option>
-                                            <option value="2028">2028</option>
-                                            <option value="2027">2027</option>
-                                            <option value="2026">2026</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="parent-filter-exam-term" class="block text-[11px] font-medium text-slate-600 mb-1">Exam Term</label>
-                                        <select id="parent-filter-exam-term" x-model="filters.term" title="Filter by exam term" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                            <option value="">All terms</option>
-                                            <option value="Term 1">Term 1</option>
-                                            <option value="Term 2">Term 2</option>
-                                            <option value="Term 3">Term 3</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="parent-filter-class" class="block text-[11px] font-medium text-slate-600 mb-1">Class</label>
-                                        <select id="parent-filter-class" x-model="filters.className" title="Filter by class" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                            <option value="">All classes</option>
-                                            <template x-for="className in classOptions" :key="className">
-                                                <option :value="className" x-text="className"></option>
-                                            </template>
-                                        </select>
-                                    </div>
-                                    <div></div>
-                                </div>
-
-                                <div class="border border-slate-200 rounded-xl mt-2 overflow-auto" x-ref="parentsList">
-                                    <table class="min-w-full text-[11px]">
-                                        <thead class="bg-slate-50 text-slate-600">
-                                            <tr>
-                                                <th class="px-3 py-1.5 text-left font-medium">Pupil</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Student ID</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Class</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Parent / Guardian</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Relationship</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Phone</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Email</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Term / Year</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100">
-                                            <template x-if="!infoFilteredStudents().length">
-                                                <tr>
-                                                    <td colspan="8" class="px-3 py-4 text-[11px] text-slate-500">
-                                                        No pupils match the selected filters.
-                                                    </td>
-                                                </tr>
-                                            </template>
-                                            <template x-for="student in infoFilteredStudents()" :key="student.id">
-                                                <tr>
-                                                    <td class="px-3 py-1.5 font-medium text-slate-800" x-text="student.name"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.id"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.className"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.parentName || '—'"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.parentRelation || '—'"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.parentPhone || '—'"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.parentEmail || '—'"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="student.term + ' ' + student.year"></td>
-                                                </tr>
-                                            </template>
-                                        </tbody>
-                                    </table>
                                 </div>
                             </div>
                         </section>
@@ -1239,197 +989,6 @@ Email: legal@sepiocorp.com
                                                     <td class="px-3 py-1.5 text-right text-slate-700" x-text="row.daysAbsent"></td>
                                                     <td class="px-3 py-1.5 text-right text-slate-700" x-text="row.timesLate"></td>
                                                     <td class="px-3 py-1.5 text-right text-slate-700" x-text="row.percentage + '%' "></td>
-                                                </tr>
-                                            </template>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section x-show="activeTab === 'generate-certificate'" x-cloak x-data="certificateCenter">
-                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs text-slate-600">
-                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                                    <div>
-                                        <div class="text-sm font-semibold text-slate-800 mb-1">Generate Certificate</div>
-                                        <p class="text-slate-400">Certificate preview for a selected pupil once you fill in the details below.</p>
-                                    </div>
-                                    <div class="flex flex-wrap justify-end gap-2 text-xs">
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="printCertificate()">
-                                            <i class="fas fa-print text-slate-500 text-xs"></i>
-                                            <span>Print certificate</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="downloadCertificatePdf()">
-                                            <i class="fas fa-file-pdf text-rose-500 text-xs"></i>
-                                            <span>Download PDF</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                    <div class="md:col-span-1 space-y-3">
-                                        <div>
-                                            <label for="certificate-student-name" class="block text-[11px] font-medium text-slate-600 mb-1">Student Name</label>
-                                            <input id="certificate-student-name" type="text" x-model="certForm.studentName" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                        </div>
-                                        <div>
-                                            <label for="certificate-class-name" class="block text-[11px] font-medium text-slate-600 mb-1">Class</label>
-                                            <input id="certificate-class-name" type="text" x-model="certForm.className" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                        </div>
-                                        <div>
-                                            <label for="certificate-title" class="block text-[11px] font-medium text-slate-600 mb-1">Certificate Title</label>
-                                            <select id="certificate-title" x-model="certForm.certificateTitle" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                                <option value="Academic Achievement Certificate">Academic Achievement Certificate</option>
-                                                <option value="Perfect Attendance Certificate">Perfect Attendance Certificate</option>
-                                                <option value="Good Conduct Certificate">Good Conduct Certificate</option>
-                                                <option value="Sports Excellence Certificate">Sports Excellence Certificate</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label for="certificate-issue-date" class="block text-[11px] font-medium text-slate-600 mb-1">Issue Date</label>
-                                            <input id="certificate-issue-date" type="text" x-model="certForm.issueDate" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" placeholder="e.g. 30 June 2026">
-                                        </div>
-                                        <div>
-                                            <label for="certificate-reason" class="block text-[11px] font-medium text-slate-600 mb-1">Reason / Citation</label>
-                                            <textarea id="certificate-reason" rows="3" x-model="certForm.reason" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" placeholder="Short description of why the certificate is awarded"></textarea>
-                                        </div>
-                                    </div>
-
-                                    <div class="md:col-span-2">
-                                        <div class="border border-slate-200 rounded-2xl bg-slate-50 p-3 md:p-4" x-ref="certificatePreview">
-                                            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-2xl px-6 py-4 text-white text-center">
-                                                <div class="text-xs tracking-[0.18em] uppercase">Shikola Primary School</div>
-                                                <div class="mt-1 text-[10px] text-slate-200">Certificate of Recognition</div>
-                                            </div>
-                                            <div class="bg-white rounded-2xl shadow-sm -mt-6 pt-8 pb-6 px-6 md:px-10 border border-slate-100">
-                                                <div class="text-center mb-6">
-                                                    <div class="text-[11px] tracking-[0.25em] uppercase text-slate-500">This certificate is proudly presented to</div>
-                                                    <div class="mt-3 text-xl md:text-2xl font-semibold text-slate-900" x-text="certForm.studentName"></div>
-                                                    <div class="mt-1 text-[11px] text-slate-500" x-text="'of ' + certForm.className"></div>
-                                                </div>
-                                                <div class="text-center mb-6">
-                                                    <div class="text-sm font-semibold text-slate-800" x-text="certForm.certificateTitle"></div>
-                                                    <p class="mt-2 text-[11px] text-slate-600 leading-relaxed" x-text="certForm.reason"></p>
-                                                </div>
-                                                <div class="flex justify-between items-end mt-8 text-[11px] text-slate-600">
-                                                    <div class="text-left">
-                                                        <div class="border-b border-slate-400 w-32 mb-1"></div>
-                                                        <div>Class Teacher</div>
-                                                    </div>
-                                                    <div class="text-center">
-                                                        <div class="border-b border-slate-400 w-28 mb-1"></div>
-                                                        <div>Date</div>
-                                                        <div class="mt-0.5 text-[10px] text-slate-500" x-text="certForm.issueDate"></div>
-                                                    </div>
-                                                    <div class="text-right">
-                                                        <div class="border-b border-slate-400 w-32 mb-1"></div>
-                                                        <div>Headteacher</div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section x-show="activeTab === 'certificate-templates'" x-cloak x-data="certificateCenter">
-                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-xs text-slate-600">
-                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                                    <div>
-                                        <div class="text-sm font-semibold text-slate-800 mb-1">Certificate Templates</div>
-                                        <p class="text-slate-400 mb-0.5">Reusable certificate layouts that can be assigned to pupils and staff.</p>
-                                    </div>
-                                    <div class="flex flex-wrap justify-end gap-2 text-xs">
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600"
-                                            @click="templateFilters.category = ''; templateFilters.status = ''">
-                                            Clear filters
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="printTemplates()">
-                                            <i class="fas fa-print text-slate-500 text-xs"></i>
-                                            <span>Print list</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="downloadTemplatesPdf()">
-                                            <i class="fas fa-file-pdf text-rose-500 text-xs"></i>
-                                            <span>Download PDF</span>
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 flex items-center gap-1.5"
-                                            @click="downloadTemplatesCsv()">
-                                            <i class="fas fa-file-csv text-emerald-500 text-xs"></i>
-                                            <span>Download CSV</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                                    <div>
-                                        <label for="cert-tpl-category" class="block text-[11px] font-medium text-slate-600 mb-1">Category</label>
-                                        <select id="cert-tpl-category" x-model="templateFilters.category" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                            <option value="">All categories</option>
-                                            <option value="Achievement">Achievement</option>
-                                            <option value="Attendance">Attendance</option>
-                                            <option value="Behaviour">Behaviour</option>
-                                            <option value="Sports">Sports</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="cert-tpl-status" class="block text-[11px] font-medium text-slate-600 mb-1">Status</label>
-                                        <select id="cert-tpl-status" x-model="templateFilters.status" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 focus:outline-none focus:ring-1 focus:ring-orange-400">
-                                            <option value="">All statuses</option>
-                                            <option value="Active">Active</option>
-                                            <option value="Draft">Draft</option>
-                                        </select>
-                                    </div>
-                                    <div></div>
-                                </div>
-
-                                <div class="border border-slate-200 rounded-xl mt-2 overflow-auto" x-ref="templatesTable">
-                                    <table class="min-w-full text-[11px]">
-                                        <thead class="bg-slate-50 text-slate-600">
-                                            <tr>
-                                                <th class="px-3 py-1.5 text-left font-medium">Code</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Template Name</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Category</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Level</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Status</th>
-                                                <th class="px-3 py-1.5 text-left font-medium">Last Updated</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100">
-                                            <template x-if="templatesLoaded && !templates.length">
-                                                <tr>
-                                                    <td colspan="6" class="px-3 py-4 text-[11px] text-slate-500">No certificate templates are available yet.</td>
-                                                </tr>
-                                            </template>
-                                            <template x-if="!(templatesLoaded && !templates.length) && !filteredTemplates().length">
-                                                <tr>
-                                                    <td colspan="6" class="px-3 py-4 text-[11px] text-slate-500">No templates match the selected filters.</td>
-                                                </tr>
-                                            </template>
-                                            <template x-for="tpl in filteredTemplates()" :key="tpl.code">
-                                                <tr>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="tpl.code"></td>
-                                                    <td class="px-3 py-1.5 font-medium text-slate-800" x-text="tpl.name"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="tpl.category"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="tpl.level"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="tpl.status"></td>
-                                                    <td class="px-3 py-1.5 text-slate-700" x-text="tpl.lastUpdated"></td>
                                                 </tr>
                                             </template>
                                         </tbody>

@@ -31,13 +31,46 @@ class ShikolaUtils {
     }
 
     handleGlobalError(event) {
-        console.error('Global error:', event.error);
-        // You could send this to an error reporting service
+        const error = event.error || event.message || 'Unknown error';
+        
+        // Filter out expected demo mode errors
+        if (error && (
+            error.message === 'API disabled in demo mode' ||
+            error.message === 'API disabled in demo mode' ||
+            (typeof error === 'string' && error.includes('API disabled in demo mode'))
+        )) {
+            return; // Silently ignore demo mode errors
+        }
+        
+        // Only log if we have meaningful error information
+        if (error && error !== 'null' && error !== null) {
+            console.error('Global error:', error);
+            console.error('Error details:', {
+                message: error.message || error,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                stack: error.stack
+            });
+        }
     }
 
     handleUnhandledRejection(event) {
-        console.error('Unhandled promise rejection:', event.reason);
-        // You could send this to an error reporting service
+        const reason = event.reason || 'Unknown promise rejection';
+        
+        // Filter out expected demo mode errors
+        if (reason && (
+            reason.message === 'API disabled in demo mode' ||
+            (typeof reason === 'string' && reason.includes('API disabled in demo mode')) ||
+            reason === 'API disabled in demo mode'
+        )) {
+            return; // Silently ignore demo mode errors
+        }
+        
+        // Only log meaningful rejections, filter out null/undefined
+        if (reason && reason !== 'null' && reason !== null && reason !== undefined) {
+            console.error('Unhandled promise rejection:', reason);
+        }
     }
 
     setupConsoleLogging() {

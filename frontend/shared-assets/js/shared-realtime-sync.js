@@ -46,43 +46,10 @@ Email: legal@sepiocorp.com
 
     // WebSocket connection
     function connectWebSocket() {
-        try {
-            ws = new WebSocket(SYNC_CONFIG.websocketUrl);
-            
-            ws.onopen = function() {
-                console.log('Real-time sync connected');
-                isConnected = true;
-                reconnectAttempts = 0;
-                startSyncIntervals();
-                notifySubscribers('connection', { connected: true });
-            };
-
-            ws.onmessage = function(event) {
-                try {
-                    const data = JSON.parse(event.data);
-                    handleRealtimeUpdate(data);
-                } catch (e) {
-                    console.error('Failed to parse WebSocket message:', e);
-                }
-            };
-
-            ws.onclose = function() {
-                console.log('Real-time sync disconnected');
-                isConnected = false;
-                stopSyncIntervals();
-                notifySubscribers('connection', { connected: false });
-                attemptReconnect();
-            };
-
-            ws.onerror = function(error) {
-                console.error('WebSocket error:', error);
-            };
-
-        } catch (e) {
-            console.error('Failed to create WebSocket connection:', e);
-            // Fallback to polling
-            startPollingMode();
-        }
+        // Disable WebSocket connection for demo mode
+        console.log('WebSocket disabled in demo mode');
+        startPollingMode();
+        return;
     }
 
     // Reconnection logic
@@ -99,6 +66,9 @@ Email: legal@sepiocorp.com
 
     // Polling mode fallback
     function startPollingMode() {
+        console.log('Polling mode disabled in demo mode');
+        return;
+        
         console.log('Starting polling mode for real-time sync');
         Object.keys(SYNC_CONFIG.syncIntervals).forEach(dataType => {
             if (!syncIntervals[dataType]) {
@@ -111,6 +81,10 @@ Email: legal@sepiocorp.com
 
     // Poll for updates
     async function pollForUpdates(dataType) {
+        // Disable API polling in demo mode
+        console.log(`API polling disabled for ${dataType} in demo mode`);
+        return;
+        
         try {
             const token = localStorage.getItem('authToken');
             if (!token) return;

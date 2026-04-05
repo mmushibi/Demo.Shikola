@@ -31,9 +31,13 @@ Email: legal@sepiocorp.com
         init() {
             // Wait for auth system to be available
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => this.checkAuthentication());
+                document.addEventListener('DOMContentLoaded', () => {
+                    // Wait a bit more for auth system to initialize
+                    setTimeout(() => this.checkAuthentication(), 100);
+                });
             } else {
-                this.checkAuthentication();
+                // Wait a bit for auth system to initialize
+                setTimeout(() => this.checkAuthentication(), 100);
             }
         }
 
@@ -47,7 +51,16 @@ Email: legal@sepiocorp.com
                 this.currentUser = window.shikolaAuth.getCurrentUser();
                 this.validatePortalAccess();
             } else {
-                this.redirectToSignIn();
+                // Retry authentication check after a delay
+                setTimeout(() => {
+                    if (window.shikolaAuth && window.shikolaAuth.isAuthenticated()) {
+                        this.isAuthenticated = true;
+                        this.currentUser = window.shikolaAuth.getCurrentUser();
+                        this.validatePortalAccess();
+                    } else {
+                        this.redirectToSignIn();
+                    }
+                }, 500);
             }
         }
 

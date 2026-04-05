@@ -22,7 +22,7 @@ class ShikolaAuth {
             id: 'demo-user',
             name: 'Demo User',
             email: 'demo@shikola.com',
-            role: 'superadmin',
+            role: 'admin',
             avatar: 'fas fa-user-cog'
         };
         this.init();
@@ -60,7 +60,6 @@ class ShikolaAuth {
         return r === 'admin' ? 'fas fa-user-shield'
             : r === 'teacher' ? 'fas fa-chalkboard-teacher'
             : r === 'pupil' ? 'fas fa-user-graduate'
-            : r === 'accountant' ? 'fas fa-user-tie'
             : 'fas fa-user';
     }
 
@@ -69,7 +68,7 @@ class ShikolaAuth {
     }
 
     isSuperAdminConsole() {
-        return String(window.location.pathname || '').toLowerCase().includes('super-admin');
+        return String(window.location.pathname || '').toLowerCase().includes('admin');
     }
 
     init() {
@@ -115,7 +114,7 @@ class ShikolaAuth {
     }
 
     async login(credentials, portal) {
-        this.setSession(this.demoUser, portal || 'super-admin');
+        this.setSession(this.demoUser, portal || 'admin');
         return { success: true, user: this.demoUser };
     }
 
@@ -135,11 +134,9 @@ class ShikolaAuth {
 
     getAvailablePortals() {
         return [
-            { id: 'super-admin', name: 'Super Admin', icon: 'fas fa-user-cog', url: '../frontend/portals/super-admin/dashboard.html' },
             { id: 'school-admin', name: 'School Admin', icon: 'fas fa-user-shield', url: '../frontend/portals/school-admin/dashboard.html' },
             { id: 'teacher-portal', name: 'Teacher Portal', icon: 'fas fa-chalkboard-teacher', url: '../frontend/portals/teacher-portal/dashboard.html' },
-            { id: 'pupil-portal', name: 'Pupil Portal', icon: 'fas fa-user-graduate', url: '../frontend/portals/pupil-portal/dashboard.html' },
-            { id: 'accountant-portal', name: 'Accountant Portal', icon: 'fas fa-user-tie', url: '../frontend/portals/accountant-portal/dashboard.html' }
+            { id: 'pupil-portal', name: 'Pupil Portal', icon: 'fas fa-user-graduate', url: '../frontend/portals/pupil-portal/dashboard.html' }
         ];
     }
 

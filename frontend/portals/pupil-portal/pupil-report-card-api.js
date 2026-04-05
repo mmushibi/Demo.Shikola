@@ -342,6 +342,12 @@ Email: legal@sepiocorp.com
         async request(endpoint, options = {}) {
             const url = (window.SHIKOLA_API_BASE || 'http://localhost:3000') + endpoint;
             
+            // Skip API calls in demo mode
+            if (!window.SHIKOLA_API_BASE || window.SHIKOLA_API_BASE === 'http://localhost:3000') {
+                // Return mock data or throw a silent error
+                throw new Error('API not configured - demo mode');
+            }
+            
             const headers = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -369,7 +375,10 @@ Email: legal@sepiocorp.com
 
                 return data;
             } catch (error) {
-                console.error(`API request failed for ${endpoint}:`, error);
+                // Only log errors in production mode, not demo mode
+                if (window.SHIKOLA_API_BASE && window.SHIKOLA_API_BASE !== 'http://localhost:3000') {
+                    console.error(`API request failed for ${endpoint}:`, error);
+                }
                 throw error;
             }
         },
