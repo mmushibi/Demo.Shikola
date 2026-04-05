@@ -21,51 +21,12 @@ class ShikolaButtonFunctions {
         this.init();
     }
 
-    getEffectiveThemeMode() {
-        try {
-            const root = document.documentElement;
-            const datasetTheme = root && root.dataset ? root.dataset.theme : null;
-            if (datasetTheme === 'light' || datasetTheme === 'dark') return datasetTheme;
-            return root.classList.contains('dark') ? 'dark' : 'light';
-        } catch (_e) {
-            return 'light';
-        }
-    }
-
-    updateThemeToggleButton(btn) {
-        if (!btn) return;
-        const effective = this.getEffectiveThemeMode();
-        if (effective === 'dark') {
-            btn.setAttribute('title', 'Switch to light theme');
-            btn.setAttribute('aria-label', 'Switch to light theme');
-            btn.innerHTML = '<i class="fas fa-sun"></i>';
-        } else {
-            btn.setAttribute('title', 'Switch to dark theme');
-            btn.setAttribute('aria-label', 'Switch to dark theme');
-            btn.innerHTML = '<i class="fas fa-moon"></i>';
-        }
-    }
-
-    ensureGlobalThemeToggleButton() {
-        // Theme toggle functionality removed - remove any existing theme toggle buttons
-        try {
-            const existingBtn = document.getElementById('shikola-global-theme-toggle');
-            if (existingBtn) {
-                existingBtn.remove();
-            }
-        } catch (_e) {
-            // Ignore errors during removal
-        }
-        return;
-    }
 
     getPortalKeyFromPath(path) {
         if (!path) return null;
         if (path.includes('/frontend/portals/school-admin/')) return 'school-admin';
         if (path.includes('/frontend/portals/teacher-portal/')) return 'teacher-portal';
         if (path.includes('/frontend/portals/pupil-portal/')) return 'pupil-portal';
-        if (path.includes('/frontend/portals/accountant-portal/')) return 'accountant-portal';
-        if (path.includes('/frontend/portals/super-admin/')) return 'super-admin';
        return null;
     }
 
@@ -93,11 +54,7 @@ class ShikolaButtonFunctions {
                     { href: 'attendance.html', label: 'Attendance', icon: 'fas fa-user-check' },
                     { href: 'my-timetable.html', label: 'My Timetable', icon: 'fas fa-calendar-alt' },
                     { href: 'classes.html', label: 'Classes', icon: 'fas fa-chalkboard' },
-                    { href: 'exams.html', label: 'Exams', icon: 'fas fa-file-alt' },
-                    { href: 'class-tests.html', label: 'Class Tests', icon: 'fas fa-clipboard-check' },
                     { href: 'reports.html', label: 'Reports', icon: 'fas fa-chart-line' },
-                    { href: 'messaging.html', label: 'Messaging', icon: 'fas fa-comments' },
-                    { href: 'profile.html', label: 'Profile', icon: 'fas fa-id-badge' }
                 ],
                 activeClass: adminActive,
                 inactiveClass: adminInactive,
@@ -110,17 +67,10 @@ class ShikolaButtonFunctions {
             return {
                 items: [
                     { href: 'dashboard.html', label: 'Dashboard', icon: 'fas fa-chart-pie' },
-                    { href: 'admission-letter.html', label: 'Admission Letter', icon: 'fas fa-envelope-open-text' },
-                    { href: 'paid-fee-receipt.html', label: 'Paid Fee Receipt', icon: 'fas fa-receipt' },
                     { href: 'my-timetable.html', label: 'My Timetable', icon: 'fas fa-calendar-alt' },
                     { href: 'my-report-card.html', label: 'My Report Card', icon: 'fas fa-file-alt' },
-                    { href: 'test-results.html', label: 'Test Results', icon: 'fas fa-clipboard-check' },
-                    { href: 'exam-result.html', label: 'Exam Result', icon: 'fas fa-file-invoice' },
-                    { href: 'home-assignments.html', label: 'Home Assignments', icon: 'fas fa-book' },
-                    { href: 'messaging.html', label: 'Messaging', icon: 'fas fa-comments' },
-                    { href: 'live-class.html', label: 'Live Class', icon: 'fas fa-video' },
-                    { href: 'profile.html', label: 'Profile', icon: 'fas fa-user-circle' }
-                ],
+                     { href: 'home-assignments.html', label: 'Home Assignments', icon: 'fas fa-book' }
+                    ],
                 activeClass: adminActive,
                 inactiveClass: adminInactive,
                 activeLabelClass: 'font-medium flex-1',
@@ -128,53 +78,6 @@ class ShikolaButtonFunctions {
             };
         }
 
-       
-        if (portalKey === 'accountant-portal') {
-            return {
-                items: [
-                    { href: 'dashboard.html', label: 'Dashboard', icon: 'fas fa-chart-line' },
-                    { href: 'chart-of-accounts.html', label: 'Chart of Accounts', icon: 'fas fa-sitemap' },
-                    { href: 'income-management.html', label: 'Income Management', icon: 'fas fa-arrow-down' },
-                    { href: 'expense-management.html', label: 'Expense Management', icon: 'fas fa-arrow-up' },
-                    { href: 'fees-management.html', label: 'Fees Management', icon: 'fas fa-graduation-cap' },
-                    { href: 'salary-management.html', label: 'Salary Management', icon: 'fas fa-sack-dollar' },
-                    { href: 'bank-reconciliation.html', label: 'Bank Reconciliation', icon: 'fas fa-university' },
-                    { href: 'financial-reports.html', label: 'Financial Reports', icon: 'fas fa-file-invoice' },
-                    { href: 'budget-management.html', label: 'Budget Management', icon: 'fas fa-calculator' },
-                    { href: 'audit-trail.html', label: 'Audit Trail', icon: 'fas fa-history' }
-                ],
-                activeClass: 'flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-md',
-                inactiveClass: adminInactive,
-                activeLabelClass: 'font-medium flex-1',
-                inactiveLabelClass: 'flex-1'
-            };
-        }
-
-        if (portalKey === 'super-admin') {
-            return {
-                items: [
-                    { href: 'dashboard.html', label: 'Console', icon: 'fas fa-chart-pie' },
-                    { href: 'schools.html', label: 'Schools', icon: 'fas fa-school' },
-                    { href: 'users-and-roles.html', label: 'Users & Roles', icon: 'fas fa-users' },
-                    { href: 'create-user.html', label: 'Create Users', icon: 'fas fa-user-plus' },
-                    { href: 'global-user-search.html', label: 'Global Search', icon: 'fas fa-magnifying-glass' },
-                    { href: 'payments-coupons.html', label: 'Payments & Coupons', icon: 'fas fa-ticket' },
-                    { href: 'subscriptions.html', label: 'Subscriptions', icon: 'fas fa-layer-group' },
-                    { href: 'plans.html', label: 'Plans & Events', icon: 'fas fa-calendar-alt' },
-                    { href: 'activity-log.html', label: 'Activity Log', icon: 'fas fa-clipboard-list' },
-                    { href: 'system-health.html', label: 'System Health', icon: 'fas fa-heart-pulse' },
-                    { href: 'settings.html', label: 'Settings', icon: 'fas fa-gear' }
-                ],
-                activeClass: 'flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-50 text-orange-600 transition',
-                inactiveClass: adminInactive,
-                activeLabelClass: 'font-medium flex-1',
-                inactiveLabelClass: 'flex-1',
-                aliases: {
-                    'provision-school.html': 'schools.html',
-                    'school-details.html': 'schools.html'
-                }
-            };
-        }
 
         return null;
     }
@@ -333,14 +236,11 @@ class ShikolaButtonFunctions {
     getAdminSidebarNavItems() {
         return [
             { href: 'dashboard.html', label: 'Dashboard', icon: 'fas fa-chart-pie' },
-            { href: 'general-settings.html', label: 'General Settings', icon: 'fas fa-cog' },
             { href: 'classes.html', label: 'Classes', icon: 'fas fa-chalkboard' },
             { href: 'pupils.html', label: 'Pupils', icon: 'fas fa-user-graduate' },
             { href: 'employees.html', label: 'Employees', icon: 'fas fa-users' },
-            { href: 'attendance.html', label: 'Attendance', icon: 'fas fa-user-check' },
             { href: 'timetables.html', label: 'Timetables', icon: 'fas fa-calendar-alt' },
-            { href: 'reports.html', label: 'Reports', icon: 'fas fa-chart-line' },
-            { href: 'profile.html', label: 'Profile', icon: 'fas fa-user-circle' }
+            { href: 'reports.html', label: 'Reports', icon: 'fas fa-chart-line' }
         ];
     }
 
@@ -1017,31 +917,18 @@ class ShikolaButtonFunctions {
     // Button action implementations
     toggleMobileMenu(event) {
         event.preventDefault();
-        
-        // Try to find Alpine.js component with sidebarOpen
-        const alpineComponent = document.querySelector('[x-data*="sidebarOpen"]');
-        if (alpineComponent && alpineComponent.__x) {
-            const data = alpineComponent.__x.$data;
-            if (data.sidebarOpen !== undefined) {
-                data.sidebarOpen = !data.sidebarOpen;
-                return;
-            }
+        const sidebar = document.querySelector('[data-sidebar]');
+        if (sidebar) {
+            sidebar.classList.toggle('open');
         }
         
-        // Fallback: try to access Alpine data stack
+        // Fallback for Alpine.js menus
         const alpineMenu = document.querySelector('[x-data*="sidebarOpen"]');
         if (alpineMenu && alpineMenu._x_dataStack) {
             const data = alpineMenu._x_dataStack[0];
             if (data.sidebarOpen !== undefined) {
                 data.sidebarOpen = !data.sidebarOpen;
-                return;
             }
-        }
-        
-        // Fallback for data-sidebar attribute
-        const sidebar = document.querySelector('[data-sidebar]');
-        if (sidebar) {
-            sidebar.classList.toggle('open');
         }
     }
 
@@ -1225,16 +1112,6 @@ class ShikolaButtonFunctions {
             if (action && typeof this[action] === 'function') {
                 this[action]();
             }
-        }
-    }
-
-    handleThemeToggle(event) {
-        event.preventDefault();
-        if (window.ShikolaTheme) {
-            const effective = this.getEffectiveThemeMode();
-            const newTheme = effective === 'dark' ? 'light' : 'dark';
-            window.ShikolaTheme.setTheme(newTheme);
-            this.showNotification(`Theme changed to ${newTheme}`, 'info');
         }
     }
 
