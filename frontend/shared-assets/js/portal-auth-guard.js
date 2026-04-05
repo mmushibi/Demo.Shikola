@@ -155,7 +155,7 @@ Email: legal@sepiocorp.com
             }
             
             // Redirect to sign-in page
-            window.location.href = '../frontend/public/index.html';
+            window.location.href = '/index.html';
         }
 
         setupAuthMonitoring() {

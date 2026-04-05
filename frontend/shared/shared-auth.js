@@ -111,7 +111,7 @@ class ShikolaAuth {
     }
 
     async forceLogout(message) {
-        window.location.href = '../frontend/public/index.html';
+        window.location.href = '/index.html';
     }
 
     async login(credentials, portal) {
@@ -120,11 +120,11 @@ class ShikolaAuth {
     }
 
     async logout() {
-        window.location.href = '../frontend/public/index.html';
+        window.location.href = '/index.html';
     }
 
     redirectToSignIn() {
-        window.location.href = '../frontend/public/index.html';
+        window.location.href = '/index.html';
     }
 
     switchPortal(targetPortal) {

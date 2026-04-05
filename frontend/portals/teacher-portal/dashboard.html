@@ -52,17 +52,11 @@ Email: legal@sepiocorp.com
         mobileSearchOpen: false, 
         mobileSearchQuery: '', 
         mobileNotificationsOpen: false,
-        availablePortals: [
-            { id: 'teacher', name: 'Teacher Portal', url: 'dashboard.html', icon: 'fas fa-chalkboard-teacher' },
-            { id: 'pupil', name: 'Pupil Portal', url: '../pupil-portal/index.html', icon: 'fas fa-graduation-cap' },
-            { id: 'admin', name: 'School Admin', url: '../school-admin/dashboard.html', icon: 'fas fa-user-tie' }
-        ],
         getInitials: function(name) {
             if (!name) return '';
             return name.split(' ').map(word => word.charAt(0).toUpperCase()).join('').slice(0, 2);
         } 
-        mobileProfileOpen: false,
-        // Student selection properties
+                // Student selection properties
         selectedStudent: null,
         students: [],
         get filteredStudents() {
@@ -204,66 +198,16 @@ Email: legal@sepiocorp.com
                         </span>
                         <span class="flex-1">Classes</span>
                     </a>
-                    <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center">
-                            <i class="fas fa-file-alt"></i>
-                        </span>
-                        <span class="flex-1">Exams</span>
-                    </a>
-                    <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center">
-                            <i class="fas fa-clipboard-check"></i>
-                        </span>
-                        <span class="flex-1">Class Tests</span>
-                    </a>
                     <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                         <span class="w-6 flex justify-center">
                             <i class="fas fa-chart-line"></i>
                         </span>
                         <span class="flex-1">Reports</span>
                     </a>
-                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center">
-                            <i class="fas fa-comments"></i>
-                        </span>
-                        <span class="flex-1">Messaging</span>
-                    </a>
-                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center">
-                            <i class="fas fa-id-badge"></i>
-                        </span>
-                        <span class="flex-1">Profile</span>
-                    </a>
                 </nav>
 
                 <div class="mt-auto pt-8 border-t border-slate-100">
-                    <!-- Portal Switcher -->
-                    <div x-show="availablePortals.length > 1" class="mb-4 px-2">
-                        <div class="text-xs font-medium text-slate-400 mb-2">Switch Portal</div>
-                        <div class="space-y-1">
-                            <template x-for="portal in availablePortals" :key="portal.id">
-                                <a :href="portal.url" class="flex items-center gap-2 px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-50 text-xs">
-                                    <span class="w-5 flex justify-center">
-                                        <i :class="portal.icon"></i>
-                                    </span>
-                                    <span x-text="portal.name"></span>
-                                </a>
-                            </template>
-                        </div>
-                    </div>
-                    
-                    <!-- User Info -->
-                    <div x-show="user" class="mb-4 px-2">
-                        <div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-50">
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-xs font-medium">
-                                <span x-text="getInitials(user && user.name ? user.name : '')"></span>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-xs font-medium text-slate-700 truncate" x-text="user ? user.name : ''"></div>
-                                <div class="text-[10px] text-slate-400 capitalize" x-text="user ? user.role : ''"></div>
-                            </div>
-                        </div>
-                    </div>
+                   
                     
                     <!-- Logout -->
                     <div class="flex items-center justify-center px-2">
@@ -313,41 +257,17 @@ Email: legal@sepiocorp.com
                             </span>
                             <span class="flex-1">Classes</span>
                         </a>
-                        <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center">
-                                <i class="fas fa-file-alt"></i>
-                            </span>
-                            <span class="flex-1">Exams</span>
-                        </a>
-                        <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center">
-                                <i class="fas fa-clipboard-check"></i>
-                            </span>
-                            <span class="flex-1">Class Tests</span>
-                        </a>
                         <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                             <span class="w-6 flex justify-center">
                                 <i class="fas fa-chart-line"></i>
                             </span>
                             <span class="flex-1">Reports</span>
                         </a>
-                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center">
-                                <i class="fas fa-comments"></i>
-                            </span>
-                            <span class="flex-1">Messaging</span>
-                        </a>
-                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center">
-                                <i class="fas fa-id-badge"></i>
-                            </span>
-                            <span class="flex-1">Profile</span>
-                        </a>
                     </nav>
 
                     <div class="mt-auto pt-8 border-t border-slate-100">
                         <div class="flex items-center justify-center px-2">
-                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
                                 <span class="w-5 flex justify-center">
                                     <i class="fas fa-right-from-bracket"></i>
                                 </span>
@@ -573,14 +493,8 @@ Email: legal@sepiocorp.com
                                     x-show="open"
                                     x-cloak
                                     class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
-                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
-                                        <span class="w-4 flex justify-center text-slate-400">
-                                            <i class="fas fa-id-badge"></i>
-                                        </span>
-                                        <span>Profile</span>
-                                    </a>
                                     <div class="my-1 border-t border-slate-100"></div>
-                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                    <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
                                         <span class="w-4 flex justify-center">
                                             <i class="fas fa-right-from-bracket"></i>
                                         </span>
@@ -633,28 +547,7 @@ Email: legal@sepiocorp.com
                             </div>
                         </div>
 
-                        <!-- Mobile profile actions -->
-                        <div x-show="mobileProfileOpen" x-cloak class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden text-xs">
-                            <div class="px-3 py-2 border-b border-slate-100 flex items-center justify-between">
-                                <span class="font-semibold text-slate-800">Account</span>
-                                <button type="button" class="text-[11px] text-slate-400" @click="mobileProfileOpen = false">Close</button>
-                            </div>
-                            <div class="py-1">
-                                <a href="profile.html" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50">
-                                    <span class="w-4 flex justify-center text-slate-400">
-                                        <i class="fas fa-id-badge"></i>
-                                    </span>
-                                    <span>Profile</span>
-                                </a>
-                                <button type="button" @click="logout()" class="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 text-red-500">
-                                    <span class="w-4 flex justify-center">
-                                        <i class="fas fa-right-from-bracket"></i>
-                                    </span>
-                                    <span>Logout</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                                            </div>
 
                     <!-- Top summary cards (driven by teacher-dashboard.js) -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mt-6">
@@ -667,68 +560,35 @@ Email: legal@sepiocorp.com
                                 <i class="fas fa-chalkboard-teacher text-xl"></i>
                             </div>
                         </a>
-                        <a href="classes.html#students" class="rounded-2xl bg-gradient-to-tr from-emerald-400 to-teal-500 text-white p-5 flex items-center justify-between shadow-md hover:shadow-lg transition-shadow cursor-pointer group">
+                        <a href="classes.html" class="rounded-2xl bg-gradient-to-tr from-emerald-400 to-teal-500 text-white p-5 flex items-center justify-between shadow-md hover:shadow-lg transition-shadow cursor-pointer group">
                             <div>
-                                <div class="text-xs uppercase tracking-wide text-emerald-100/90">Students this term</div>
-                                <div class="mt-2 text-2xl font-semibold leading-none" x-text="studentsThisTerm"></div>
+                                <div class="text-xs uppercase tracking-wide text-emerald-100/90">Pupils this term</div>
+                                <div class="mt-2 text-2xl font-semibold leading-none" x-text="studentsThisTerm">150</div>
                             </div>
                             <div class="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                                 <i class="fas fa-user-graduate text-xl"></i>
                             </div>
                         </a>
-                        <a href="class-tests.html" class="rounded-2xl bg-gradient-to-tr from-orange-400 to-pink-500 text-white p-5 flex items-center justify-between shadow-md hover:shadow-lg transition-shadow cursor-pointer group">
+                        <a href="reports.html" class="rounded-2xl bg-gradient-to-tr from-orange-400 to-pink-500 text-white p-5 flex items-center justify-between shadow-md hover:shadow-lg transition-shadow cursor-pointer group">
                             <div>
-                                <div class="text-xs uppercase tracking-wide text-orange-100/90">Assessments to mark</div>
-                                <div class="mt-2 text-2xl font-semibold leading-none" x-text="assessmentsToMark"></div>
+                                <div class="text-xs uppercase tracking-wide text-orange-100/90">Reports</div>
+                                <div class="mt-2 text-2m font-semibold leading-none">View All</div>
                             </div>
                             <div class="h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <i class="fas fa-clipboard-check text-xl"></i>
+                                <i class="fas fa-chart-line text-xl"></i>
                             </div>
                         </a>
                     </div>
 
                     <!-- Exam/Class Test Overview card -->
                     <div class="mt-6 rounded-2xl bg-white border border-slate-100 shadow-sm p-5">
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <div class="text-sm font-semibold text-slate-800">Exam & Test Overview</div>
-                                <div class="text-xs text-slate-400 mt-1">Recent activity and pending items</div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <a href="exams.html" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-medium hover:bg-indigo-100 flex items-center gap-1.5">
-                                    <i class="fas fa-file-alt text-[11px]"></i>
-                                    Exams
-                                </a>
-                                <a href="class-tests.html" class="px-3 py-1.5 rounded-xl bg-orange-50 text-orange-600 text-xs font-medium hover:bg-orange-100 flex items-center gap-1.5">
-                                    <i class="fas fa-clipboard-check text-[11px]"></i>
-                                    Tests
-                                </a>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="text-center">
-                                <div class="text-2xl font-semibold text-slate-800" x-text="examTestOverview.unpublishedCount"></div>
-                                <div class="text-xs text-slate-400 mt-1">Unpublished marks</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-semibold text-slate-800" x-text="examTestOverview.recentCount"></div>
-                                <div class="text-xs text-slate-400 mt-1">Recent exams</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-semibold text-slate-800">
-                                    <template x-if="examTestOverview.averageScore !== null">
-                                        <span x-text="examTestOverview.averageScore + '%'"></span>
-                                    </template>
-                                    <template x-if="examTestOverview.averageScore === null">
-                                        <span class="text-slate-400">--</span>
-                                    </template>
-                                </div>
-                                <div class="text-xs text-slate-400 mt-1">Average score</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="text-2xl font-semibold text-slate-800" x-text="examTestOverview.pendingMarks"></div>
-                                <div class="text-xs text-slate-400 mt-1">Pending marks</div>
-                            </div>
+                        <div class="text-sm font-semibold text-slate-800">Reports Overview</div>
+                        <div class="text-xs text-slate-400 mt-1">View comprehensive reports and analytics</div>
+                        <div class="mt-4">
+                            <a href="reports.html" class="px-3 py-1.5 rounded-xl bg-orange-50 text-orange-600 text-xs font-medium hover:bg-orange-100 flex items-center gap-1.5">
+                                <i class="fas fa-chart-line text-[11px]"></i>
+                                View Reports
+                            </a>
                         </div>
                     </div>
 

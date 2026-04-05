@@ -66,31 +66,15 @@ Email: legal@sepiocorp.com
                         <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
                         <span class="flex-1">Classes</span>
                     </a>
-                    <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
-                        <span class="flex-1">Exams</span>
-                    </a>
-                    <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
-                        <span class="flex-1">Class Tests</span>
-                    </a>
                     <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                         <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
                         <span class="flex-1">Reports</span>
-                    </a>
-                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
-                        <span class="flex-1">Messaging</span>
-                    </a>
-                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
-                        <span class="flex-1">Profile</span>
                     </a>
                 </nav>
 
                 <div class="mt-auto pt-8 border-t border-slate-100">
                     <div class="flex items-center justify-center px-2">
-                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                        <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
                             <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
                             <span>Logout</span>
                         </a>
@@ -125,31 +109,15 @@ Email: legal@sepiocorp.com
                             <span class="w-6 flex justify-center"><i class="fas fa-chalkboard"></i></span>
                             <span class="flex-1">Classes</span>
                         </a>
-                        <a href="exams.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
-                            <span class="flex-1">Exams</span>
-                        </a>
-                        <a href="class-tests.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-clipboard-check"></i></span>
-                            <span class="flex-1">Class Tests</span>
-                        </a>
                         <a href="reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                             <span class="w-6 flex justify-center"><i class="fas fa-chart-line"></i></span>
                             <span class="flex-1">Reports</span>
-                        </a>
-                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
-                            <span class="flex-1">Messaging</span>
-                        </a>
-                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-id-badge"></i></span>
-                            <span class="flex-1">Profile</span>
                         </a>
                     </nav>
 
                     <div class="mt-auto pt-8 border-t border-slate-100">
                         <div class="flex items-center justify-center px-2">
-                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
                                 <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
                                 <span>Logout</span>
                             </a>
@@ -187,7 +155,7 @@ Email: legal@sepiocorp.com
                                     get allSuggestions() {
                                         const allItems = [
                                             ...this.pupils.map(p => ({type: 'pupil', name: p, icon: 'fa-user-graduate', url: '#'})),
-                                            ...this.assessments.map(a => ({type: 'assessment', name: a, icon: 'fa-clipboard-check', url: 'class-tests.html'})),
+                                            ...this.assessments.map(a => ({type: 'assessment', name: a, icon: 'fa-clipboard-check', url: 'classes.html'})),
                                             ...this.classes.map(c => ({type: 'class', name: c, icon: 'fa-chalkboard', url: 'classes.html'}))
                                         ];
                                         if (!this.query) return allItems.slice(0, 8);
@@ -405,14 +373,7 @@ Email: legal@sepiocorp.com
                                     x-show="open"
                                     x-cloak
                                     class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
-                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
-                                        <span class="w-4 flex justify-center text-slate-400">
-                                            <i class="fas fa-id-badge"></i>
-                                        </span>
-                                        <span>Profile</span>
-                                    </a>
-                                    <div class="my-1 border-t border-slate-100"></div>
-                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                                                        <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
                                         <span class="w-4 flex justify-center">
                                             <i class="fas fa-right-from-bracket"></i>
                                         </span>

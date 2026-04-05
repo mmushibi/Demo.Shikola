@@ -104,18 +104,7 @@ Email: legal@sepiocorp.com
     return legacyApiRequest('/api/teacher/dashboard');
   }
 
-  // Teacher Profile with database integration
-  async function getProfile() {
-    return legacyApiRequest('/api/teacher/profile');
-  }
-
-  async function updateProfile(data) {
-    return legacyApiRequest('/api/teacher/profile', {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    });
-  }
-
+  
   // Teacher Classes with database integration
   async function getMyClasses() {
     if (canUseUniversalAPI()) {
@@ -471,50 +460,7 @@ Email: legal@sepiocorp.com
     });
   }
 
-  // Class Tests with database integration
-  async function getClassTests(params = {}) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.get('tests', params);
-    }
-    const query = new URLSearchParams();
-    if (params.className) query.set('className', params.className);
-    if (params.subject) query.set('subject', params.subject);
-    if (params.term) query.set('term', params.term);
-    const queryStr = query.toString();
-    return legacyApiRequest(`/api/teacher/class-tests${queryStr ? '?' + queryStr : ''}`);
-  }
-
-  async function createClassTest(test) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.post('tests', test);
-    }
-    return legacyApiRequest('/api/teacher/class-tests', {
-      method: 'POST',
-      body: JSON.stringify(test),
-    });
-  }
-
-  async function saveClassTestMarks(testId, pupils) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.post('tests', { 
-        action: 'marks', testId, pupils 
-      });
-    }
-    return legacyApiRequest(`/api/teacher/class-tests/${testId}/marks`, {
-      method: 'POST',
-      body: JSON.stringify({ pupils }),
-    });
-  }
-
-  async function getClassTestMarks(testId) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.get('tests', { 
-        action: 'marks', testId 
-      });
-    }
-    return legacyApiRequest(`/api/teacher/class-tests/${testId}/marks`);
-  }
-
+  
   // Live Classes with database integration
   async function getLiveClasses() {
     if (canUseUniversalAPI()) {
@@ -625,147 +571,6 @@ Email: legal@sepiocorp.com
     return legacyApiRequest('/api/teacher/grades', {
       method: 'POST',
       body: JSON.stringify(data),
-    });
-  }
-
-  // Messaging - Real Backend Integration
-  async function getMessageThreads(search = {}) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.get('threads', search);
-    }
-    
-    const query = new URLSearchParams();
-    if (search.query) query.set('query', search.query);
-    if (search.peerRole) query.set('peerRole', search.peerRole);
-    if (search.includeArchived) query.set('includeArchived', search.includeArchived);
-    if (search.page) query.set('page', search.page);
-    if (search.pageSize) query.set('pageSize', search.pageSize);
-    
-    const queryString = query.toString();
-    return legacyApiRequest(`/api/messaging/threads${queryString ? '?' + queryString : ''}`);
-  }
-
-  async function getThreadMessages(threadId) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.get(`threads/${threadId}/messages`);
-    }
-    return legacyApiRequest(`/api/messaging/threads/${threadId}/messages`);
-  }
-
-  async function sendMessage(data) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.post('threads', data);
-    }
-    
-    // Use FormData for file uploads
-    const formData = new FormData();
-    formData.append('recipientId', data.recipientId);
-    formData.append('recipientRole', data.recipientRole);
-    formData.append('recipientName', data.recipientName);
-    formData.append('body', data.body);
-    
-    if (data.threadId) {
-      formData.append('threadId', data.threadId);
-    }
-    
-    if (data.attachments && data.attachments.length > 0) {
-      data.attachments.forEach(file => {
-        formData.append('attachments', file);
-      });
-    }
-    
-    return legacyApiRequest('/api/messaging/threads', {
-      method: 'POST',
-      body: formData,
-      headers: {} // Let browser set Content-Type for FormData
-    });
-  }
-
-  async function markMessageAsRead(messageId) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.post(`messages/${messageId}/read`);
-    }
-    return legacyApiRequest(`/api/messaging/messages/${messageId}/read`, {
-      method: 'POST'
-    });
-  }
-
-  async function deleteMessage(messageId) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.delete(`messages/${messageId}`);
-    }
-    return legacyApiRequest(`/api/messaging/messages/${messageId}`, {
-      method: 'DELETE'
-    });
-  }
-
-  async function archiveThread(threadId) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.delete(`threads/${threadId}`);
-    }
-    return legacyApiRequest(`/api/messaging/threads/${threadId}`, {
-      method: 'DELETE'
-    });
-  }
-
-  async function shareMessage(threadId, messageId, shareType) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.post('share', {
-        threadId,
-        messageId,
-        shareType
-      });
-    }
-    return legacyApiRequest('/api/messaging/share', {
-      method: 'POST',
-      body: JSON.stringify({
-        threadId,
-        messageId,
-        shareType
-      })
-    });
-  }
-
-  async function getContacts(query = '') {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.get('contacts', { query });
-    }
-    const queryString = query ? `?query=${encodeURIComponent(query)}` : '';
-    return legacyApiRequest(`/api/messaging/contacts${queryString}`);
-  }
-
-  async function getMessageStatistics() {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.get('statistics');
-    }
-    return legacyApiRequest('/api/messaging/statistics');
-  }
-
-  async function uploadMessageAttachment(file, messageId) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('messageId', messageId);
-    
-    return legacyApiRequest('/api/messaging/attachments/upload', {
-      method: 'POST',
-      body: formData,
-      headers: {} // Let browser set Content-Type for FormData
-    });
-  }
-
-  async function downloadAttachment(attachmentId) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.get(`attachments/${attachmentId}/download`);
-    }
-    return legacyApiRequest(`/api/messaging/attachments/${attachmentId}/download`);
-  }
-
-  async function deleteAttachment(attachmentId) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.delete(`attachments/${attachmentId}`);
-    }
-    return legacyApiRequest(`/api/messaging/attachments/${attachmentId}`, {
-      method: 'DELETE'
     });
   }
 
@@ -1289,85 +1094,11 @@ Email: legal@sepiocorp.com
     });
   }
 
-  // Class Tests with real backend integration
-  async function getClassTests(params = {}) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.get('class-tests', params);
-    }
-    
-    const query = new URLSearchParams();
-    if (params.className) query.set('className', params.className);
-    if (params.subject) query.set('subject', params.subject);
-    if (params.term) query.set('term', params.term);
-    const queryStr = query.toString();
-    
-    return legacyApiRequest(`/api/teacher/class-tests${queryStr ? '?' + queryStr : ''}`);
-  }
-
-  async function createClassTest(testData) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.post('class-tests', testData);
-    }
-    
-    return legacyApiRequest('/api/teacher/class-tests', {
-      method: 'POST',
-      body: JSON.stringify(testData),
-    });
-  }
-
-  async function saveClassTestMarks(testId, pupils) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.post('class-tests', { 
-        action: 'marks', testId, pupils 
-      });
-    }
-    
-    return legacyApiRequest(`/api/teacher/class-tests/${testId}/marks`, {
-      method: 'POST',
-      body: JSON.stringify({ pupils }),
-    });
-  }
-
-  async function getClassTestMarks(testId) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.get('class-tests', { 
-        action: 'marks', testId 
-      });
-    }
-    
-    return legacyApiRequest(`/api/teacher/class-tests/${testId}/marks`);
-  }
-
-  async function getClassTestResults(params = {}) {
-    if (canUseUniversalAPI()) {
-      return await window.ShikolaUniversalAPI.get('class-tests', { 
-        action: 'results', ...params 
-      });
-    }
-    
-    const query = new URLSearchParams();
-    if (params.className) query.set('className', params.className);
-    if (params.subject) query.set('subject', params.subject);
-    if (params.test) query.set('test', params.test);
-    if (params.term) query.set('term', params.term);
-    const queryStr = query.toString();
-    
-    return legacyApiRequest(`/api/teacher/class-tests/results${queryStr ? '?' + queryStr : ''}`);
-  }
-
+  
   // Export API
   window.ShikolaTeacherApi = {
     // Dashboard
     getDashboard,
-
-    // Profile
-    getProfile,
-    updateProfile,
-
-    // Signature Management
-    getSignature,
-    uploadSignature,
-    deleteSignature,
 
     // Password Management
     changePassword,
@@ -1416,26 +1147,6 @@ Email: legal@sepiocorp.com
     // Timetable
     getTimetable,
 
-    // Messaging
-    getMessageThreads,
-    getThreadMessages,
-    sendMessage,
-
-    // Exams
-    getMyExams,
-    getExamSchedulesForTeacher,
-    getExamMarksForTeacher,
-    getExamChapters,
-    createExamChapter,
-    deleteExamChapter,
-    getQuestionBank,
-    createQuestion,
-    deleteQuestion,
-    getExamSchedules: getExamSchedulesForTeacher,
-    createExamSchedule,
-    getExamMarks,
-    saveExamMarks,
-
     // Teacher Role and Assignments
     getTeacherProfile,
     getMyClasses,
@@ -1448,17 +1159,6 @@ Email: legal@sepiocorp.com
     getPupils,
     getMyPupils,
 
-    // Class Tests
-    getClassTests,
-    createClassTest,
-    saveClassTestMarks,
-    getClassTestMarks,
-    getClassTestResults,
-
-    // Exams
-    getMyExams,
-    getExamSchedulesForTeacher,
-    getExamMarksForTeacher,
 
     // Reports
     getStudentReportCard,

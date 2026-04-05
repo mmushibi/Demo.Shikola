@@ -284,7 +284,7 @@ class ShikolaButtonFunctions {
         });
 
         // Backwards compatibility: treat plain links to the public index as logout links
-        const legacyLogoutLinks = document.querySelectorAll('a[href="../frontend/public/index.html"]:not([data-action="logout"])');
+        const legacyLogoutLinks = document.querySelectorAll('a[href="/index.html"]:not([data-action="logout"])');
         legacyLogoutLinks.forEach(link => {
             link.dataset.action = 'logout';
             link.addEventListener('click', (event) => this.handleLogout(event));
@@ -944,7 +944,7 @@ class ShikolaButtonFunctions {
                 await this.secureLogoutFallback();
                 // Skip redirect for super-admin console
                 if (!window.location.pathname.includes('super-admin')) {
-                    window.location.href = '../frontend/public/index.html';
+                    window.location.href = '/index.html';
                 }
             }
         }

@@ -59,7 +59,7 @@ class ExamResultsAPI {
     }
 
     redirectToLogin() {
-        window.location.href = '../../public/index.html';
+        window.location.href = '/index.html';
     }
 
     // Get pupil's exams

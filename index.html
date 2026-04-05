@@ -26,6 +26,8 @@ Email: legal@sepiocorp.com
   <link href="https://fonts.googleapis.com/css2?family=Glacial+Indifference:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="frontend/js/security.js"></script>
+  <script src="frontend/public/mock-data-generator.js"></script>
+  <script src="frontend/public/mock-api-service.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script>
     tailwind.config = {
@@ -89,53 +91,22 @@ Email: legal@sepiocorp.com
       }
     }
   </style>
+
+    <script src="public/comprehensive-mock-data.js"></script>
+
+    <script src="public/simple-mock-data.js"></script>
 </head>
 <body class="bg-slate-50" x-data="appState()">
   <!-- Navigation -->
   <header class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200">
     <div class="mx-auto max-w-8xl px-6 lg:px-12">
-      <nav class="flex items-center justify-between py-4">
+      <nav class="flex items-center justify-center py-4">
         <div class="flex items-center gap-3">
           <a href="#" class="flex items-center gap-1 text-xl font-bold text-dark">
             <img src="frontend/assets/images/logo.png" alt="Shikola logo" class="h-14 w-auto" />
           </a>
         </div>
-        
-        <button class="rounded-full border border-primary-200 p-2 text-primary-600 lg:hidden" @click="mobileNav = !mobileNav" aria-label="Toggle navigation">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        
-        <div class="hidden items-center gap-10 text-sm font-medium text-slate-600 lg:flex">
-          <a class="hover:text-primary-600" href="#portals">Portals</a>
-          <a class="hover:text-primary-600" href="#features">Features</a>
-          <a class="hover:text-primary-600" href="#workflow">How it works</a>
-          <a class="hover:text-primary-600" href="#contact">Support</a>
-        </div>
-        
-        <div class="hidden items-center gap-4 lg:flex">
-          <button @click="toggleDarkMode()" class="rounded-full border border-primary-200 p-2 text-primary-600 hover:bg-primary-50 transition-colors" aria-label="Toggle dark mode">
-            <svg x-show="!darkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-            <svg x-show="darkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          </button>
-          <a href="frontend/public/signin.html" class="glass-button rounded-full px-5 py-2 text-sm font-semibold text-primary-700">Sign In</a>
-          <a href="frontend/public/signup.html" class="glass-button rounded-full px-6 py-2 text-sm font-semibold text-primary-700">Get Started</a>
-        </div>
-      </nav>
-      
-      <div class="lg:hidden" x-show="mobileNav" x-transition>
-        <div class="mx-6 mt-2 flex flex-col gap-4 rounded-2xl bg-white/80 p-6 text-sm font-medium text-slate-600 shadow-lg backdrop-blur">
-          <a class="hover:text-primary-600" href="#portals">Portals</a>
-          <a class="hover:text-primary-600" href="#features">Features</a>
-          <a class="hover:text-primary-600" href="#workflow">How it works</a>
-          <a class="hover:text-primary-600" href="#contact">Support</a>
-        </div>
-      </div>
+       </nav> 
     </div>
   </header>
 
@@ -155,58 +126,11 @@ Email: legal@sepiocorp.com
               <a href="#portals" class="rounded-full border-2 border-primary-500 bg-primary-500 px-8 py-4 text-center font-semibold text-white hover:bg-primary-600 transition-all hover:shadow-lg hover:scale-105">
                 Explore System Portals
               </a>
-              <a href="frontend/public/index.html" class="rounded-full border-2 border-primary-200 bg-white px-8 py-4 text-center font-semibold text-primary-600 hover:bg-primary-50 transition-all hover:shadow-lg hover:scale-105">
-                View Public Site
-              </a>
-            </div>
-          </div>
-          
-          <div class="grid grid-cols-3 gap-8 pt-8">
-            <div>
-              <div class="text-3xl font-bold text-primary-600">5</div>
-              <div class="text-sm text-slate-600">System Portals</div>
-            </div>
-            <div>
-              <div class="text-3xl font-bold text-primary-600">100%</div>
-              <div class="text-sm text-slate-600">Web System</div>
-            </div>
-            <div>
-              <div class="text-3xl font-bold text-primary-600">No</div>
-              <div class="text-sm text-slate-600">Login Required</div>
+             
             </div>
           </div>
         </div>
         
-        <div class="relative">
-          <div class="absolute inset-0 -z-10 rounded-full bg-white/70 shadow-2xl shadow-primary-100 blur-xl"></div>
-          <div class="relative rounded-2xl bg-white/90 backdrop-blur p-8 border border-white/50 shadow-2xl">
-            <div class="text-center space-y-6">
-              <h2 class="text-xl font-semibold text-dark mb-4">How It Works</h2>
-              <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <div class="flex items-start gap-3">
-                  <svg class="h-5 w-5 text-amber-600 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <h4 class="font-semibold text-amber-800 mb-1">Simple to Use</h4>
-                    <p class="text-sm text-amber-700">
-                      This is an easy-to-use system. All information is shown for example. Changes are not saved. This is just to show you how it works.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div class="text-center">
-                <p class="text-sm text-slate-500">All portals are accessible without login</p>
-                <div class="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Ready to Use
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </section>
@@ -338,19 +262,15 @@ Email: legal@sepiocorp.com
   </section>
 
   <!-- Footer -->
-  <footer class="bg-slate-900 text-white py-1">
+  <footer class="bg-slate-900 text-white py-4">
     <div class="mx-auto max-w-8xl px-5">
-      <div class="grid gap-8 lg:grid-cols-4">
-        <div>
-          <div class="flex items-center gap-3 mb-4">
-            <img src="frontend/assets/images/logo.png" alt="Shikola logo" class="h-14 w-auto" />
-          </div>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <img src="frontend/assets/images/logo.png" alt="Shikola logo" class="h-14 w-auto" />
         </div>
-        
-
-      
-      <div class="mt-8 pt-8 border-t border-slate-800 text-center text-slate-400 text-sm">
-        <p>&copy; 2026 Shikola. All rights reserved. Web Version 1.2</p>
+        <div class="text-slate-400 text-sm">
+          <p>&copy; 2026 Shikola. All rights reserved. Web Version 1.2</p>
+        </div>
       </div>
     </div>
   </footer>
@@ -376,5 +296,70 @@ Email: legal@sepiocorp.com
     }
   </script>
   <script src="frontend/js/security.js"></script>
+
+<script>
+// Basic school configuration for Shikola Academy
+document.addEventListener('DOMContentLoaded', function() {
+    window.ShikolaConfig = {
+        schoolName: 'Shikola Academy',
+        location: 'Lusaka, Zambia',
+        academicYear: '2026',
+        currentTerm: 'Term 1'
+    };
+    
+    // Update school name elements
+    document.querySelectorAll('.school-name').forEach(el => {
+        el.textContent = 'Shikola Academy';
+    });
+    
+    // Update location elements
+    document.querySelectorAll('.school-location').forEach(el => {
+        el.textContent = 'Lusaka, Zambia';
+    });
+});
+</script>
+
+<script>
+// Basic school configuration for Shikola Academy
+document.addEventListener('DOMContentLoaded', function() {
+    window.ShikolaConfig = {
+        schoolName: 'Shikola Academy',
+        location: 'Lusaka, Zambia',
+        academicYear: '2026',
+        currentTerm: 'Term 1'
+    };
+    
+    // Update school name elements
+    document.querySelectorAll('.school-name').forEach(el => {
+        el.textContent = 'Shikola Academy';
+    });
+    
+    // Update location elements
+    document.querySelectorAll('.school-location').forEach(el => {
+        el.textContent = 'Lusaka, Zambia';
+    });
+});
+</script>
+
+<script>
+// Basic school configuration for Shikola Academy
+document.addEventListener('DOMContentLoaded', function() {
+    window.ShikolaConfig = {
+        schoolName: 'Shikola Academy',
+        location: 'Lusaka, Zambia',
+        academicYear: '2026',
+        currentTerm: 'Term 1'
+    };
+    
+    // Update school name elements
+    document.querySelectorAll('.school-name').forEach(el => {
+        el.textContent = 'Shikola Academy';
+    });
+    
+    // Update location elements
+    document.querySelectorAll('.school-location').forEach(el => {
+        el.textContent = 'Lusaka, Zambia';
+    });
+});
+</script>
 </body>
-</html>

@@ -264,7 +264,7 @@ Email: legal@sepiocorp.com
                             return { stats: { classesCount: 0, subjectsCount: 0, pupilsThisTerm: 0, assignmentsCount: 0 }, attendance: { present: 0, absent: 0, total: 0, percentage: 0 }, upcomingClasses: [] };
                         } else if (path.includes('/classes')) {
                             return { classes: [], subjects: [] };
-                        } else if (path.includes('/assignments') || path.includes('/live-classes') || path.includes('/class-tests')) {
+                        } else if (path.includes('/assignments') || path.includes('/live-classes')) {
                             return [];
                         } else {
                             return null;
@@ -493,7 +493,7 @@ Email: legal@sepiocorp.com
                         window.ShikolaNotifications.add({
                             title: 'New Assignment Created',
                             message: evt.detail ? evt.detail.title || 'Assignment created' : 'Assignment created',
-                            link: 'class-tests.html'
+                            link: 'reports.html'
                         });
                     }
                 });
@@ -591,7 +591,7 @@ Email: legal@sepiocorp.com
                                 name: assignment.title || 'Assignment',
                                 type: 'assessment',
                                 icon: 'fa-clipboard-check',
-                                url: 'class-tests.html'
+                                url: 'classes.html'
                             });
                         });
                     }

@@ -25,21 +25,16 @@ Email: legal@sepiocorp.com
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="../../config.js"></script>
     <script src="../../shared-assets/js/shared-api-client.js"></script>
-    <script src="../../shared/js/shared-ecz-grading.js"></script>
-    <script src="../../shared/js/shared-exam-results.js"></script>
-    <script src="../../shared/js/shared-report-card-data.js"></script>
     <script src="pupil-dashboard-integration.js" defer></script>
     <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
     <script src="../../shared-assets/js/shared-auth.js" defer></script>
-    <script src="../../shared/js/shared-attendance.js" defer></script>
-    <script src="../../shared-assets/js/button-functions.js" defer></script>
+        <script src="../../shared-assets/js/button-functions.js" defer></script>
     <script src="pupil-functionality.js" defer></script>
-    <script src="../../shared/js/shared-notifications.js" defer></script>
-    <script src="../../shared/js/shared-export-print.js" defer></script>
-    <script src="../../shared/js/shared-chart-interactions.js" defer></script>
     <script src="pupil-security.js"></script>
     <script src="../../public/data-initializer.js"></script>
     <script src="../../public/quick-data-loader.js"></script>
+    <script src="../../public/pupil-mock-data.js"></script>
+    <script src="pupil-dashboard-data-loader.js"></script>
     <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../../assets/css/styles.css">
@@ -57,14 +52,6 @@ Email: legal@sepiocorp.com
                         <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
                         <span class="font-medium flex-1">Dashboard</span>
                     </a>
-                    <a href="admission-letter.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-envelope-open-text"></i></span>
-                        <span class="flex-1">Admission Letter</span>
-                    </a>
-                    <a href="paid-fee-receipt.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-receipt"></i></span>
-                        <span class="flex-1">Paid Fee Receipt</span>
-                    </a>
                     <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                         <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
                         <span class="flex-1">My Timetable</span>
@@ -73,31 +60,15 @@ Email: legal@sepiocorp.com
                         <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
                         <span class="flex-1">My Report Card</span>
                     </a>
-                    <a href="exam-result.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-file-invoice"></i></span>
-                        <span class="flex-1">Exam Result</span>
-                    </a>
                     <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                         <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
                         <span class="flex-1">Home Assignments</span>
-                    </a>
-                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
-                        <span class="flex-1">Messaging</span>
-                    </a>
-                    <a href="live-class.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-video"></i></span>
-                        <span class="flex-1">Live Class</span>
-                    </a>
-                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-user-circle"></i></span>
-                        <span class="flex-1">Profile</span>
                     </a>
                 </nav>
 
                 <div class="mt-auto pt-8 border-t border-slate-100">
                     <div class="flex items-center justify-center px-2">
-                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                        <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
                             <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
                             <span>Logout</span>
                         </a>
@@ -120,15 +91,7 @@ Email: legal@sepiocorp.com
                             <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
                             <span class="font-medium flex-1">Dashboard</span>
                         </a>
-                        <a href="admission-letter.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-envelope-open-text"></i></span>
-                            <span class="flex-1">Admission Letter</span>
-                        </a>
-                        <a href="paid-fee-receipt.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-receipt"></i></span>
-                            <span class="flex-1">Paid Fee Receipt</span>
-                        </a>
-                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
+                         <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                             <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
                             <span class="flex-1">My Timetable</span>
                         </a>
@@ -136,31 +99,17 @@ Email: legal@sepiocorp.com
                             <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
                             <span class="flex-1">My Report Card</span>
                         </a>
-                        <a href="exam-result.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-file-invoice"></i></span>
-                            <span class="flex-1">Exam Result</span>
-                        </a>
+                        
                         <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                             <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
                             <span class="flex-1">Home Assignments</span>
                         </a>
-                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
-                            <span class="flex-1">Messaging</span>
-                        </a>
-                        <a href="live-class.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-video"></i></span>
-                            <span class="flex-1">Live Class</span>
-                        </a>
-                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-user-circle"></i></span>
-                            <span class="flex-1">Profile</span>
-                        </a>
+                        
                     </nav>
 
                     <div class="mt-auto pt-8 border-t border-slate-100">
                         <div class="flex items-center justify-center px-2">
-                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
                                 <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
                                 <span>Logout</span>
                             </a>
@@ -188,7 +137,7 @@ Email: legal@sepiocorp.com
                                 x-data="{
                                     query: '',
                                     focus: false,
-                                    suggestions: ['Assignments', 'Grades', 'Attendance', 'Schedule', 'Exams', 'Homework'],
+                                    suggestions: ['Assignments', 'Grades', 'Schedule', 'Exams', 'Homework'],
                                     get allSuggestions() {
                                         if (!this.query) return this.suggestions.slice(0, 5);
                                         const q = this.query.toLowerCase();
@@ -450,14 +399,9 @@ Email: legal@sepiocorp.com
                                     </div>
                                 </button>
                                 <div x-show="open" x-cloak class="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-lg border border-slate-100 py-2 z-50">
-                                    <a href="profile.html" class="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 transition">
-                                        <span class="w-5 flex justify-center text-slate-400">
-                                            <i class="fas fa-user"></i>
-                                        </span>
-                                        <span class="text-[10px] text-slate-700">Profile</span>
-                                    </a>
+                                    
                                     <div class="border-t border-slate-100 my-1"></div>
-                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                    <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
                                         <span class="w-5 flex justify-center text-slate-400">
                                             <i class="fas fa-right-from-bracket"></i>
                                         </span>
@@ -468,7 +412,7 @@ Email: legal@sepiocorp.com
                         </div>
                     </div>
 
-                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
                         <!-- Academic Performance -->
                         <div class="rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-100 p-4" x-data="pupilAcademicCard()" x-init="init()">
                             <div class="flex items-center justify-between mb-3">
@@ -494,31 +438,7 @@ Email: legal@sepiocorp.com
                             </div>
                         </div>
 
-                        <!-- Attendance -->
-                        <div class="rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-100 p-4" x-data="pupilAttendanceCard()" x-init="init()">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-emerald-500">
-                                    <i class="fas fa-user-check text-sm"></i>
-                                </div>
-                                <span class="text-[10px] text-emerald-600 font-medium" x-text="termPercentage >= 90 ? 'Excellent' : (termPercentage >= 75 ? 'Good' : (termPercentage >= 50 ? 'Fair' : (termPercentage > 0 ? 'Needs attention' : 'No attendance')))"></span>
-                            </div>
-                            <div class="text-[11px] uppercase tracking-wide text-emerald-600 mb-1">Attendance</div>
-                            <div class="text-2xl font-semibold text-slate-800" x-text="termPercentage + '%'">0%</div>
-                            <div class="text-[11px] text-slate-500 mt-1">
-                                <span>This term</span>
-                                <span class="ml-1" x-text="'Today: ' + todayLabel"></span>
-                            </div>
-                            <div class="mt-2 border-t border-emerald-100 pt-2 space-y-1" x-show="recentRecords && recentRecords.length" x-cloak>
-                                <div class="text-[10px] text-emerald-700 font-semibold">Recent attendance</div>
-                                <template x-for="rec in recentRecords" :key="rec.date + '-' + (rec.className || '')">
-                                    <div class="flex justify-between text-[10px] text-emerald-900">
-                                        <span x-text="rec.date"></span>
-                                        <span x-text="rec.label"></span>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-
+                        
                         <!-- Pending Assignments -->
                         <div class="rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-100 p-4" x-data="pupilAssignmentCard()" x-init="init()">
                             <div class="flex items-center justify-between mb-3">
@@ -578,30 +498,87 @@ Email: legal@sepiocorp.com
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Attendance -->
+                        <div class="rounded-2xl bg-gradient-to-br from-green-50 to-green-100 border border-green-100 p-4" x-data="pupilAttendanceCard()" x-init="init()">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-green-500">
+                                    <i class="fas fa-user-check text-sm"></i>
+                                </div>
+                                <span class="text-[10px] text-green-600 font-medium" x-text="attendanceStatus"></span>
+                            </div>
+                            <div class="text-[11px] uppercase tracking-wide text-green-600 mb-1">Attendance</div>
+                            <div class="text-2xl font-semibold text-slate-800" x-text="attendanceRate"></div>
+                            <div class="text-[11px] text-slate-500 mt-1">
+                                <span>This month: <span x-text="thisMonth + '%'"></span></span>
+                                <span class="ml-1 text-green-600">↑ <span x-text="(thisMonth - lastMonth) + '%'"></span></span>
+                            </div>
+                            <div class="mt-2 border-t border-green-100 pt-2">
+                                <div class="w-full bg-green-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full transition-all duration-300" :style="`width: ${parseInt(attendanceRate)}%`"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timetable -->
+                        <div class="rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-100 p-4" x-data="pupilTimetableCard()" x-init="init()">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-purple-500">
+                                    <i class="fas fa-calendar-alt text-sm"></i>
+                                </div>
+                                <span class="text-[10px] text-purple-600 font-medium">Today</span>
+                            </div>
+                            <div class="text-[11px] uppercase tracking-wide text-purple-600 mb-1">Next Class</div>
+                            <div class="text-lg font-semibold text-slate-800" x-text="nextLesson"></div>
+                            <div class="text-[11px] text-slate-500 mt-1">
+                                <span x-text="nextLessonTime"></span>
+                                <span class="mx-1">•</span>
+                                <span x-text="nextLessonRoom"></span>
+                            </div>
+                            <div class="mt-2 border-t border-purple-100 pt-2">
+                                <div class="text-[10px] text-purple-700">
+                                    <i class="fas fa-user mr-1"></i>
+                                    <span x-text="nextLessonTeacher"></span>
+                                </div>
+                                <div class="text-[10px] text-purple-600 mt-1">
+                                    <span x-text="todayLessons + ' lessons today'"></span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs flex-1">
                         <!-- My Activities -->
-                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" x-data="pupilActivitiesWidget()">
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" x-data="pupilUpcomingEvents()" x-init="init()">
                             <div class="flex items-center justify-between mb-4">
                                 <div>
-                                    <div class="text-sm font-semibold text-slate-800">My Activities</div>
-                                    <div class="text-xs text-slate-400 mt-1">Your personal activities and events</div>
+                                    <div class="text-sm font-semibold text-slate-800">Upcoming Events</div>
+                                    <div class="text-xs text-slate-400 mt-1">School activities and important dates</div>
                                 </div>
                                 <a href="my-timetable.html?view=activities" class="text-xs text-orange-600 hover:text-orange-700">
                                     <i class="fas fa-plus mr-1"></i>Add
                                 </a>
                             </div>
-                            <div id="activities-widget-container" class="space-y-3">
-                                <div class="text-center py-4">
-                                    <i class="fas fa-spinner fa-spin text-slate-300"></i>
-                                    <div class="text-xs text-slate-400 mt-2">Loading activities...</div>
+                            <div class="space-y-3">
+                                <template x-for="event in events.slice(0, 4)" :key="event.title">
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex-1">
+                                                <div class="text-xs font-medium text-slate-800" x-text="event.title"></div>
+                                                <div class="text-[10px] text-slate-600 mt-1" x-text="formatDate(event.date)"></div>
+                                            </div>
+                                            <span class="px-2 py-1 text-[10px] font-medium rounded-full" :class="getTypeColor(event.type)" x-text="event.type"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div class="p-4 rounded-xl bg-slate-50 text-[11px] text-slate-500 text-center" x-show="!events || !events.length" x-cloak>
+                                    No upcoming events scheduled.
                                 </div>
                             </div>
                         </div>
 
                         <!-- Study Sessions -->
-                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" x-data="pupilStudyWidget()">
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" x-data="pupilTimetablePage()" x-init="init()">
                             <div class="flex items-center justify-between mb-4">
                                 <div>
                                     <div class="text-sm font-semibold text-slate-800">Study Sessions</div>
@@ -611,43 +588,58 @@ Email: legal@sepiocorp.com
                                     <i class="fas fa-plus mr-1"></i>Add
                                 </a>
                             </div>
-                            <div id="study-widget-container" class="space-y-3">
-                                <div class="text-center py-4">
-                                    <i class="fas fa-spinner fa-spin text-slate-300"></i>
-                                    <div class="text-xs text-slate-400 mt-2">Loading study sessions...</div>
+                            <div class="space-y-3">
+                                <template x-for="session in studySchedule.slice(0, 4)" :key="session.day + session.time">
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <div class="flex-1">
+                                                <div class="text-xs font-medium text-slate-800" x-text="session.subject"></div>
+                                                <div class="text-[10px] text-slate-600 mt-1">
+                                                    <span x-text="session.day"></span>
+                                                    <span class="mx-1">•</span>
+                                                    <span x-text="session.time"></span>
+                                                </div>
+                                                <div class="text-[9px] text-slate-500 mt-1" x-text="session.activity"></div>
+                                            </div>
+                                            <span class="px-2 py-1 text-[10px] font-medium rounded-full" 
+                                                  :class="session.priority === 'High' ? 'bg-red-100 text-red-700' : session.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'" 
+                                                  x-text="session.priority"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                                <div class="p-4 rounded-xl bg-slate-50 text-[11px] text-slate-500 text-center" x-show="!studySchedule || !studySchedule.length" x-cloak>
+                                    No study sessions scheduled.
                                 </div>
                             </div>
                         </div>
 
                         <!-- Upcoming Classes -->
-                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" x-data="pupilEventsCard()" x-init="init()">
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" x-data="pupilTimetablePage()" x-init="init()">
                             <div class="flex items-center justify-between mb-4">
                                 <div>
-                                    <div class="text-sm font-semibold text-slate-800">Upcoming Classes</div>
+                                    <div class="text-sm font-semibold text-slate-800">Today's Classes</div>
                                     <div class="text-xs text-slate-400 mt-1">Your scheduled classes for today</div>
                                 </div>
                             </div>
                             <div class="space-y-3">
-                                <template x-for="classItem in upcomingClasses" :key="classItem.id">
+                                <template x-for="classItem in todaySlots.slice(0, 4)" :key="classItem.id">
                                     <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
                                         <div class="flex items-center justify-between gap-2">
                                             <div class="flex-1">
-                                                <div class="text-xs font-medium text-slate-800" x-text="classItem.subject"></div>
+                                                <div class="text-xs font-medium text-slate-800" x-text="classItem.subjectName"></div>
                                                 <div class="text-[10px] text-slate-600 mt-1">
-                                                    <span x-text="classItem.teacher"></span>
+                                                    <span x-text="classItem.teacherName"></span>
                                                     <span class="mx-1">•</span>
-                                                    <span x-text="classItem.room"></span>
+                                                    <span x-text="classItem.roomName"></span>
                                                 </div>
                                             </div>
                                             <div class="text-[10px] text-slate-400 whitespace-nowrap">
-                                                <span x-text="formatTime(classItem.startTime)"></span>
-                                                <span class="mx-1">-</span>
-                                                <span x-text="formatTime(classItem.endTime)"></span>
+                                                <span x-text="classItem.startLabel"></span>
                                             </div>
                                         </div>
                                     </div>
                                 </template>
-                                <div class="p-4 rounded-xl bg-slate-50 text-[11px] text-slate-500 text-center" x-show="!upcomingClasses || !upcomingClasses.length" x-cloak>
+                                <div class="p-4 rounded-xl bg-slate-50 text-[11px] text-slate-500 text-center" x-show="!todaySlots || !todaySlots.length" x-cloak>
                                     No classes scheduled for today. Check your timetable for the complete weekly schedule.
                                 </div>
                             </div>
@@ -699,18 +691,6 @@ Email: legal@sepiocorp.com
                                     <i class="fas fa-calendar-alt"></i>
                                 </div>
                                 <span class="text-xs font-medium text-slate-700">Timetable</span>
-                            </a>
-                            <a href="messaging.html" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition text-center">
-                                <div class="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                                    <i class="fas fa-comments"></i>
-                                </div>
-                                <span class="text-xs font-medium text-slate-700">Messages</span>
-                            </a>
-                            <a href="live-class.html" class="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-slate-100 transition text-center">
-                                <div class="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
-                                    <i class="fas fa-video"></i>
-                                </div>
-                                <span class="text-xs font-medium text-slate-700">Live Class</span>
                             </a>
                         </div>
                     </div>
@@ -1139,219 +1119,7 @@ Email: legal@sepiocorp.com
                 };
             });
 
-            // Enhanced Attendance Card (existing functionality maintained)
-            window.Alpine.data('pupilAttendanceCard', function () {
-                return {
-                    todayLabel: 'Not marked',
-                    termPercentage: 0,
-                    recentRecords: [],
-                    init: function () {
-                        try {
-                            var auth = window.shikolaAuth;
-                            if (!auth || typeof auth.getCurrentUser !== 'function') return;
-                            var user = auth.getCurrentUser();
-                            if (!user || !user.id) return;
-                            var pupilId = String(user.id);
-                            var today = new Date().toISOString().slice(0, 10);
-                            
-                            // Set up real-time attendance updates
-                            var self = this;
-                            try {
-                                window.addEventListener('shikola:attendance-saved', function(event) {
-                                    const { className, date, pupils } = event.detail;
-                                    const pupilRecord = pupils.find(s => s.id === pupilId);
-                                    if (pupilRecord && date === today) {
-                                        // Update today's attendance
-                                        if (pupilRecord.status === 'P') {
-                                            self.todayLabel = 'Present';
-                                        } else if (pupilRecord.status === 'A') {
-                                            self.todayLabel = 'Absent';
-                                        } else if (pupilRecord.status === 'Lv') {
-                                            self.todayLabel = 'On leave';
-                                        } else if (pupilRecord.status === 'L') {
-                                            self.todayLabel = 'Late';
-                                        } else {
-                                            self.todayLabel = 'Not marked';
-                                        }
-                                        
-                                        // Refresh attendance data
-                                        self.computeAttendance();
-                                    }
-                                });
-
-                                window.addEventListener('shikola:attendance-remarks-updated', function(event) {
-                                    const { className, date, remarks } = event.detail;
-                                    const remarkRecord = remarks.find(r => r.pupilId === pupilId);
-                                    if (remarkRecord && date === today) {
-                                        // Show notification for new remark
-                                        if (remarkRecord.remark && remarkRecord.remark.trim()) {
-                                            self.showNotification('New attendance remark: ' + remarkRecord.remark);
-                                        }
-                                    }
-                                });
-                            } catch (e) {
-                                console.warn('Failed to set up real-time attendance listeners:', e);
-                            }
-                            
-                            if (window.ShikolaAttendanceStore && typeof window.ShikolaAttendanceStore.getPupilStatusForDate === 'function') {
-                                var status = window.ShikolaAttendanceStore.getPupilStatusForDate(pupilId, today);
-                                if (status === 'P') {
-                                    this.todayLabel = 'Present';
-                                } else if (status === 'A') {
-                                    this.todayLabel = 'Absent';
-                                } else if (status === 'Lv') {
-                                    this.todayLabel = 'On leave';
-                                } else if (status === 'L') {
-                                    this.todayLabel = 'Late';
-                                } else {
-                                    this.todayLabel = 'Not marked';
-                                }
-                            }
-                            // Compute term attendance percentage and recent records for this pupil
-                            if (window.ShikolaAttendanceStore && window.ShikolaAttendanceStore.PREFIX) {
-                                var PREFIX = window.ShikolaAttendanceStore.PREFIX;
-                                var basePrefix = PREFIX + ':pupils:';
-                                var present = 0;
-                                var total = 0;
-                                var records = [];
-                                try {
-                                    for (var idx = 0; idx < localStorage.length; idx++) {
-                                        var key = localStorage.key(idx);
-                                        if (!key || key.indexOf(basePrefix) !== 0) continue;
-                                        var raw = localStorage.getItem(key);
-                                        if (!raw) continue;
-                                        var parsed;
-                                        try {
-                                            parsed = JSON.parse(raw) || {};
-                                        } catch (e) {
-                                            continue;
-                                        }
-                                        var attendance = parsed.attendance || {};
-                                        var remarks = parsed.remarks || {};
-                                        var idStr = String(pupilId);
-                                        if (!Object.prototype.hasOwnProperty.call(attendance, idStr)) continue;
-                                        var st = attendance[idStr];
-                                        if (!st) continue;
-                                        // Count only marked days
-                                        total += 1;
-                                        if (st === 'P') present += 1;
-                                        var parts = key.split(':');
-                                        var dateIso = parts[2] || '';
-                                        var className = parts.slice(3).join(':') || '';
-                                        var remark = remarks[idStr] || '';
-                                        var label = 'Not marked';
-                                        if (st === 'P') label = 'Present';
-                                        else if (st === 'A') label = 'Absent';
-                                        else if (st === 'Lv') label = 'On leave';
-                                        else if (st === 'L') label = 'Late';
-                                        records.push({
-                                            date: dateIso,
-                                            className: className,
-                                            status: st,
-                                            label: label,
-                                            remark: remark
-                                        });
-                                    }
-                                } catch (e) {
-                                    present = 0;
-                                    total = 0;
-                                    records = [];
-                                }
-                                this.termPercentage = total ? Math.round((present * 100) / total) : 0;
-                                try {
-                                    records.sort(function (a, b) {
-                                        return String(b.date || '').localeCompare(String(a.date || ''));
-                                    });
-                                } catch (e) {}
-                                this.recentRecords = records.slice(0, 5);
-                            }
-                        } catch (e) {
-                        }
-                    },
-                    computeAttendance: function() {
-                        // Refresh attendance calculation
-                        var self = this;
-                        try {
-                            var auth = window.shikolaAuth;
-                            if (!auth || typeof auth.getCurrentUser !== 'function') return;
-                            var user = auth.getCurrentUser();
-                            if (!user || !user.id) return;
-                            var pupilId = String(user.id);
-                            
-                            if (window.ShikolaAttendanceStore && window.ShikolaAttendanceStore.PREFIX) {
-                                var PREFIX = window.ShikolaAttendanceStore.PREFIX;
-                                var basePrefix = PREFIX + ':pupils:';
-                                var present = 0;
-                                var total = 0;
-                                var records = [];
-                                try {
-                                    for (var idx = 0; idx < localStorage.length; idx++) {
-                                        var key = localStorage.key(idx);
-                                        if (!key || key.indexOf(basePrefix) !== 0) continue;
-                                        var raw = localStorage.getItem(key);
-                                        if (!raw) continue;
-                                        var parsed;
-                                        try {
-                                            parsed = JSON.parse(raw) || {};
-                                        } catch (e) {
-                                            continue;
-                                        }
-                                        var attendance = parsed.attendance || {};
-                                        var remarks = parsed.remarks || {};
-                                        var idStr = String(pupilId);
-                                        if (!Object.prototype.hasOwnProperty.call(attendance, idStr)) continue;
-                                        var st = attendance[idStr];
-                                        if (!st) continue;
-                                        total += 1;
-                                        if (st === 'P') present += 1;
-                                        var parts = key.split(':');
-                                        var dateIso = parts[2] || '';
-                                        var className = parts.slice(3).join(':') || '';
-                                        var remark = remarks[idStr] || '';
-                                        var label = 'Not marked';
-                                        if (st === 'P') label = 'Present';
-                                        else if (st === 'A') label = 'Absent';
-                                        else if (st === 'Lv') label = 'On leave';
-                                        else if (st === 'L') label = 'Late';
-                                        records.push({
-                                            date: dateIso,
-                                            className: className,
-                                            status: st,
-                                            label: label,
-                                            remark: remark
-                                        });
-                                    }
-                                } catch (e) {
-                                    present = 0;
-                                    total = 0;
-                                    records = [];
-                                }
-                                self.termPercentage = total ? Math.round((present * 100) / total) : 0;
-                                try {
-                                    records.sort(function (a, b) {
-                                        return String(b.date || '').localeCompare(String(a.date || ''));
-                                    });
-                                } catch (e) {}
-                                self.recentRecords = records.slice(0, 5);
-                            }
-                        } catch (e) {
-                        }
-                    },
-                    showNotification: function(message) {
-                        // Simple notification for pupils
-                        try {
-                            if (window.shikolaNotifications && typeof window.shikolaNotifications.show === 'function') {
-                                window.shikolaNotifications.show(message, 'info');
-                            } else {
-                                console.log('Pupil notification:', message);
-                            }
-                        } catch (e) {
-                            console.log('Pupil notification:', message);
-                        }
-                    }
-                };
-            });
-
+            
             // Activities Widget Component
             window.Alpine.data('pupilActivitiesWidget', function () {
                 return {

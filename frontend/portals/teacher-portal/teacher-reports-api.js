@@ -59,7 +59,7 @@ class TeacherReportsAPI {
     }
 
     redirectToLogin() {
-        window.location.href = '../../public/index.html';
+        window.location.href = '/index.html';
     }
 
     // Get student data for reports

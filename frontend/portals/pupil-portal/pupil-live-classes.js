@@ -59,7 +59,7 @@ class PupilLiveClassesAPI {
     }
 
     redirectToLogin() {
-        window.location.href = '../../public/index.html';
+        window.location.href = '/index.html';
     }
 
     // Get live classes for the pupil

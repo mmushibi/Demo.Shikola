@@ -1,4 +1,5 @@
-<!DOCTYPE html><!--
+<!DOCTYPE html>
+<!--
 Copyright (c) 2026 Sepio Corp. All Rights Reserved.
 
 This software and its associated documentation files (the "Software") 
@@ -33,6 +34,8 @@ Email: legal@sepiocorp.com
     <script src="pupil-functionality.js" defer></script>
     <script src="pupil-security.js"></script>
     <script src="../../../shared-assets/js/portal-auth-guard.js" defer></script>
+    <script src="../../../public/pupil-mock-data.js"></script>
+    <script src="pupil-timetable-data-loader.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
@@ -47,49 +50,25 @@ Email: legal@sepiocorp.com
                 <nav class="space-y-1 text-sm">
                     <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                         <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
-                        <span class="font-medium flex-1">Dashboard</span>
-                    </a>
-                    <a href="admission-letter.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-envelope-open-text"></i></span>
-                        <span class="flex-1">Admission Letter</span>
-                    </a>
-                    <a href="paid-fee-receipt.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-receipt"></i></span>
-                        <span class="flex-1">Paid Fee Receipt</span>
+                        <span class="flex-1">Dashboard</span>
                     </a>
                     <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
                         <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
-                        <span class="flex-1">My Timetable</span>
+                        <span class="font-medium flex-1">My Timetable</span>
                     </a>
                     <a href="my-report-card.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                         <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
                         <span class="flex-1">My Report Card</span>
                     </a>
-                    <a href="exam-result.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-file-invoice"></i></span>
-                        <span class="flex-1">Exam Result</span>
-                    </a>
                     <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                         <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
                         <span class="flex-1">Home Assignments</span>
-                    </a>
-                    <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
-                        <span class="flex-1">Messaging</span>
-                    </a>
-                    <a href="live-class.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-video"></i></span>
-                        <span class="flex-1">Live Class</span>
-                    </a>
-                    <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                        <span class="w-6 flex justify-center"><i class="fas fa-user-circle"></i></span>
-                        <span class="flex-1">Profile</span>
                     </a>
                 </nav>
 
                 <div class="mt-auto pt-8 border-t border-slate-100">
                     <div class="flex items-center justify-center px-2">
-                        <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                        <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
                             <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
                             <span>Logout</span>
                         </a>
@@ -110,15 +89,7 @@ Email: legal@sepiocorp.com
                     <nav class="space-y-1 text-sm">
                         <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                             <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
-                            <span class="font-medium flex-1">Dashboard</span>
-                        </a>
-                        <a href="admission-letter.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-envelope-open-text"></i></span>
-                            <span class="flex-1">Admission Letter</span>
-                        </a>
-                        <a href="paid-fee-receipt.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-receipt"></i></span>
-                            <span class="flex-1">Paid Fee Receipt</span>
+                            <span class="flex-1">Dashboard</span>
                         </a>
                         <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
                             <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
@@ -128,31 +99,15 @@ Email: legal@sepiocorp.com
                             <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
                             <span class="flex-1">My Report Card</span>
                         </a>
-                        <a href="exam-result.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-file-invoice"></i></span>
-                            <span class="flex-1">Exam Result</span>
-                        </a>
                         <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
                             <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
                             <span class="flex-1">Home Assignments</span>
-                        </a>
-                        <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-comments"></i></span>
-                            <span class="flex-1">Messaging</span>
-                        </a>
-                        <a href="live-class.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-video"></i></span>
-                            <span class="flex-1">Live Class</span>
-                        </a>
-                        <a href="profile.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-user-circle"></i></span>
-                            <span class="flex-1">Profile</span>
                         </a>
                     </nav>
 
                     <div class="mt-auto pt-8 border-t border-slate-100">
                         <div class="flex items-center justify-center px-2">
-                            <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                            <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
                                 <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
                                 <span>Logout</span>
                             </a>
@@ -203,7 +158,7 @@ Email: legal@sepiocorp.com
                                         <span>View Profile</span>
                                     </a>
                                     <div class="my-1 border-t border-slate-100"></div>
-                                    <a href="../../public/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
+                                    <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
                                         <span class="w-4 flex justify-center">
                                             <i class="fas fa-right-from-bracket"></i>
                                         </span>
