@@ -426,7 +426,7 @@ Account: ${employee.bankAccount}
 
     // Listen for admin mock data initialization
     if (window.addEventListener) {
-        window.addEventListener('shikola:admin-mock-data-initialized', function(event) {
+        window.addEventListener('shikola:all-mock-data-initialized', function(event) {
             console.log('Admin mock data initialized, loading employees...');
             loadEmployeesData();
         });

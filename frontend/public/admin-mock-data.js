@@ -156,12 +156,12 @@ if (window.SHIKOLA_CONFIG && window.SHIKOLA_CONFIG.DEMO_MODE) {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
-                window.ShikolaMockData.initializeAll();
+                window.ShikolaAdminMockData.initializeAll();
             }, 1000);
         });
     } else {
         setTimeout(() => {
-            window.ShikolaMockData.initializeAll();
+            window.ShikolaAdminMockData.initializeAll();
         }, 1000);
     }
 }

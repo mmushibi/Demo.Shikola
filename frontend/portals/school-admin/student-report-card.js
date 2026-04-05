@@ -496,9 +496,33 @@ document.addEventListener('alpine:init', () => {
             if (this.studentsLoading) return;
             this.studentsLoading = true;
             try {
-                var data = await this.apiGetJson('/api/pupils', { limit: 500, offset: 0 });
-                var list = Array.isArray(data) ? data : (data && Array.isArray(data.pupils) ? data.pupils : []);
-                this.students = (list || []).map(p => this.normalizePupilForStudents(p)).filter(Boolean);
+                // Try to use mock data first
+                if (window.reportsStudentData && Array.isArray(window.reportsStudentData)) {
+                    this.students = window.reportsStudentData.map(p => this.normalizePupilForStudents(p)).filter(Boolean);
+                    console.log('Loaded student data from window.reportsStudentData:', this.students.length, 'students');
+                } else {
+                    // Try localStorage as fallback
+                    try {
+                        const stored = localStorage.getItem('shikola_reports_student_data');
+                        if (stored) {
+                            const parsed = JSON.parse(stored);
+                            if (Array.isArray(parsed)) {
+                                this.students = parsed.map(p => this.normalizePupilForStudents(p)).filter(Boolean);
+                                console.log('Loaded student data from localStorage:', this.students.length, 'students');
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Failed to load from localStorage:', e);
+                    }
+                    
+                    // If still no data, fallback to API call
+                    if (!this.students || !this.students.length) {
+                        var data = await this.apiGetJson('/api/pupils', { limit: 500, offset: 0 });
+                        var list = Array.isArray(data) ? data : (data && Array.isArray(data.pupils) ? data.pupils : []);
+                        this.students = (list || []).map(p => this.normalizePupilForStudents(p)).filter(Boolean);
+                        console.log('Loaded student data from API:', this.students.length, 'students');
+                    }
+                }
 
                 if (this.filters.className) {
                     this.selectedStudent = null;
@@ -1477,25 +1501,49 @@ document.addEventListener('alpine:init', () => {
             if (this.studentAttendanceLoading) return;
             this.studentAttendanceLoading = true;
             try {
-                var range = this.studentRange();
-                var query = {
-                    startDate: range ? range.startDate : '',
-                    endDate: range ? range.endDate : '',
-                    className: this.studentAttendanceFilters.className || ''
-                };
-                var data = await this.apiGetJson('/api/admin/reports/attendance', query);
-                var rows = Array.isArray(data) ? data : [];
-                this.studentAttendanceRows = rows.map((r) => ({
-                    month: this.studentAttendanceFilters.month || '',
-                    year: this.studentAttendanceFilters.year || '',
-                    className: r.className || '',
-                    studentName: r.pupilName || '',
-                    studentId: r.pupilId || '',
-                    daysPresent: r.presentDays != null ? Number(r.presentDays) : 0,
-                    daysAbsent: r.absentDays != null ? Number(r.absentDays) : 0,
-                    timesLate: r.lateDays != null ? Number(r.lateDays) : 0,
-                    percentage: r.attendanceRate != null ? Number(r.attendanceRate) : 0
-                }));
+                // Try to use mock data first
+                if (window.reportsStudentAttendance && Array.isArray(window.reportsStudentAttendance)) {
+                    this.studentAttendanceRows = window.reportsStudentAttendance;
+                    console.log('Loaded student attendance from window.reportsStudentAttendance:', this.studentAttendanceRows.length, 'records');
+                } else {
+                    // Try localStorage as fallback
+                    try {
+                        const stored = localStorage.getItem('shikola_reports_student_attendance');
+                        if (stored) {
+                            const parsed = JSON.parse(stored);
+                            if (Array.isArray(parsed)) {
+                                this.studentAttendanceRows = parsed;
+                                console.log('Loaded student attendance from localStorage:', this.studentAttendanceRows.length, 'records');
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Failed to load attendance from localStorage:', e);
+                    }
+                    
+                    // If still no data, fallback to API call
+                    if (!this.studentAttendanceRows || !this.studentAttendanceRows.length) {
+                        var range = this.studentRange();
+                        var query = {
+                            startDate: range ? range.startDate : '',
+                            endDate: range ? range.endDate : '',
+                            className: this.studentAttendanceFilters.className || ''
+                        };
+                        var data = await this.apiGetJson('/api/admin/reports/attendance', query);
+                        var rows = Array.isArray(data) ? data : [];
+                        this.studentAttendanceRows = rows.map((r) => ({
+                            month: this.studentAttendanceFilters.month || '',
+                            year: this.studentAttendanceFilters.year || '',
+                            className: r.className || '',
+                            studentName: r.pupilName || '',
+                            studentId: r.pupilId || '',
+                            daysPresent: r.presentDays != null ? Number(r.presentDays) : 0,
+                            daysAbsent: r.absentDays != null ? Number(r.absentDays) : 0,
+                            timesLate: r.lateDays != null ? Number(r.lateDays) : 0,
+                            percentage: r.attendanceRate != null ? Number(r.attendanceRate) : 0
+                        }));
+                        console.log('Loaded student attendance from API:', this.studentAttendanceRows.length, 'records');
+                    }
+                }
             } finally {
                 this.studentAttendanceLoading = false;
             }
@@ -1505,28 +1553,52 @@ document.addEventListener('alpine:init', () => {
             this.staffAttendanceLoading = true;
             this.staffAttendanceUnavailable = false;
             try {
-                var range = this.staffRange();
-                var query = {
-                    startDate: range ? range.startDate : '',
-                    endDate: range ? range.endDate : ''
-                };
+                // Try to use mock data first
+                if (window.reportsStaffAttendance && Array.isArray(window.reportsStaffAttendance)) {
+                    this.staffAttendanceRows = window.reportsStaffAttendance;
+                    console.log('Loaded staff attendance from window.reportsStaffAttendance:', this.staffAttendanceRows.length, 'records');
+                } else {
+                    // Try localStorage as fallback
+                    try {
+                        const stored = localStorage.getItem('shikola_reports_staff_attendance');
+                        if (stored) {
+                            const parsed = JSON.parse(stored);
+                            if (Array.isArray(parsed)) {
+                                this.staffAttendanceRows = parsed;
+                                console.log('Loaded staff attendance from localStorage:', this.staffAttendanceRows.length, 'records');
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Failed to load staff attendance from localStorage:', e);
+                    }
+                    
+                    // If still no data, fallback to API call
+                    if (!this.staffAttendanceRows || !this.staffAttendanceRows.length) {
+                        var range = this.staffRange();
+                        var query = {
+                            startDate: range ? range.startDate : '',
+                            endDate: range ? range.endDate : ''
+                        };
 
-                var data = await this.apiGetJson('/api/admin/reports/staff-attendance', query);
-                var rows = Array.isArray(data) ? data : [];
-                this.staffAttendanceRows = rows.map((r) => ({
-                    month: this.staffAttendanceFilters.month || '',
-                    year: this.staffAttendanceFilters.year || '',
-                    staffName: r.staffName || r.teacherName || r.fullName || '',
-                    role: r.role || r.position || 'Staff',
-                    department: r.department || r.className || '',
-                    daysPresent: r.daysPresent != null ? Number(r.daysPresent) : 0,
-                    daysAbsent: r.daysAbsent != null ? Number(r.daysAbsent) : 0,
-                    timesLate: r.timesLate != null ? Number(r.timesLate) : 0,
-                    percentage: r.attendanceRate != null ? Number(r.attendanceRate) : 0
-                }));
+                        var data = await this.apiGetJson('/api/admin/reports/staff-attendance', query);
+                        var rows = Array.isArray(data) ? data : [];
+                        this.staffAttendanceRows = rows.map((r) => ({
+                            month: this.staffAttendanceFilters.month || '',
+                            year: this.staffAttendanceFilters.year || '',
+                            staffName: r.staffName || r.teacherName || r.fullName || '',
+                            role: r.role || r.position || 'Staff',
+                            department: r.department || r.className || '',
+                            daysPresent: r.daysPresent != null ? Number(r.daysPresent) : 0,
+                            daysAbsent: r.daysAbsent != null ? Number(r.daysAbsent) : 0,
+                            timesLate: r.timesLate != null ? Number(r.timesLate) : 0,
+                            percentage: r.attendanceRate != null ? Number(r.attendanceRate) : 0
+                        }));
 
-                if (!rows.length && data === null) {
-                    this.staffAttendanceUnavailable = true;
+                        if (!rows.length && data === null) {
+                            this.staffAttendanceUnavailable = true;
+                        }
+                        console.log('Loaded staff attendance from API:', this.staffAttendanceRows.length, 'records');
+                    }
                 }
             } finally {
                 this.staffAttendanceLoading = false;
