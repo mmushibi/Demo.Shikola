@@ -19,26 +19,26 @@ Email: legal@sepiocorp.com
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shikola - Exams</title>
-    <link rel="icon" type="image/png" href="/frontend/assets/images/favicon.png">
+    <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
     <link rel="stylesheet" href="/frontend/dist/styles.css">
     <script src="/config/config.js"></script>
-    <script src="/shared-assets/js/shared-auth.js"></script>
-    <script src="/shared-assets/js/shared-api-client.js"></script>
-    <script src="/shared-assets/js/shared-realtime-sync.js"></script>
+    <script src="../../shared-assets/js/shared-auth.js"></script>
+    <script src="../../shared-assets/js/shared-api-client.js"></script>
+    <script src="../../shared-assets/js/shared-realtime-sync.js"></script>
     <script src="classes-api.js" defer></script>
     <script src="exams-api.js" defer></script>
     <script src="pupils-api.js" defer></script>
-    <script src="/shared-assets/js/shared-ecz-grading.js" defer></script>
+    <script src="../../shared-assets/js/shared-ecz-grading.js" defer></script>
     <script src="exams-page.js" defer></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
-    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../shared-assets/js/button-functions.js" defer></script>
     <script src="/fix-accessibility.js" defer></script>
     <script src="exams-tab-persistence.js" defer></script>
-    <script src="/shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/shared-assets/css/styles.css">
+    <link rel="stylesheet" href="../../shared-assets/css/styles.css">
     <style>
         body.dashboard-page {
             background-color: transparent;
@@ -106,7 +106,7 @@ Email: legal@sepiocorp.com
                 class="fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-50 lg:hidden flex"
             >
                 <div class="flex justify-center mb-10">
-                    <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
                 </div>
 
                 <nav class="space-y-1 text-sm">
@@ -199,7 +199,7 @@ Email: legal@sepiocorp.com
             <!-- Desktop sidebar -->
             <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
                 <div class="flex justify-center mb-10">
-                    <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
                 </div>
 
                 <nav class="space-y-1 text-sm">
@@ -296,7 +296,7 @@ Email: legal@sepiocorp.com
                         <i class="fas fa-times text-sm"></i>
                     </button>
                     <div class="flex justify-center mb-10">
-                        <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl lg:hidden" data-school-logo>
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl lg:hidden" data-school-logo>
                     </div>
                     <nav class="space-y-1 text-sm">
                         <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
@@ -393,7 +393,7 @@ Email: legal@sepiocorp.com
                             <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-full bg-white shadow-lg flex items-center justify-center text-slate-600 hover:bg-slate-50 transition" aria-label="Open navigation" @click="sidebarOpen = true">
                                 <i class="fas fa-bars"></i>
                             </button>
-                            <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-12 w-auto rounded-2xl lg:hidden" data-school-logo>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-auto rounded-2xl lg:hidden" data-school-logo>
                             <div class="flex-1 min-w-0">
                                 <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Exams Management</h1>
                                 <p class="text-xs sm:text-sm text-slate-400 mt-1">Manage exams, question papers, marks, and result outputs.</p>

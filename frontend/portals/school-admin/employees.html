@@ -22,7 +22,7 @@ Email: legal@sepiocorp.com
     <title>Shikola - Employees</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/config/config.js?v=20250222"></script>
-    <script src="/shared-assets/js/shared-api-client.js?v=20250222"></script>
+    <script src="../../shared-assets/js/shared-api-client.js?v=20250222"></script>
     <script src="employees-api.js?v=20250222-2" defer></script>
     <script>
         // Verify our changes are loaded
@@ -35,14 +35,14 @@ Email: legal@sepiocorp.com
         }, 1000);
     </script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
-    <script src="/shared-assets/js/shared-auth.js" defer></script>
-    <script src="/shared-assets/js/button-functions.js" defer></script>
-    <script src="/shared-assets/js/shared-school-profile.js" defer></script>
-    <script src="/shared-assets/js/shared-notifications.js" defer></script>
-    <script src="/shared-assets/js/shared-export-print.js" defer></script>
-    <script src="/shared-assets/js/shared-chart-interactions.js" defer></script>
-    <script src="/shared-assets/js/shared-realtime-client.js" defer></script>
+    <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../shared-assets/js/button-functions.js" defer></script>
+    <script src="../../shared-assets/js/shared-school-profile.js" defer></script>
+    <script src="../../shared-assets/js/shared-notifications.js" defer></script>
+    <script src="../../shared-assets/js/shared-export-print.js" defer></script>
+    <script src="../../shared-assets/js/shared-chart-interactions.js" defer></script>
+    <script src="../../shared-assets/js/shared-realtime-client.js" defer></script>
     
     <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
     <script>
@@ -138,17 +138,17 @@ Email: legal@sepiocorp.com
             background: linear-gradient(to bottom, #ea580c, #c2410c);
         }
     </style>
-    <script src="/shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>    <script src="../../js/security.js"></script>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/frontend/assets/css/styles.css">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 <body class="dashboard-page" data-realtime="true">
     <div x-data="{ sidebarOpen: false, activeTab: 'all-employees', chatOpen: false, mobileSearchOpen: false, mobileNotificationsOpen: false, mobileProfileOpen: false, mobileSearchQuery: '', mobileHeaderOpen: false, get tierLevel() { if (window.Alpine && window.Alpine.store && window.Alpine.store('global')) { return window.Alpine.store('global').tierLevel; } return (window.__shikola_global_store_data && window.__shikola_global_store_data.tierLevel) || 1; } }" class="min-h-screen flex">
         <div class="flex-1 flex gap-4 lg:gap-8 w-full">
             <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
                 <div class="flex justify-center mb-10">
-                    <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
                 </div>
 
                 <nav class="nav-menu space-y-1 text-sm">
@@ -234,7 +234,7 @@ Email: legal@sepiocorp.com
                         <i class="fas fa-times text-sm"></i>
                     </button>
                     <div class="flex justify-center mb-10">
-                        <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
                     </div>
 
                     <nav class="space-y-1 text-sm">
@@ -314,7 +314,7 @@ Email: legal@sepiocorp.com
                             <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-white shadow-lg flex items-center justify-center text-slate-600 hover:bg-slate-50 transition" aria-label="Open navigation" @click="sidebarOpen = true">
                                 <i class="fas fa-bars"></i>
                             </button>
-                            <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-12 w-auto rounded-2xl lg:hidden" data-school-logo>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-auto rounded-2xl lg:hidden" data-school-logo>
                             <div class="hidden sm:block lg:hidden">
                                 <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Employees</h1>
                                 <p class="text-xs sm:text-sm text-slate-400 mt-1">Manage employee records, staff ID cards, job letters, and login access.</p>

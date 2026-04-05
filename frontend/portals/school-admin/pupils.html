@@ -22,16 +22,16 @@ Email: legal@sepiocorp.com
     <title>Shikola - Pupils</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/config/config.js"></script>
-    <script src="/shared-assets/js/shared-auth.js"></script>
-    <script src="/shared-assets/js/shared-api-client.js"></script>
-    <script src="/shared-assets/js/shared-realtime-sync.js"></script>
-    <script src="/shared-assets/js/shared-realtime-client.js"></script>
+    <script src="../../shared-assets/js/shared-auth.js"></script>
+    <script src="../../shared-assets/js/shared-api-client.js"></script>
+    <script src="../../shared-assets/js/shared-realtime-sync.js"></script>
+    <script src="../../shared-assets/js/shared-realtime-client.js"></script>
     <script src="classes-api.js" defer></script>
     <script src="pupils-api.js" defer></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="/shared-assets/js/dashboard-theme.js" defer></script>
-    <script src="/shared-assets/js/shared-auth.js" defer></script>
-    <script src="/shared-assets/js/button-functions.js" defer></script>
+    <script src="../../shared-assets/js/dashboard-theme.js" defer></script>
+    <script src="../../shared-assets/js/shared-auth.js" defer></script>
+    <script src="../../shared-assets/js/button-functions.js" defer></script>
     <script src="../fix-accessibility.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
@@ -109,11 +109,11 @@ Email: legal@sepiocorp.com
             background: linear-gradient(to bottom, #ea580c, #c2410c);
         }
     </style>
-    <script src="/shared-assets/js/portal-auth-guard.js" defer></script>    
+    <script src="../../shared-assets/js/portal-auth-guard.js" defer></script>    
     <script src="../../js/security.js"></script>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="/frontend/assets/css/styles.css" rel="stylesheet">
+    <link href="../../assets/css/styles.css" rel="stylesheet">
 </head>
 <body class="dashboard-page">
     <div x-data="{
@@ -144,7 +144,7 @@ Email: legal@sepiocorp.com
         <div class="flex-1 flex gap-4 lg:gap-8 w-full">
             <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40">
                 <div class="flex justify-center mb-10">
-                    <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
                 </div>
 
                 <nav class="nav-menu space-y-1 text-sm">
@@ -230,7 +230,7 @@ Email: legal@sepiocorp.com
                         <i class="fas fa-times text-sm"></i>
                     </button>
                     <div class="flex justify-center mb-10">
-                        <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
+                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
                     </div>
 
                     <nav class="space-y-1 text-sm">
@@ -310,7 +310,7 @@ Email: legal@sepiocorp.com
                             <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-white shadow-lg flex items-center justify-center text-slate-600 hover:bg-slate-50 transition" aria-label="Open navigation" @click="sidebarOpen = true">
                                 <i class="fas fa-bars"></i>
                             </button>
-                            <img src="/frontend/assets/images/logo.png" alt="Shikola logo" class="h-12 w-auto rounded-2xl lg:hidden" data-school-logo>
+                            <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-12 w-auto rounded-2xl lg:hidden" data-school-logo>
                             <div class="hidden sm:block lg:hidden">
                                 <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">Pupils</h1>
                                 <p class="text-xs sm:text-sm text-slate-400 mt-1">Manage pupils admissions, families, status, IDs, logins, and promotions.</p>
