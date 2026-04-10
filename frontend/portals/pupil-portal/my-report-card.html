@@ -22,25 +22,29 @@ Email: legal@sepiocorp.com
     <title>Shikola - My Report Card</title>
     <link rel="icon" type="image/png" href="../../assets/images/favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="../../../config/config.js"></script>
-    <script src="../../../shared-assets/js/shared-api-client.js"></script>
-    <script src="pupil-report-card-api.js"></script>
-    <script src="my-report-card.js"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="../../../public/pupil-mock-data.js"></script>
-    <script src="pupil-report-card-data-loader.js"></script>
-    <script src="pupil-functionality.js" defer></script>
-    <script src="pupil-security.js" defer></script>
-    <script src="../../../shared-assets/js/portal-auth-guard.js" defer></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../../assets/css/styles.css">
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .grade-a-plus { background-color: #dcfce7; color: #15803d; }
+        .grade-a { background-color: #dcfce7; color: #16a34a; }
+        .grade-b-plus { background-color: #dbeafe; color: #2563eb; }
+        .grade-b { background-color: #dbeafe; color: #3b82f6; }
+        .grade-c-plus { background-color: #fef3c7; color: #d97706; }
+        .grade-c { background-color: #fef3c7; color: #f59e0b; }
+        .grade-d { background-color: #fed7aa; color: #ea580c; }
+        .grade-f { background-color: #fecaca; color: #dc2626; }
+    </style>
 </head>
-<body class="dashboard-page">
-    <div x-data="pupilReportCardPage()" class="min-h-screen flex">
+<body class="dashboard-page bg-slate-50">
+    <div id="app" class="min-h-screen flex">
         <div class="flex-1 flex gap-4 lg:gap-8 w-full">
+            <!-- Sidebar -->
             <aside class="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-white shadow-xl flex-col py-8 px-6 z-40 overflow-y-auto">
                 <div class="flex justify-center mb-10">
-                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover" data-school-logo>
+                    <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover">
                 </div>
 
                 <nav class="space-y-1 text-sm">
@@ -64,7 +68,7 @@ Email: legal@sepiocorp.com
 
                 <div class="mt-auto pt-8 border-t border-slate-100">
                     <div class="flex items-center justify-center px-2">
-                        <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
+                        <a href="/index.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
                             <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
                             <span>Logout</span>
                         </a>
@@ -72,53 +76,11 @@ Email: legal@sepiocorp.com
                 </div>
             </aside>
 
-            <div x-show="sidebarOpen" x-cloak class="fixed inset-0 z-50 flex lg:hidden">
-                <div class="absolute inset-0 bg-slate-900/40" @click="sidebarOpen = false"></div>
-                <aside class="relative h-full w-64 bg-white shadow-xl flex flex-col py-8 px-6">
-                    <button type="button" class="absolute top-4 right-4 h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" aria-label="Close navigation" @click="sidebarOpen = false">
-                        <i class="fas fa-times text-sm"></i>
-                    </button>
-                    <div class="flex justify-center mb-10">
-                        <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-15 w-20 rounded-2xl object-cover" data-school-logo>
-                    </div>
-
-                    <nav class="space-y-1 text-sm">
-                        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-chart-pie"></i></span>
-                            <span class="flex-1">Dashboard</span>
-                        </a>
-                        <a href="my-timetable.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
-                            <span class="flex-1">My Timetable</span>
-                        </a>
-                        <a href="my-report-card.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-white shadow-md">
-                            <span class="w-6 flex justify-center"><i class="fas fa-file-alt"></i></span>
-                            <span class="flex-1">My Report Card</span>
-                        </a>
-                        <a href="home-assignments.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition">
-                            <span class="w-6 flex justify-center"><i class="fas fa-book"></i></span>
-                            <span class="flex-1">Home Assignments</span>
-                        </a>
-                    </nav>
-
-                    <div class="mt-auto pt-8 border-t border-slate-100">
-                        <div class="flex items-center justify-center px-2">
-                            <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-2 rounded-xl text-red-500 hover:bg-red-50 text-xs font-medium">
-                                <span class="w-5 flex justify-center"><i class="fas fa-right-from-bracket"></i></span>
-                                <span>Logout</span>
-                            </a>
-                        </div>
-                    </div>
-                </aside>
-            </div>
-
+            <!-- Main Content -->
             <main class="flex-1 w-full px-3 sm:px-6 py-6 lg:pl-72">
                 <div class="bg-white rounded-3xl shadow-xl px-4 sm:px-6 lg:px-8 py-5 lg:py-7 h-full flex flex-col">
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div class="flex items-center justify-center w-full lg:w-auto lg:justify-start gap-3">
-                            <button type="button" class="lg:hidden fixed top-4 left-4 z-40 h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 shadow-sm" aria-label="Open navigation" @click="sidebarOpen = true">
-                                <i class="fas fa-bars"></i>
-                            </button>
                             <img src="../../assets/images/logo.png" alt="Shikola logo" class="h-14 w-auto rounded-2xl lg:hidden">
                             <div class="text-center lg:text-left">
                                 <h1 class="text-2xl sm:text-3xl font-semibold text-slate-800">My Report Card</h1>
@@ -126,76 +88,34 @@ Email: legal@sepiocorp.com
                             </div>
                         </div>
                         <div class="hidden sm:flex items-center gap-3">
-                            <!-- Real-time Sync Status -->
-                            <div class="flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
-                                <span class="w-2 h-2 rounded-full mr-2" :class="{
-                                    'bg-green-500': syncStatus === 'connected',
-                                    'bg-blue-500': syncStatus === 'syncing',
-                                    'bg-orange-500': syncStatus === 'offline',
-                                    'bg-red-500': syncStatus === 'error'
-                                }"></span>
-                                <span class="text-xs text-slate-600" x-text="getSyncStatusDisplay().text"></span>
-                            </div>
-                            
                             <div class="hidden sm:flex items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 w-56">
                                 <i class="fas fa-search text-slate-400 text-sm mr-2"></i>
-                                <input type="text" placeholder="Search report..." class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1">
+                                <input type="text" placeholder="Search subjects, grades..." class="bg-transparent text-sm text-slate-600 placeholder-slate-400 focus:outline-none flex-1">
                             </div>
-                            
-                            <!-- Manual Refresh Button -->
-                            <button @click="manualRefresh()" class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" type="button" aria-label="Refresh" title="Last sync: <span x-text='formatLastSyncTime()'></span>">
-                                <i class="fas fa-sync-alt" :class="{'animate-spin': syncStatus === 'syncing'}"></i>
-                            </button>
-                            
-                            <button class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" type="button" aria-label="Notifications">
+                            <button class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600" type="button">
                                 <i class="far fa-bell"></i>
                             </button>
-                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-                                <button type="button" class="flex items-center gap-2 pl-1" @click="open = !open" title="User menu">
+                            <div class="relative">
+                                <button type="button" class="flex items-center gap-2 pl-1">
                                     <div class="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-400 to-pink-500 text-white flex items-center justify-center text-sm">
                                         <i class="fas fa-user"></i>
                                     </div>
                                     <div class="hidden sm:block text-left">
-                                        <div class="text-xs font-medium text-slate-700">Shikola</div>
-                                        <div class="text-[10px] text-slate-400">Pupil</div>
+                                        <div class="text-xs font-medium text-slate-700">Yohano Mushibi</div>
+                                        <div class="text-[10px] text-slate-400">Grade 9A \u2022 Pupil ID: REG-002</div>
                                     </div>
                                 </button>
-                                <div
-                                    x-show="open"
-                                    x-cloak
-                                    class="absolute right-0 mt-2 w-44 rounded-xl bg-white shadow-lg border border-slate-100 py-1 text-xs text-slate-600 z-30">
-                                    <a href="profile.html" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50">
-                                        <span class="w-4 flex justify-center text-slate-400">
-                                            <i class="fas fa-user-circle"></i>
-                                        </span>
-                                        <span>View Profile</span>
-                                    </a>
-                                    <div class="my-1 border-t border-slate-100"></div>
-                                    <button @click="clearCacheAndReload()" class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 w-full text-left">
-                                        <span class="w-4 flex justify-center text-slate-400">
-                                            <i class="fas fa-trash"></i>
-                                        </span>
-                                        <span>Clear Cache</span>
-                                    </button>
-                                    <div class="my-1 border-t border-slate-100"></div>
-                                    <a href="/index.html" data-action="logout" class="flex items-center gap-2 px-3 py-1.5 hover:bg-red-50 text-red-500">
-                                        <span class="w-4 flex justify-center">
-                                            <i class="fas fa-right-from-bracket"></i>
-                                        </span>
-                                        <span>Logout</span>
-                                    </a>
-                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-6">
                         <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 text-xs sm:text-sm">
-                            <button type="button" @click="setActiveCardType('result')" :class="activeCardType === 'result' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <button type="button" onclick="setCardType('result')" id="resultCardBtn" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-slate-900 text-white shadow-sm">
                                 <span class="w-5 flex justify-center"><i class="fas fa-clipboard-list"></i></span>
                                 <span>Result Card</span>
                             </button>
-                            <button type="button" @click="setActiveCardType('report')" :class="activeCardType === 'report' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <button type="button" onclick="setCardType('report')" id="reportCardBtn" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100">
                                 <span class="w-5 flex justify-center"><i class="fas fa-file-alt"></i></span>
                                 <span>Report Card</span>
                             </button>
@@ -204,19 +124,19 @@ Email: legal@sepiocorp.com
 
                     <div class="mt-4">
                         <div class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 text-xs sm:text-sm">
-                            <button type="button" @click="setActiveTerm('term1')" :class="activeTerm === 'term1' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <button type="button" onclick="setTerm('term1')" id="term1Btn" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-orange-500 text-white shadow-sm">
                                 <span class="w-5 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
                                 <span>Term 1</span>
                             </button>
-                            <button type="button" @click="setActiveTerm('term2')" :class="activeTerm === 'term2' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <button type="button" onclick="setTerm('term2')" id="term2Btn" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100">
                                 <span class="w-5 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
                                 <span>Term 2</span>
                             </button>
-                            <button type="button" @click="setActiveTerm('term3')" :class="activeTerm === 'term3' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <button type="button" onclick="setTerm('term3')" id="term3Btn" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100">
                                 <span class="w-5 flex justify-center"><i class="fas fa-calendar-alt"></i></span>
                                 <span>Term 3</span>
                             </button>
-                            <button type="button" @click="setActiveTerm('annual')" :class="activeTerm === 'annual' ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200">
+                            <button type="button" onclick="setTerm('annual')" id="annualBtn" class="flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100">
                                 <span class="w-5 flex justify-center"><i class="fas fa-chart-line"></i></span>
                                 <span>Annual Summary</span>
                             </button>
@@ -224,40 +144,576 @@ Email: legal@sepiocorp.com
                     </div>
 
                     <div class="mt-6 flex-1 text-sm">
-                        <!-- Unified Card Container -->
-                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-8" id="unifiedCardContainer">
-                            <!-- Loading State -->
-                            <div x-show="loading" class="text-center py-12">
-                                <div class="inline-flex items-center gap-3 text-slate-500">
-                                    <div class="animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-orange-500"></div>
-                                    <span class="text-sm">Loading your <span x-text="activeCardType === 'result' ? 'Result Card' : 'Report Card'"></span>...</span>
-                                </div>
-                            </div>
-
-                            <!-- Not Published State -->
-                            <div x-show="!loading && !isPublished" class="text-center py-12">
-                                <div class="inline-flex flex-col items-center gap-4">
-                                    <div class="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center">
-                                        <i class="fas fa-file-alt text-slate-400 text-xl"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-lg font-semibold text-slate-800 mb-1" x-show="!schoolProfile">School Profile Not Configured</h3>
-                                        <h3 class="text-lg font-semibold text-slate-800 mb-1" x-show="schoolProfile">Not Yet Published</h3>
-                                        <p class="text-sm text-slate-500" x-show="!schoolProfile">Please contact your school administrator to configure the school profile in general settings.</p>
-                                        <p class="text-sm text-slate-500" x-show="schoolProfile">Your <span x-text="activeCardType === 'result' ? 'Result Card' : 'Report Card'"></span> for <span x-text="activeTerm === 'annual' ? 'Annual Summary' : activeTerm"></span> will appear here once your school publishes it.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Card Content -->
-                            <div x-show="!loading && isPublished" id="cardContent">
-                                <!-- Content will be dynamically inserted here -->
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
+                            <div id="reportCardContent">
+                                <!-- Content will be dynamically loaded here -->
                             </div>
                         </div>
                     </div>
+                </div>
             </main>
         </div>
     </div>
+
+    <script>
+        // Report Card Data
+        const reportCardData = {
+            currentPupil: {
+                pupil_id: "REG-002",
+                first_name: "Yohano",
+                last_name: "Mushibi",
+                class_name: "Grade 9A"
+            },
+            terms: {
+                "term1": {
+                    resultCard: {
+                        subjects: [
+                            { subject: "Mathematics", score: 78, maxScore: 100, grade: "B+", remarks: "Good performance", position: 3, classAverage: 72 },
+                            { subject: "English", score: 85, maxScore: 100, grade: "A", remarks: "Excellent work", position: 2, classAverage: 68 },
+                            { subject: "Science", score: 72, maxScore: 100, grade: "B", remarks: "Satisfactory", position: 5, classAverage: 70 },
+                            { subject: "Social Studies", score: 88, maxScore: 100, grade: "A", remarks: "Outstanding", position: 1, classAverage: 65 },
+                            { subject: "Computer Studies", score: 90, maxScore: 100, grade: "A+", remarks: "Exceptional performance", position: 1, classAverage: 75 }
+                        ],
+                        totalScore: 808,
+                        maxTotalScore: 1000,
+                        average: 80.8,
+                        grade: "B+",
+                        position: 3,
+                        totalPupils: 28,
+                        attendance: {
+                            totalDays: 120,
+                            presentDays: 114,
+                            absentDays: 6,
+                            percentage: 95
+                        },
+                        conduct: "Excellent",
+                        teacherRemarks: "Yohano has shown remarkable improvement this term. His dedication to studies is commendable.",
+                        principalRemarks: "Keep up the excellent work. You are a role model to your peers."
+                    },
+                    reportCard: {
+                        subjects: [
+                            { subject: "Mathematics", score: 78, maxScore: 100, grade: "B+", remarks: "Good performance", position: 3, classAverage: 72 },
+                            { subject: "English", score: 85, maxScore: 100, grade: "A", remarks: "Excellent work", position: 2, classAverage: 68 },
+                            { subject: "Science", score: 72, maxScore: 100, grade: "B", remarks: "Satisfactory", position: 5, classAverage: 70 },
+                            { subject: "Social Studies", score: 88, maxScore: 100, grade: "A", remarks: "Outstanding", position: 1, classAverage: 65 },
+                            { subject: "Computer Studies", score: 90, maxScore: 100, grade: "A+", remarks: "Exceptional performance", position: 1, classAverage: 75 }
+                        ],
+                        totalScore: 808,
+                        maxTotalScore: 1000,
+                        average: 80.8,
+                        grade: "B+",
+                        position: 3,
+                        totalPupils: 28,
+                        attendance: {
+                            totalDays: 120,
+                            presentDays: 114,
+                            absentDays: 6,
+                            percentage: 95
+                        },
+                        conduct: "Excellent",
+                        teacherRemarks: "Yohano has shown remarkable improvement this term. His dedication to studies is commendable.",
+                        principalRemarks: "Keep up the excellent work. You are a role model to your peers."
+                    }
+                },
+                "term2": {
+                    resultCard: {
+                        subjects: [
+                            { subject: "Mathematics", score: 82, maxScore: 100, grade: "B+", remarks: "Improved performance", position: 2, classAverage: 74 },
+                            { subject: "English", score: 87, maxScore: 100, grade: "A", remarks: "Consistently excellent", position: 1, classAverage: 70 },
+                            { subject: "Science", score: 76, maxScore: 100, grade: "B+", remarks: "Good progress", position: 4, classAverage: 72 },
+                            { subject: "Social Studies", score: 91, maxScore: 100, grade: "A+", remarks: "Outstanding achievement", position: 1, classAverage: 67 },
+                            { subject: "Computer Studies", score: 93, maxScore: 100, grade: "A+", remarks: "Exceptional work", position: 1, classAverage: 77 }
+                        ],
+                        totalScore: 829,
+                        maxTotalScore: 1000,
+                        average: 82.9,
+                        grade: "A",
+                        position: 2,
+                        totalPupils: 28,
+                        attendance: {
+                            totalDays: 120,
+                            presentDays: 116,
+                            absentDays: 4,
+                            percentage: 97
+                        },
+                        conduct: "Excellent",
+                        teacherRemarks: "Yohano continues to excel in all subjects. His analytical skills have improved significantly.",
+                        principalRemarks: "Outstanding academic performance. Keep maintaining this high standard."
+                    },
+                    reportCard: {
+                        subjects: [
+                            { subject: "Mathematics", score: 82, maxScore: 100, grade: "B+", remarks: "Improved performance", position: 2, classAverage: 74 },
+                            { subject: "English", score: 87, maxScore: 100, grade: "A", remarks: "Consistently excellent", position: 1, classAverage: 70 },
+                            { subject: "Science", score: 76, maxScore: 100, grade: "B+", remarks: "Good progress", position: 4, classAverage: 72 },
+                            { subject: "Social Studies", score: 91, maxScore: 100, grade: "A+", remarks: "Outstanding achievement", position: 1, classAverage: 67 },
+                            { subject: "Computer Studies", score: 93, maxScore: 100, grade: "A+", remarks: "Exceptional work", position: 1, classAverage: 77 }
+                        ],
+                        totalScore: 829,
+                        maxTotalScore: 1000,
+                        average: 82.9,
+                        grade: "A",
+                        position: 2,
+                        totalPupils: 28,
+                        attendance: {
+                            totalDays: 120,
+                            presentDays: 116,
+                            absentDays: 4,
+                            percentage: 97
+                        },
+                        conduct: "Excellent",
+                        teacherRemarks: "Yohano continues to excel in all subjects. His analytical skills have improved significantly.",
+                        principalRemarks: "Outstanding academic performance. Keep maintaining this high standard."
+                    }
+                },
+                "term3": {
+                    resultCard: {
+                        subjects: [
+                            { subject: "Mathematics", score: 85, maxScore: 100, grade: "A", remarks: "Excellent work", position: 1, classAverage: 75 },
+                            { subject: "English", score: 89, maxScore: 100, grade: "A", remarks: "Outstanding performance", position: 1, classAverage: 71 },
+                            { subject: "Science", score: 79, maxScore: 100, grade: "B+", remarks: "Strong improvement", position: 3, classAverage: 73 },
+                            { subject: "Social Studies", score: 94, maxScore: 100, grade: "A+", remarks: "Exceptional results", position: 1, classAverage: 68 },
+                            { subject: "Computer Studies", score: 95, maxScore: 100, grade: "A+", remarks: "Outstanding achievement", position: 1, classAverage: 78 }
+                        ],
+                        totalScore: 842,
+                        maxTotalScore: 1000,
+                        average: 84.2,
+                        grade: "A",
+                        position: 1,
+                        totalPupils: 28,
+                        attendance: {
+                            totalDays: 120,
+                            presentDays: 118,
+                            absentDays: 2,
+                            percentage: 98
+                        },
+                        conduct: "Excellent",
+                        teacherRemarks: "Yohano has achieved remarkable progress this term. His dedication and hard work are evident in all subjects.",
+                        principalRemarks: "Exceptional academic achievement. Yohano is a model student and an inspiration to his peers."
+                    },
+                    reportCard: {
+                        subjects: [
+                            { subject: "Mathematics", score: 85, maxScore: 100, grade: "A", remarks: "Excellent work", position: 1, classAverage: 75 },
+                            { subject: "English", score: 89, maxScore: 100, grade: "A", remarks: "Outstanding performance", position: 1, classAverage: 71 },
+                            { subject: "Science", score: 79, maxScore: 100, grade: "B+", remarks: "Strong improvement", position: 3, classAverage: 73 },
+                            { subject: "Social Studies", score: 94, maxScore: 100, grade: "A+", remarks: "Exceptional results", position: 1, classAverage: 68 },
+                            { subject: "Computer Studies", score: 95, maxScore: 100, grade: "A+", remarks: "Outstanding achievement", position: 1, classAverage: 78 }
+                        ],
+                        totalScore: 842,
+                        maxTotalScore: 1000,
+                        average: 84.2,
+                        grade: "A",
+                        position: 1,
+                        totalPupils: 28,
+                        attendance: {
+                            totalDays: 120,
+                            presentDays: 118,
+                            absentDays: 2,
+                            percentage: 98
+                        },
+                        conduct: "Excellent",
+                        teacherRemarks: "Yohano has achieved remarkable progress this term. His dedication and hard work are evident in all subjects.",
+                        principalRemarks: "Exceptional academic achievement. Yohano is a model student and an inspiration to his peers."
+                    }
+                },
+                "annual": {
+                    resultCard: {
+                        overallAverage: 82.6,
+                        overallGrade: "A",
+                        overallPosition: 2,
+                        totalPupils: 28,
+                        attendanceRate: 97,
+                        termProgression: [
+                            { term: "Term 1", average: 80.8, position: 3 },
+                            { term: "Term 2", average: 82.9, position: 2 },
+                            { term: "Term 3", average: 84.2, position: 1 }
+                        ],
+                        bestSubject: "Computer Studies",
+                        bestSubjectScore: "92.7%",
+                        mostImproved: "Mathematics",
+                        bestPerformance: "Computer Studies - 92.7% average"
+                    }
+                }
+            }
+        };
+
+        // State management
+        let currentTerm = 'term1';
+        let currentCardType = 'result';
+
+        // Helper functions
+        function getGradeColor(grade) {
+            const colors = {
+                'A+': 'grade-a-plus',
+                'A': 'grade-a',
+                'B+': 'grade-b-plus',
+                'B': 'grade-b',
+                'C+': 'grade-c-plus',
+                'C': 'grade-c',
+                'D': 'grade-d',
+                'F': 'grade-f'
+            };
+            return colors[grade] || 'bg-slate-100 text-slate-600';
+        }
+
+        function updateButtonStyles() {
+            // Update card type buttons
+            document.getElementById('resultCardBtn').className = currentCardType === 'result' 
+                ? 'flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-slate-900 text-white shadow-sm'
+                : 'flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100';
+            
+            document.getElementById('reportCardBtn').className = currentCardType === 'report'
+                ? 'flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-slate-900 text-white shadow-sm'
+                : 'flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100';
+
+            // Update term buttons
+            const termButtons = {
+                'term1': 'term1Btn',
+                'term2': 'term2Btn',
+                'term3': 'term3Btn',
+                'annual': 'annualBtn'
+            };
+
+            Object.keys(termButtons).forEach(term => {
+                const btn = document.getElementById(termButtons[term]);
+                btn.className = term === currentTerm
+                    ? 'flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-orange-500 text-white shadow-sm'
+                    : 'flex items-center gap-2 px-3 py-2 rounded-full whitespace-nowrap border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100';
+            });
+        }
+
+        function setCardType(type) {
+            currentCardType = type;
+            updateButtonStyles();
+            renderReportCard();
+        }
+
+        function setTerm(term) {
+            currentTerm = term;
+            updateButtonStyles();
+            renderReportCard();
+        }
+
+        function renderReportCard() {
+            const container = document.getElementById('reportCardContent');
+            
+            // Ensure we have valid data structure
+            if (!reportCardData || !reportCardData.terms) {
+                console.error('Report card data not available');
+                return;
+            }
+            
+            // Debug: Log current state
+            console.log('Current Term:', currentTerm);
+            console.log('Current Card Type:', currentCardType);
+            console.log('Available terms:', Object.keys(reportCardData.terms));
+            console.log('Available card types for term:', currentTerm, Object.keys(reportCardData.terms[currentTerm] || {}));
+            
+            let data = reportCardData.terms[currentTerm]?.[currentCardType];
+            console.log('Found data:', data);
+            
+            // Fallback: if data is null, try to force access to term1 resultCard
+            if (!data && currentTerm === 'term1' && currentCardType === 'result') {
+                console.log('Using fallback data access');
+                data = reportCardData.terms.term1.resultCard;
+                console.log('Fallback data:', data);
+            }
+            
+            if (!data) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="inline-flex flex-col items-center gap-4">
+                            <div class="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center">
+                                <i class="fas fa-file-alt text-slate-400 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-800 mb-1">Not Yet Published</h3>
+                                <p class="text-sm text-slate-500">Your ${currentCardType === 'result' ? 'Result Card' : 'Report Card'} for ${currentTerm === 'annual' ? 'Annual Summary' : currentTerm} will appear here once your school publishes it.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentTerm === 'annual') {
+                container.innerHTML = renderAnnualSummary(data);
+            } else {
+                container.innerHTML = renderTermReport(data);
+            }
+        }
+
+        function renderTermReport(data) {
+            const subjectsHtml = data.subjects.map(subject => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${subject.subject}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                        <span class="font-semibold text-slate-800">${subject.score}</span>
+                        <span class="text-slate-500">/${subject.maxScore}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${getGradeColor(subject.grade)}">${subject.grade}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-slate-600">${subject.position}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-slate-600">${subject.classAverage}</td>
+                    <td class="px-6 py-4 text-sm text-slate-600">${subject.remarks}</td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="space-y-6">
+                    <!-- Student Information -->
+                    <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl p-6 border border-orange-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-800 mb-3">Student Information</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Name:</span>
+                                        <span class="font-medium text-slate-800">${reportCardData.currentPupil.first_name} ${reportCardData.currentPupil.last_name}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Class:</span>
+                                        <span class="font-medium text-slate-800">${reportCardData.currentPupil.class_name}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Pupil ID:</span>
+                                        <span class="font-medium text-slate-800">${reportCardData.currentPupil.pupil_id}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-800 mb-3">Academic Summary</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Total Score:</span>
+                                        <span class="font-medium text-slate-800">${data.totalScore}/${data.maxTotalScore}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Average:</span>
+                                        <span class="font-medium text-slate-800">${data.average}%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Grade:</span>
+                                        <span class="font-bold text-orange-600 text-lg">${data.grade}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Position:</span>
+                                        <span class="font-medium text-slate-800">${data.position}/${data.totalPupils}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Subjects Table -->
+                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                            <h3 class="text-lg font-semibold text-slate-800">Subject Results</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Subject</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">Score</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">Grade</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">Position</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">Class Avg</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200">
+                                    ${subjectsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Attendance and Conduct -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Attendance</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-slate-600">Total School Days</span>
+                                    <span class="font-medium text-slate-800">${data.attendance.totalDays}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-slate-600">Days Present</span>
+                                    <span class="font-medium text-green-600">${data.attendance.presentDays}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-slate-600">Days Absent</span>
+                                    <span class="font-medium text-red-600">${data.attendance.absentDays}</span>
+                                </div>
+                                <div class="pt-3 border-t border-slate-200">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-medium text-slate-700">Attendance Rate</span>
+                                        <span class="text-lg font-bold text-green-600">${data.attendance.percentage}%</span>
+                                    </div>
+                                    <div class="mt-2 bg-slate-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: ${data.attendance.percentage}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Conduct & Remarks</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <span class="text-sm font-medium text-slate-700">Conduct:</span>
+                                    <span class="ml-2 px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full">${data.conduct}</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-slate-700 mb-2">Class Teacher's Remarks:</h4>
+                                    <p class="text-sm text-slate-600 italic">"${data.teacherRemarks}"</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-slate-700 mb-2">Principal's Remarks:</h4>
+                                    <p class="text-sm text-slate-600 italic">"${data.principalRemarks}"</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAnnualSummary(data) {
+            const progressionHtml = data.termProgression.map(term => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${term.term}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-semibold text-slate-800">${term.average}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-slate-600">${term.position}/${data.totalPupils}</td>
+                </tr>
+            `).join('');
+
+            return `
+                <div class="space-y-6">
+                    <!-- Student Information -->
+                    <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-2xl p-6 border border-orange-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-800 mb-3">Student Information</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Name:</span>
+                                        <span class="font-medium text-slate-800">${reportCardData.currentPupil.first_name} ${reportCardData.currentPupil.last_name}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Class:</span>
+                                        <span class="font-medium text-slate-800">${reportCardData.currentPupil.class_name}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Pupil ID:</span>
+                                        <span class="font-medium text-slate-800">${reportCardData.currentPupil.pupil_id}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-slate-800 mb-3">Annual Summary</h3>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Overall Average:</span>
+                                        <span class="font-medium text-slate-800">${data.overallAverage}%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Overall Grade:</span>
+                                        <span class="font-bold text-orange-600 text-lg">${data.overallGrade}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Overall Position:</span>
+                                        <span class="font-medium text-slate-800">${data.overallPosition}/${data.totalPupils}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-600">Attendance Rate:</span>
+                                        <span class="font-medium text-slate-800">${data.attendanceRate}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Term Progression -->
+                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                            <h3 class="text-lg font-semibold text-slate-800">Term Progression</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Term</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">Average</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-slate-600 uppercase tracking-wider">Position</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200">
+                                    ${progressionHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Achievements -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Academic Achievements</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-slate-600">Best Subject:</span>
+                                    <span class="font-medium text-slate-800">${data.bestSubject}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-slate-600">Best Subject Score:</span>
+                                    <span class="font-medium text-green-600">${data.bestSubjectScore}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-slate-600">Most Improved:</span>
+                                    <span class="font-medium text-orange-600">${data.mostImproved}</span>
+                                </div>
+                                <div class="pt-3 border-t border-slate-200">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-medium text-slate-700">Best Performance:</span>
+                                        <span class="text-sm font-bold text-green-600">${data.bestPerformance}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6">
+                            <h3 class="text-lg font-semibold text-slate-800 mb-4">Year Summary</h3>
+                            <div class="space-y-4">
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold text-orange-600 mb-2">${data.overallAverage}%</div>
+                                    <div class="text-sm text-slate-600">Overall Average</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-green-600 mb-2">${data.overallPosition}/${data.totalPupils}</div>
+                                    <div class="text-sm text-slate-600">Class Position</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-lg font-bold text-blue-600 mb-2">${data.overallGrade}</div>
+                                    <div class="text-sm text-slate-600">Overall Grade</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, initializing report card...');
+            console.log('Report card data:', reportCardData);
+            
+            // Force test data access
+            console.log('Test data access:', reportCardData.terms?.term1?.resultCard);
+            
+            renderReportCard();
+        });
+    </script>
 </body>
 </html>
-                                                                                                                                                                                                                                                                        
